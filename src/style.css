@@ -4,11 +4,6 @@ body
 	background-color: rgb(242, 253, 255);
 }
 
-a:link, a:visited, a:active
-{
-	color: black;
-}
-
 #header
 {
 	font-family: Microsoft Jhenghei;
@@ -25,11 +20,11 @@ a:link, a:visited, a:active
 }
 
 ::-moz-selection {
-	background: #ffffcc;
-	color: black;
+	background: #481800;
+	color: white
 }
 
 ::selection {
-	background: #Fffffcc;
-	color: black;
+	background: #481800;
+	color: white;
 }

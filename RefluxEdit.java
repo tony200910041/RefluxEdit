@@ -67,7 +67,7 @@ public class RefluxEdit extends JFrame
 				{
 					try
 					{
-						w.openToTextArea(new File(args[0]));
+						w.openToTextAreaNoProgress(new File(args[0]));
 					}
 					catch (Exception ex)
 					{
@@ -1912,6 +1912,27 @@ public class RefluxEdit extends JFrame
 		}
 	}
 	
+	public void openToTextAreaNoProgress(File f)
+	{
+		TEXTAREA.setText("");
+		try
+		{
+			BufferedReader br1 = new BufferedReader(new FileReader(f));
+			while ((TMP1 = br1.readLine()) != null)
+			{
+				TEXTAREA.append(TMP1 + "\n");
+			}
+			br1.close();
+		}
+		catch (Throwable ex)
+		{
+			JOptionPane.showMessageDialog(w, "Cannot open file!\nError message: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		setFileLabel(f);
+		TEXTAREA.setCaretPosition(0);
+	}
+	
 	public void openToTextArea(final File f)
 	{
 		final RandomProgress prog = new RandomProgress();
@@ -1935,16 +1956,7 @@ public class RefluxEdit extends JFrame
 					JOptionPane.showMessageDialog(w, "Cannot open file!\nError message: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 					return null;
 				}
-				TMP1 = f.getPath();
-				file = f;
-				if (TMP1.length() > 50)
-				{
-					currentFile.setText("Current file: " + TMP1.substring(0,25) + "..." + TMP1.substring(TMP1.length()-25, TMP1.length()));
-				}
-				else
-				{
-					currentFile.setText("Current file: " + TMP1);
-				}
+				setFileLabel(f);
 				TEXTAREA.setCaretPosition(0);
 				prog.dispose();
 				return null;
@@ -1962,6 +1974,20 @@ public class RefluxEdit extends JFrame
 				}
 			}
 		});
+	}
+	
+	public void setFileLabel(File f)
+	{
+		TMP1 = f.getPath();
+		file = f;
+		if (TMP1.length() > 50)
+		{
+			currentFile.setText("Current file: " + TMP1.substring(0,25) + "..." + TMP1.substring(TMP1.length()-25, TMP1.length()));
+		}
+		else
+		{
+			currentFile.setText("Current file: " + TMP1);
+		}
 	}
 	
 	public static String getSettingsFilePath()

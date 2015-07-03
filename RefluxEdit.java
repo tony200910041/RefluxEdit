@@ -3,7 +3,6 @@ import java.awt.event.*;
 import java.awt.datatransfer.*;
 import java.awt.dnd.*;
 import java.awt.print.*;
-import java.awt.geom.Rectangle2D;
 import javax.swing.*;
 import javax.swing.filechooser.*;
 import javax.swing.border.*;
@@ -29,7 +28,7 @@ public class RefluxEdit extends JFrame
 	
 	private static JTextArea TEXTAREA = new JTextArea();
 	private JLabel currentFile = new JLabel(" ");
-	private JMenuBar menubar;
+	private static JMenuBar menubar;
 	
 	private static JFileChooser WindowsChooser;
 	private static MyFileChooser JavaChooser;
@@ -45,12 +44,13 @@ public class RefluxEdit extends JFrame
 	static RefluxEdit w;
 	JPanel topPanel = new JPanel();
 	JPanel bottomPanel = new JPanel();
+	
 	private static int i, j, k, l, m;
 	private static String TMP1, TMP2, TMP3, TMP4;
 	
 	public static void main(final String[] args)
 	{
-		setLAF();
+		RefluxEdit.setLAF();
 		final double initialTime = System.currentTimeMillis();
 		final SplashScreen splash = SplashScreen.getSplashScreen();
 		splash.createGraphics();
@@ -113,14 +113,13 @@ public class RefluxEdit extends JFrame
 	public RefluxEdit(String title)
 	{
 		super(title);
-		this.setLAF();
+		this.setJMenuBar(menubar);
+		
 		final RefluxEdit frame = this;
 		this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		this.setMinimumSize(new Dimension(275,250));
 		this.setLayout(new BorderLayout());
 		this.initialize();
-		menubar = new JMenuBar();
-		this.setJMenuBar(menubar);
 		
 		currentFile.setFont(f13);
 		topPanel.add(new MyButton("New", -1));
@@ -188,16 +187,27 @@ public class RefluxEdit extends JFrame
 			{
 				case "Windows":
 				UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+				menubar = new JMenuBar();
+				menubar.setBackground(Color.WHITE);				
 				break;
 							
 				case "Nimbus":
 				UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+				menubar = new JMenuBar();				
 				TEXTAREA.setSelectedTextColor(Color.BLACK);
+				UIManager.put("nimbusInfoBlue", new Color(255,186,0));
+				break;
+				
+				default:
+				menubar = new JMenuBar();
+				menubar.setBackground(new Color(242,254,255));
 				break;
 			}
 		}
 		catch (Throwable ex)
 		{
+			menubar = new JMenuBar();
+			menubar.setBackground(new Color(242,254,255));
 		}
 	}
 	
@@ -349,7 +359,6 @@ public class RefluxEdit extends JFrame
 	
 	public void restoreMenus()
 	{
-		menubar.setBackground(new Color(242,254,255));
 		MyMenu menu1 = new MyMenu("File");
 		MyMenu menu2 = new MyMenu("Edit");
 		MyMenu menu3 = new MyMenu("Tools");
@@ -654,11 +663,6 @@ public class RefluxEdit extends JFrame
 			JOptionPane.showMessageDialog(w, "Editing the text is DISABLED!\nPlease enable editing!", "Error", JOptionPane.WARNING_MESSAGE);
 		}
 		
-		public void cannotOpen(Throwable ex)
-		{
-			JOptionPane.showMessageDialog(w, "Cannot open file!\nError message: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-		}
-		
 		public int isOverride()
 		{
 			return JOptionPane.showConfirmDialog(w, "Override old file?", "Warning", JOptionPane.WARNING_MESSAGE);
@@ -712,14 +716,8 @@ public class RefluxEdit extends JFrame
 				case 23: return "w";
 				case 24: return "x";
 				case 25: return "y";
-				default:
-				case 26: return "z";
+				default: case 26: return "z";
 			}
-		}
-		
-		public String toLetter2(int a)
-		{
-			return ("abcdefghijklmnopqrstuvwxyz").substring(i-1, i);
 		}
 		
 		@Override
@@ -765,10 +763,14 @@ public class RefluxEdit extends JFrame
 					}
 					else
 					{
-						currentFile.setText(" ");
-						file = null;
-						TEXTAREA.setText("");
-						isOnNew = false;
+						i = JOptionPane.showConfirmDialog(w, "Create new file?\nThe current file will be DISCARDED!", "Confirm", JOptionPane.YES_NO_OPTION);
+						if (i == JOptionPane.YES_OPTION)
+						{
+							currentFile.setText(" ");
+							file = null;
+							TEXTAREA.setText("");
+							isOnNew = false;
+						}
 					}
 				}
 				break;
@@ -794,28 +796,14 @@ public class RefluxEdit extends JFrame
 					i = chooser.showOpenDialog(w);
 					if (i == JFileChooser.APPROVE_OPTION)
 					{
-						try
-						{
-							openToTextArea(chooser.getSelectedFile());
-						}
-						catch (IOException ex)
-						{
-							cannotOpen(ex);
-						}
+						openToTextArea(chooser.getSelectedFile());
 					}
 					break;
 										
 					case "Beta":
-					try
-					{
-						File[] f_a = FileChooser.showFileChooser(new File(getSettingsFilePath()));
-						if (f_a == null) break outswitch;
-						openToTextArea(f_a[0]);
-					}
-					catch (Exception ex)
-					{
-						cannotOpen(ex);
-					}
+					File[] f_a = FileChooser.showFileChooser(new File(getSettingsFilePath()));
+					if (f_a == null) break outswitch;
+					openToTextArea(f_a[0]);
 					break;
 				}
 				break;
@@ -824,14 +812,7 @@ public class RefluxEdit extends JFrame
 				TMP1 = JOptionPane.showInputDialog(w, "Please enter the path:", "Input", JOptionPane.QUESTION_MESSAGE);
 				if ((TMP1 != null)&&(!TMP1.isEmpty()))
 				{
-					try
-					{
-						openToTextArea(new File(TMP1));
-					}
-					catch (Exception ex)
-					{
-						cannotOpen(ex);
-					}
+					openToTextArea(new File(TMP1));
 				}
 				break;
 				 
@@ -996,7 +977,9 @@ public class RefluxEdit extends JFrame
 					TMP1 = undoManager.undo();
 					if (TMP1 != null)
 					{
+						i = TEXTAREA.getCaretPosition();
 						TEXTAREA.setText(TMP1);
+						TEXTAREA.setCaretPosition(i);
 					}
 				}
 				else
@@ -1011,7 +994,9 @@ public class RefluxEdit extends JFrame
 					TMP1 = undoManager.redo();
 					if (TMP1 != null)
 					{
+						i = TEXTAREA.getCaretPosition();
 						TEXTAREA.setText(TMP1);
+						TEXTAREA.setCaretPosition(i);
 					}
 				}
 				else
@@ -1092,6 +1077,7 @@ public class RefluxEdit extends JFrame
 				case 15: //delete
 				if (TEXTAREA.isEditable())
 				{
+					undoManager.backup(TEXTAREA.getText());
 					TEXTAREA.replaceSelection(null);
 				}
 				else
@@ -1120,7 +1106,7 @@ public class RefluxEdit extends JFrame
 				break;
 				
 				case 18: //wrap option
-				JDialog wrap = new JDialog();
+				JDialog wrap = new JDialog(w);
 				wrap.setModal(true);
 				wrap.setTitle("Wrap option");
 				wrap.setSize(300,80);
@@ -1142,7 +1128,7 @@ public class RefluxEdit extends JFrame
 				break;
 				
 				case 19: //encoding
-				JDialog encoding = new JDialog();
+				JDialog encoding = new JDialog(w);
 				encoding.setModal(true);
 				encoding.setTitle("Encoding option");
 				encoding.setSize(300,150);
@@ -1241,7 +1227,7 @@ public class RefluxEdit extends JFrame
 				break;
 				
 				case 20: //file chooser
-				JDialog chooserOption = new JDialog();
+				JDialog chooserOption = new JDialog(w);
 				chooserOption.setModal(true);
 				chooserOption.setTitle("Encoding option");
 				chooserOption.setSize(300,120);
@@ -1399,7 +1385,7 @@ public class RefluxEdit extends JFrame
 				case 25: //replace, selection
 				if (TEXTAREA.isEditable())
 				{
-					final JDialog replace = new JDialog();
+					final JDialog replace = new JDialog(w);
 					replace.setTitle("Replace");
 					replace.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 					replace.getContentPane().setBackground(Color.WHITE);
@@ -1545,7 +1531,7 @@ public class RefluxEdit extends JFrame
 				break;
 				
 				case 29: //tab size
-				JDialog tabSize = new JDialog();
+				JDialog tabSize = new JDialog(w);
 				tabSize.setTitle("Tab size");
 				tabSize.setModal(true);
 				tabSize.getContentPane().setBackground(Color.WHITE);
@@ -1734,7 +1720,7 @@ public class RefluxEdit extends JFrame
 				break;
 				
 				case 36: //selection color
-				JDialog selectionColorDialog = new JDialog();
+				JDialog selectionColorDialog = new JDialog(w);
 				selectionColorDialog.setTitle("Selection Color");
 				selectionColorDialog.setLayout(new FlowLayout());
 				selectionColorDialog.setModal(true);
@@ -1755,13 +1741,12 @@ public class RefluxEdit extends JFrame
 				break;
 				
 				case 37: //LAF
-				JDialog LAFOption = new JDialog();
+				JDialog LAFOption = new JDialog(w);
 				LAFOption.setModal(true);
 				LAFOption.setTitle("Look and Feel option");
 				LAFOption.getContentPane().setBackground(Color.WHITE);
 				boolean DefaultL = false;
 				boolean WindowsL = false;
-				//boolean Synth = false;
 				boolean Nimbus = false;
 				try
 				{
@@ -1784,10 +1769,6 @@ public class RefluxEdit extends JFrame
 						WindowsL = true;
 						break;
 						
-						//case "Synth":
-						//Synth = true;
-						//break;
-						
 						case "Nimbus":
 						Nimbus = true;
 						break;
@@ -1795,7 +1776,6 @@ public class RefluxEdit extends JFrame
 				}
 				final MyRadioButton isDefaultL = new MyRadioButton("Use default Look and Feel", DefaultL, 1);
 				final MyRadioButton isWindowsL = new MyRadioButton("Use Windows Look and Feel", WindowsL, 2);
-				//final MyRadioButton isSynth = new MyRadioButton("Use Synth Look and Feel", Synth, 3);
 				final MyRadioButton isNimbus = new MyRadioButton("Use Nimbus Look and Feel", Nimbus, 4);
 				ActionListener listener3 = new ActionListener()
 				{
@@ -1806,7 +1786,6 @@ public class RefluxEdit extends JFrame
 							case 1:
 							isDefaultL.setSelected(true);
 							isWindowsL.setSelected(false);
-							//isSynth.setSelected(false);
 							isNimbus.setSelected(false);
 							TMP1 = "Default";
 							break;
@@ -1814,23 +1793,15 @@ public class RefluxEdit extends JFrame
 							case 2:
 							isDefaultL.setSelected(false);
 							isWindowsL.setSelected(true);
-							//isSynth.setSelected(false);
 							isNimbus.setSelected(false);
 							TMP1 = "Windows";
 							break;
 							
-							/*case 3:
-							isDefaultL.setSelected(false);
-							isWindowsL.setSelected(false);
-							isSynth.setSelected(true);
-							isNimbus.setSelected(false);
-							TMP1 = "Synth";
-							break;*/
+							//case 3:
 							
 							case 4:
 							isDefaultL.setSelected(false);
 							isWindowsL.setSelected(false);
-							//isSynth.setSelected(false);
 							isNimbus.setSelected(true);
 							TMP1 = "Nimbus";
 							break;
@@ -1839,12 +1810,10 @@ public class RefluxEdit extends JFrame
 				};
 				isDefaultL.addActionListener(listener3);
 				isWindowsL.addActionListener(listener3);
-				//isSynth.addActionListener(listener3);	
 				isNimbus.addActionListener(listener3);	
 				LAFOption.setLayout(new GridLayout(3,1,0,0));
 				LAFOption.add(isDefaultL);
 				LAFOption.add(isWindowsL);
-				//LAFOption.add(isSynth);
 				LAFOption.add(isNimbus);
 				LAFOption.setSize(250,140);
 				LAFOption.setLocationRelativeTo(w);
@@ -1870,8 +1839,9 @@ public class RefluxEdit extends JFrame
 	{
 		private JProgressBar prog;
 		private double initialTime;
-		RandomProgress(int min, int max)
+		public RandomProgress(int min, int max)
 		{
+			super(w);
 			this.setTitle("Progress");
 			this.setLayout(new FlowLayout());
 			this.prog = new JProgressBar(min, max);
@@ -1880,10 +1850,27 @@ public class RefluxEdit extends JFrame
 			this.prog.setStringPainted(true);
 			this.add(prog);
 			this.pack();
-			this.setLocationRelativeTo(null);
-			this.setAlwaysOnTop(true);
+			this.setLocationRelativeTo(w);
+			this.setResizable(false);
 			this.setVisible(true);
 			this.initialTime = System.currentTimeMillis();
+		}
+		
+		public RandomProgress()
+		{
+			super(w);
+			this.setTitle("Progress");
+			this.setLayout(new FlowLayout());
+			this.prog = new JProgressBar();
+			this.prog.setIndeterminate(true);
+			this.prog.setFont(f13);
+			this.prog.setString("Please wait...");
+			this.prog.setStringPainted(true);
+			this.add(prog);
+			this.pack();
+			this.setLocationRelativeTo(w);
+			this.setResizable(false);
+			this.setVisible(true);
 		}
 		
 		public void setValue(int x)
@@ -1925,26 +1912,56 @@ public class RefluxEdit extends JFrame
 		}
 	}
 	
-	public void openToTextArea(File f) throws IOException
+	public void openToTextArea(final File f)
 	{
-		TEXTAREA.setText("");
-		BufferedReader br1 = new BufferedReader(new FileReader(f));
-		while ((TMP1 = br1.readLine()) != null)
+		final RandomProgress prog = new RandomProgress();
+		final SwingWorker<Void, Void> task = new SwingWorker<Void, Void>()
 		{
-			TEXTAREA.append(TMP1 + "\n");
-		}
-		br1.close();
-		TMP1 = f.getPath();
-		file = f;
-		if (TMP1.length() > 50)
+			@Override
+			public Void doInBackground()
+			{
+				TEXTAREA.setText("");
+				try
+				{
+					BufferedReader br1 = new BufferedReader(new FileReader(f));
+					while (((TMP1 = br1.readLine()) != null)&&(!this.isCancelled()))
+					{
+						TEXTAREA.append(TMP1 + "\n");
+					}
+					br1.close();
+				}
+				catch (Throwable ex)
+				{
+					JOptionPane.showMessageDialog(w, "Cannot open file!\nError message: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+					return null;
+				}
+				TMP1 = f.getPath();
+				file = f;
+				if (TMP1.length() > 50)
+				{
+					currentFile.setText("Current file: " + TMP1.substring(0,25) + "..." + TMP1.substring(TMP1.length()-25, TMP1.length()));
+				}
+				else
+				{
+					currentFile.setText("Current file: " + TMP1);
+				}
+				TEXTAREA.setCaretPosition(0);
+				prog.dispose();
+				return null;
+			}
+		};
+		task.execute();
+		prog.addWindowListener(new WindowAdapter()
 		{
-			currentFile.setText("Current file: " + TMP1.substring(0,25) + "..." + TMP1.substring(TMP1.length()-25, TMP1.length()));
-		}
-		else
-		{
-			currentFile.setText("Current file: " + TMP1);
-		}
-		TEXTAREA.setCaretPosition(0);
+			@Override
+			public void windowClosing(WindowEvent ev)
+			{
+				if (task.cancel(true))
+				{
+					JOptionPane.showMessageDialog(w, "Stopped opening file " + f.getPath() + ".", "Stopped", JOptionPane.WARNING_MESSAGE);
+				}
+			}
+		});
 	}
 	
 	public static String getSettingsFilePath()

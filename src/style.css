@@ -4,6 +4,11 @@ body
 	background-color: rgb(242, 253, 255);
 }
 
+a:link, a:visited, a:active
+{
+	color: black;
+}
+
 #header
 {
 	font-family: Microsoft Jhenghei;

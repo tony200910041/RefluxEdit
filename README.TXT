@@ -1,0 +1,143 @@
+RefluxEdit
+
+----------
+
+RefluxEdit is a very small and simple text editor written in Java.
+
+----------
+
+This is a legal agreement between you and the developer(s) of RefluxEdit.
+
+RefluxEdit is distributed under the Mozilla Public License 2.0 (MPL 2.0). You are free to distribute, modify, copy or share RefluxEdit and you are welcome to use RefluxEdit everywhere for any purpose for free, as long as you strictly comply with the MPL 2.0 license. The source code of RefluxEdit can be found in SourceForge page.
+
+RefluxEdit is provided "AS IS" and WITHOUT warranties. RefluxEdit does not contain any spyware, adware or malware. Please be reminded that the RefluxEdit trademark is not open to the public. If you do not agree to the above term(s), you should remove RefluxEdit immediately. It is not possible to avoid abiding by the agreement(s) by language reason(s).
+
+----------
+Version History:
+RefluxEdit 3.1
+-New function: bottom-left corner word count panel
+-Changed: more stable startup
+-Changed: hexadecimal changed to uppercase
+-Changed: faster response speed of cancelling generating random words
+-Changed: automatic commit edit of spinner
+
+RefluxEdit 3.0 2014-10-31
+-New function: visit SourceForge page: http://refluxedit.sourceforge.net
+-Changed: "Help" ribbon design
+-Changed: slighly changed "File" menu separators
+
+RefluxEdit 3.0beta1 2014-09-30
+-New function: accelerator hint in Ribbon UI
+-Changed: default encoding (provide both PrintWriter and FileOutputStream mode)
+-Changed: enhanced undo/redo function
+-Changed: added separator in File menu
+-Changed: added warning message when using delete blank lines function
+-Changed: line separator dialog
+-Changed: default text area font size (changed from 13 to 15)
+-Changed: tooltip text font in Nimbus Look and Feel
+-Fixed bug #00014: still editable after disabling editint the text
+-Fixed bug #00015: not updating saved state after using specific tools
+-Fixed bug #00016: not saving image correctly
+
+RefluxEdit 3.0alpha 2014-09-18
+-Major change: Ribbon UI
+-New function: insert unicode character and unicode value
+-New function: line separator options
+-Changed: unified button style
+-Changed: default saving method (PrintWriter used)
+-Changed: enhanced undo/redo function
+-Fixed bug #00013: not closing progress dialog when failed to open file
+
+RefluxEdit 2.2
+-Internal testing version
+
+RefluxEdit 2.1 2014-08-30
+-New function: export text to image (format supported by ImageIO)
+-New function: character count
+-Changed: menu bar color (can be restored)
+-Changed: slightly narrower edges (can be restored)
+-Changed: much faster "Generate random words" function (algorithm in RefluxEdit 1.2)
+-Changed: not showing word count dialog if text area is empty
+
+RefluxEdit 2.0 2014-07-23
+-New function: color chooser (JColorChooser)
+-New function: base converter (base 2, 8, 10 and 16)
+-New function: execute System.gc() (reduce memory usage)
+-Changed: menu structure (new Options menu, new Case conversion menu)
+-Changed: some radio buttons changed to check boxes due to convention
+-Changed: use larger icon in "New" menu item
+-Changed: change of color of some button when mouse entered
+-Changed: About dialog icon changed to Duke
+-Changed: no need to restart after choosing top panel mode
+-Fixed bug #00009: flawed frame (blank frame, missing component etc)
+-Fixed bug #00010: not adding .txt automatically when using "Save" instead of "Save as"
+-Fixed bug #00011: not resetting current file label and internal current file when opening file is aborted
+-Fixed bug #00012: toolbar buttons become white after being clicked
+
+RefluxEdit 2.0beta4 2014-07-12
+-New function: Simple 4-button panel, toolbar or no container mode
+-New function: text area font selection
+-Changed: show beta version in About dialog
+
+RefluxEdit 2.0beta3rev1 2014-07-09
+-Fixed bug #00008: failed file association due to progress bar
+
+RefluxEdit 2.0beta3 2014-07-09
+-Changed: display an indeterminate progress bar dialog when opening file
+-Changed: Information Dialog icon changed to dark yellow (Nimbus Look and Feel)
+-Fixed bug #00006: not showing dialog on top of main window
+-Fixed bug #00007: caret position changed after performing undo action
+
+RefluxEdit 2.0beta2 2014-06-28
+-New function: detect state of being modified (not saved)
+-New function: drag and drop support
+-New function: set Look and Feel
+-Fixed bug #00004: failed to choose type in Beta chooser
+-Fixed bug #00005: failed to save some unicode characters
+
+RefluxEdit 2.0beta1 2014-06-25
+-beta release of major rewrite
+-Speed improvement
+-Changed: lighter background (R=245, G=245, B=245) when text area is disabled
+-Changed: much faster search/replace
+-New function: add keybord shortcut
+-New function: add menu item icons
+-Fixed bug #00002: failed to open some small text files
+-Fixed bug #00003: failed to save some selection color
+
+RefluxEdit 2.0alpha 2014-06-21
+-Major rewrite
+-Speed improvement
+-Changed: splash screen added
+-Changed: use slightly bigger words (size: 13)
+-Changed: menu structure
+-Changed: unfocusable buttons
+-New function: (beta) support 4 encodings
+-New function: 3 file choosers
+-New function: text area selection color option
+-New function: tab size option
+-New function: word counter
+-New function: show progress bar when generating random words
+
+RefluxEdit 1.4alpha
+-Internal testing version
+
+RefluxEdit 1.3
+-Internal testing version
+
+RefluxEdit 1.2 2014-03-06
+-New function: file association support (Windows executable)
+-New function: save settings
+-New function: automatically add .txt file extension to file name
+-Changed: Bigger JFileChooser size
+
+RefluxEdit 1.1 2014-02-06
+-Fixed bug #00001: Not cancelling the "Find" dialog
+-New functions: Open File (quick), Invert case, Insert key words, Generate random words
+-Changed: JMenuBar amendment: added a new JLabel
+
+RefluxEdit 1.0 2014-02-03
+-First release version
+----------
+
+Please feel free to contact tony200910041 by email, tony200910041@gmail.com or in my blog, http://tony200910041.wordpress.com, if you have further enquiries, problems or suggestions. Your advice would be highly appreciated.

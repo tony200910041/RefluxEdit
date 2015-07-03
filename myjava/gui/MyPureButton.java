@@ -1,8 +1,7 @@
-package myjava.gui;
+package myjava.gui; //version: 1.0
 
 import java.awt.*;
 import javax.swing.*;
-import myjava.gui.MyRibbonBorder;
 import myjava.gui.common.Resources;
 
 public class MyPureButton extends JPanel implements Resources
@@ -17,7 +16,7 @@ public class MyPureButton extends JPanel implements Resources
 		label.setText(text);
 		label.setFont(f13);
 		this.add(label);
-		this.setBorder(new MyRibbonBorder(MyRibbonBorder.UNSELECTED));
+		this.setBorder(bord1);
 	}
 	
 	public void setAlignLeft()

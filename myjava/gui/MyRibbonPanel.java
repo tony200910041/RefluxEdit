@@ -28,7 +28,7 @@ public class MyRibbonPanel extends JPanel implements MouseListener
 		
 	public void addTab(String name, JPanel panel)
 	{
-		MyPureButton button = new MyPureButton(name);
+		MyPureTabButton button = new MyPureTabButton(name);
 		buttonPanel.add(button);
 		list.put(button, panel);
 		button.addMouseListener(this);

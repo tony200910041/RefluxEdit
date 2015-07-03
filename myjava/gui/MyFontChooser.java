@@ -1,17 +1,16 @@
-package myjava.gui;
+package myjava.gui; //version: 1.0
 
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import java.util.Vector;
+import myjava.gui.common.*;
 
-public class MyFontChooser extends JPanel implements ActionListener, ChangeListener
+public class MyFontChooser extends JPanel implements ActionListener, ChangeListener, Resources
 {
 	private static final Font[] usableFonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
-	private static final Font f13 = new Font("Microsoft Jhenghei", Font.PLAIN, 13);
-	protected Font selectedFont;
-	
+	protected Font selectedFont;	
 	protected JComboBox comboBox = new JComboBox();
 	protected JSpinner spinner = new JSpinner(new SpinnerNumberModel(12, 1, 200, 1));
 	protected MyRadioButton plain = new MyRadioButton("Plain", false, 1);
@@ -132,5 +131,10 @@ public class MyFontChooser extends JPanel implements ActionListener, ChangeListe
 	public Font getFont()
 	{
 		return this.selectedFont;
+	}
+	
+	public JSpinner getSpinner()
+	{
+		return this.spinner;
 	}
 }

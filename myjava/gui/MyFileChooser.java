@@ -1,4 +1,4 @@
-package myjava.gui;
+package myjava.gui; //version: 1.0
 
 import java.awt.Color;
 import java.awt.Font;
@@ -7,17 +7,17 @@ import java.awt.Container;
 import java.awt.Component;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+import myjava.gui.common.Resources;
 
-public class MyFileChooser extends JFileChooser
+public class MyFileChooser extends JFileChooser implements Resources
 {
-	private static final Font FONT = new Font("Microsoft Jhenghei", Font.PLAIN, 13); 
 	public MyFileChooser(String str)
 	{
 		this.setPreferredSize(new Dimension(500,420));
 		this.setDialogTitle(str);
 		this.setFileHidingEnabled(false);
 		this.setDialogType(JFileChooser.OPEN_DIALOG);
-		this.setApproveButtonText("Open");
+		this.setApproveButtonText("Choose");
 		setStylePrivate((Container)this, Color.WHITE, Color.BLACK);
 	}
 	
@@ -60,25 +60,21 @@ public class MyFileChooser extends JFileChooser
                 comp[i].setBackground(bg);
             }	 
             comp[i].setForeground(fg);
-            comp[i].setFont(FONT);
-        }
-        
-        UIManager.put("OptionPane.buttonFont", FONT);
-        UIManager.put("OptionPane.messageFont", FONT);
+            comp[i].setFont(f13);
+        }        
+        UIManager.put("OptionPane.buttonFont", f13);
+        UIManager.put("OptionPane.messageFont", f13);
         UIManager.put("OptionPane.okButtonText", "OK");
-        UIManager.put("Button.background", bg);
- 
+        UIManager.put("Button.background", bg); 
         UIManager.put("PopupMenu.background", bg);
         UIManager.put("MenuItem.background", bg);
-        UIManager.put("RadioButtonMenuItem.background", bg);
- 
-        UIManager.put("PopupMenu.font", FONT);
-        UIManager.put("MenuItem.font", FONT);
-        UIManager.put("Menu.font", FONT);
-        UIManager.put("RadioButtonMenuItem.font", FONT);
-        UIManager.put("TextField.font", FONT);
- 
-        UIManager.put("ToolTip.font", FONT);
+        UIManager.put("RadioButtonMenuItem.background", bg); 
+        UIManager.put("PopupMenu.font", f13);
+        UIManager.put("MenuItem.font", f13);
+        UIManager.put("Menu.font", f13);
+        UIManager.put("RadioButtonMenuItem.font", f13);
+        UIManager.put("TextField.font", f13); 
+        UIManager.put("ToolTip.font", f13);
         UIManager.put("ToolTip.border", new LineBorder(fg, 1));
         UIManager.put("ToolTip.background", bg);
     }

@@ -1,4 +1,4 @@
-package myjava.gui;
+package myjava.gui; //version: 1.0
 
 import java.awt.*;
 import javax.swing.border.Border;

@@ -1,11 +1,15 @@
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.datatransfer.*;
+import java.awt.dnd.*;
+import java.awt.print.*;
+import java.awt.geom.Rectangle2D;
 import javax.swing.*;
 import javax.swing.filechooser.*;
 import javax.swing.border.*;
-import javax.swing.plaf.basic.BasicMenuItemUI;
+import javax.swing.plaf.synth.*;
 import java.io.*;
+import java.nio.*;
 import java.util.Properties;
 import java.util.Arrays;
 import MyJava.MyFileChooser;
@@ -23,14 +27,14 @@ public class RefluxEdit extends JFrame
 	private static final int WIDTH = (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth();
 	private static final int HEIGHT = (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight();
 	
-	JTextArea TEXTAREA = new JTextArea();
-	JLabel currentFile = new JLabel(" ");
-	JMenuBar menubar;
+	private static JTextArea TEXTAREA = new JTextArea();
+	private JLabel currentFile = new JLabel(" ");
+	private JMenuBar menubar;
 	
-	static JFileChooser WindowsChooser;
-	static MyFileChooser JavaChooser;
-	static JFileChooser chooser;
-	File file = null;
+	private static JFileChooser WindowsChooser;
+	private static MyFileChooser JavaChooser;
+	private static JFileChooser chooser;
+	private File file = null;
 	
 	private static final JPopupMenu popup = new JPopupMenu();
 	private static final Clipboard clipbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -41,11 +45,12 @@ public class RefluxEdit extends JFrame
 	static RefluxEdit w;
 	JPanel topPanel = new JPanel();
 	JPanel bottomPanel = new JPanel();
-	static int i, j, k, l, m;
-	static String TMP1, TMP2, TMP3, TMP4;
+	private static int i, j, k, l, m;
+	private static String TMP1, TMP2, TMP3, TMP4;
 	
 	public static void main(final String[] args)
 	{
+		setLAF();
 		final double initialTime = System.currentTimeMillis();
 		final SplashScreen splash = SplashScreen.getSplashScreen();
 		splash.createGraphics();
@@ -108,6 +113,7 @@ public class RefluxEdit extends JFrame
 	public RefluxEdit(String title)
 	{
 		super(title);
+		this.setLAF();
 		final RefluxEdit frame = this;
 		this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		this.setMinimumSize(new Dimension(275,250));
@@ -135,11 +141,18 @@ public class RefluxEdit extends JFrame
 		UIManager.put("OptionPane.yesButtonText", "YES");
 		UIManager.put("OptionPane.noButtonText", "NO");
 		UIManager.put("Button.background", Color.WHITE);
-		UIManager.put("ComboBox.font", f13);
 		UIManager.put("MenuItem.acceleratorForeground", new Color(34,131,132));
 		UIManager.put("MenuItem.selectionBackground", new Color(220,220,220));
 		UIManager.put("PopupMenu.border", new LineBorder(Color.BLACK, 1));
 		UIManager.put("Separator.foreground", Color.BLACK);
+		UIManager.put("ComboBox.font", f13);
+		UIManager.put("TextField.font", f13);
+		UIManager.put("Label.font", f13);
+		UIManager.put("TabbedPane.font", f13);
+		UIManager.put("RadioButton.font", f13);
+		UIManager.put("CheckBox.font", f13);
+		UIManager.put("Button.font", f13);
+		UIManager.put("TitledBorder.font", f13);
 		
 		this.addWindowListener(new WindowAdapter()
 		{
@@ -167,6 +180,27 @@ public class RefluxEdit extends JFrame
 		});
 	}
 	
+	public static void setLAF()
+	{
+		try
+		{
+			switch (getConfig("LAF"))
+			{
+				case "Windows":
+				UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+				break;
+							
+				case "Nimbus":
+				UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+				TEXTAREA.setSelectedTextColor(Color.BLACK);
+				break;
+			}
+		}
+		catch (Throwable ex)
+		{
+		}
+	}
+	
 	public void initialize()
 	{
 		//this.setSize(300,600);
@@ -192,6 +226,7 @@ public class RefluxEdit extends JFrame
 				writeConfig("SelectionColor.r", "244");
 				writeConfig("SelectionColor.g", "223");
 				writeConfig("SelectionColor.b", "255");
+				writeConfig("LAF", "Default");
 			}
 			catch (Exception ex)
 			{
@@ -301,7 +336,7 @@ public class RefluxEdit extends JFrame
 			public boolean accept(File f)
 			{
 				String FILE = f.getPath().toLowerCase();
-				return (FILE.endsWith("txt"))||(FILE.endsWith("java"))||(FILE.endsWith("py"))||(FILE.endsWith("php"))||(FILE.endsWith("html"))||(FILE.endsWith("htm"))||(FILE.endsWith("xml"))||(FILE.endsWith("bot"))||(FILE.endsWith("properties"));
+				return (f.isDirectory())||(FILE.endsWith("txt"))||(FILE.endsWith("java"))||(FILE.endsWith("py"))||(FILE.endsWith("php"))||(FILE.endsWith("html"))||(FILE.endsWith("htm"))||(FILE.endsWith("xml"))||(FILE.endsWith("bot"))||(FILE.endsWith("properties"));
 			}
 			
 			@Override
@@ -328,6 +363,7 @@ public class RefluxEdit extends JFrame
 		menu1.add(new MyMenuItem("Save as", "SAVE", 4).setAccelerator(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
 		menu1.add(new MyMenuItem("Save", null, 5));
 		menu1.add(new JSeparator());
+		menu1.add(new MyMenuItem("Print", null, 38));
 		menu1.add(new MyMenuItem("Close", "CLOSE", 6));
 		
 		menu2.add(new MyMenuItem("Undo", "UNDO", 7).setAccelerator(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
@@ -352,6 +388,7 @@ public class RefluxEdit extends JFrame
 		menu3.add(new MyMenuItem("FileChooser options", null, 20));
 		menu3.add(new MyMenuItem("Tab size options", null, 29));
 		menu3.add(new MyMenuItem("Selection color options", null, 36));
+		menu3.add(new MyMenuItem("Look and Feel options", null, 37));
 		menu3.add(new JSeparator());
 		menu3.add(new MyMenuItem("Word count (beta)", null, 22).setAccelerator(KeyEvent.VK_F2, ActionEvent.CTRL_MASK));
 		menu3.add(new MyMenuItem("Delete blank lines", null, 35));
@@ -370,12 +407,13 @@ public class RefluxEdit extends JFrame
 		menu4.add(new JSeparator());
 		menu4.add(new MyMenuItem("Insert key words (Java)", "KEYWORDJAVA", 33));
 		menu4.add(new MyMenuItem("Insert key words (html)", "KEYWORDHTML", 34));
-		//next one: 37
+		//next one: 39
 	}
 	
 	public void restoreTextArea()
 	{
 		TEXTAREA.setFont(new Font(f13.getFontName(), f13.getStyle(), f13.getSize()+2));
+		TEXTAREA.setDragEnabled(true);
 		TEXTAREA.setText("");
 		TEXTAREA.addKeyListener(new KeyAdapter()
 		{
@@ -390,6 +428,10 @@ public class RefluxEdit extends JFrame
 					undoManager.backup(TEXTAREA.getText());
 					time = 0;
 				}
+				if (!ev.isControlDown())
+				{
+					undoManager.setPosition(0);
+				}
 			}
 			
 			@Override
@@ -399,6 +441,15 @@ public class RefluxEdit extends JFrame
 				{
 					i = ev.getKeyCode();
 					MyMenuItem menuItem = null;
+					if (TMP2 != null)
+					{
+						TMP1 = new String(TMP2);
+					}
+					else
+					{
+						TMP1 = null;
+					}
+					TMP2 = TEXTAREA.getText();
 					if (i == KeyEvent.VK_Z)
 					{
 						menuItem = new MyMenuItem(null, null, 7);
@@ -427,6 +478,10 @@ public class RefluxEdit extends JFrame
 					{
 						menuItem = new MyMenuItem(null, null, 22);
 					}
+					else if (i == KeyEvent.VK_V)
+					{
+						undoManager.backup(TMP1);
+					}
 					try
 					{
 						menuItem.dispatchEvent(new MouseEvent(menuItem, MouseEvent.MOUSE_RELEASED, 1, MouseEvent.NOBUTTON, 0, 0, 1, false));
@@ -434,6 +489,26 @@ public class RefluxEdit extends JFrame
 					catch (Exception ex)
 					{
 					}
+				}
+			}
+		});
+		TEXTAREA.setDropTarget(new DropTarget()
+		{
+			@Override
+            public synchronized void drop(DropTargetDropEvent dtde)
+            {
+				dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
+				try
+				{
+					File file = (File)(((java.util.List)(dtde.getTransferable().getTransferData(DataFlavor.javaFileListFlavor))).get(0));
+					i = JOptionPane.showConfirmDialog(w, "Open file " + file.getPath() + "?\nNote that the current file will not be saved.", "Confirm Dialog", JOptionPane.YES_NO_OPTION);
+					if (i == JOptionPane.YES_OPTION)
+					{
+						openToTextArea(file);
+					}
+				}
+				catch (Throwable ex)
+				{
 				}
 			}
 		});
@@ -560,10 +635,7 @@ public class RefluxEdit extends JFrame
 		
 		public MyMenuItem setAccelerator(int keyEvent, int actionEvent)
 		{
-			if (System.getProperty("os.name").toUpperCase().startsWith("WIN"))
-			{
-				this.setAccelerator(KeyStroke.getKeyStroke(keyEvent, actionEvent));
-			}
+			this.setAccelerator(KeyStroke.getKeyStroke(keyEvent, actionEvent));
 			return this;
 		}
 	}
@@ -681,6 +753,8 @@ public class RefluxEdit extends JFrame
 					file = null;
 					TEXTAREA.setText("");
 					isOnNew = false;
+					isSaved = true;
+					((MyButton)(ev.getSource())).setText("New");
 				}
 				else
 				{
@@ -961,6 +1035,7 @@ public class RefluxEdit extends JFrame
 					undoManager.backup(TEXTAREA.getText());
 					clipbrd.setContents(new StringSelection(TEXTAREA.getSelectedText()), null);
 					TEXTAREA.replaceSelection(null);
+					isSaved = false;
 				}
 				else
 				{
@@ -969,14 +1044,7 @@ public class RefluxEdit extends JFrame
 				break;
 				
 				case 12: //copy
-				if (TEXTAREA.isEditable())
-				{
-					clipbrd.setContents(new StringSelection(TEXTAREA.getSelectedText()), null);
-				}
-				else
-				{
-					cannotEdit();
-				}
+				clipbrd.setContents(new StringSelection(TEXTAREA.getSelectedText()), null);
 				break;
 				
 				case 13: //paste
@@ -992,6 +1060,7 @@ public class RefluxEdit extends JFrame
 					}
 					undoManager.backup(TEXTAREA.getText());
 					TEXTAREA.insert(TMP1, TEXTAREA.getCaretPosition());
+					isSaved = false;
 				}
 				else
 				{
@@ -1012,6 +1081,7 @@ public class RefluxEdit extends JFrame
 					}
 					undoManager.backup(TEXTAREA.getText());
 					TEXTAREA.insert("\n" + TMP1, TEXTAREA.getCaretPosition());
+					isSaved = false;
 				}
 				else
 				{
@@ -1020,7 +1090,14 @@ public class RefluxEdit extends JFrame
 				break;
 				
 				case 15: //delete
-				TEXTAREA.replaceSelection(null);
+				if (TEXTAREA.isEditable())
+				{
+					TEXTAREA.replaceSelection(null);
+				}
+				else
+				{
+					cannotEdit();
+				}
 				break;
 				
 				case 16: //about RefluxEdit
@@ -1417,6 +1494,7 @@ public class RefluxEdit extends JFrame
 					{
 						TEXTAREA.setText(TEXTAREA.getText().toUpperCase());
 					}
+					isSaved = false;
 				}
 				else
 				{
@@ -1437,6 +1515,7 @@ public class RefluxEdit extends JFrame
 					{
 						TEXTAREA.setText(TEXTAREA.getText().toLowerCase());
 					}
+					isSaved = false;
 				}
 				else
 				{
@@ -1457,6 +1536,7 @@ public class RefluxEdit extends JFrame
 					{
 						TEXTAREA.setText(toInvertCase(TEXTAREA.getText()));
 					}
+					isSaved = false;
 				}
 				else
 				{
@@ -1498,6 +1578,7 @@ public class RefluxEdit extends JFrame
 				{
 					undoManager.backup(TEXTAREA.getText());
 					TEXTAREA.insert("\n==========\n", TEXTAREA.getCaretPosition());
+					isSaved = false;
 				}
 				else
 				{
@@ -1510,6 +1591,7 @@ public class RefluxEdit extends JFrame
 				{
 					undoManager.backup(TEXTAREA.getText());
 					TEXTAREA.insert("    ", TEXTAREA.getCaretPosition());
+					isSaved = false;
 				}
 				else
 				{
@@ -1564,6 +1646,7 @@ public class RefluxEdit extends JFrame
 										}
 									}
 									prog.dispose();
+									isSaved = false;
 									JOptionPane.showMessageDialog(w, "Done: " + (j-1) + " word(s) generated.\nTime taken: " + prog.timeUsed() + " second(s)", "Done", JOptionPane.INFORMATION_MESSAGE);
 								}
 								catch (Throwable ex)
@@ -1600,6 +1683,7 @@ public class RefluxEdit extends JFrame
 					{
 						undoManager.backup(TEXTAREA.getText());
 						TEXTAREA.insert(TMP1, TEXTAREA.getCaretPosition());
+						isSaved = false;
 					}
 				}
 				else
@@ -1617,6 +1701,7 @@ public class RefluxEdit extends JFrame
 					{
 						undoManager.backup(TEXTAREA.getText());
 						TEXTAREA.insert(TMP1, TEXTAREA.getCaretPosition());
+						isSaved = false;
 					}
 				}
 				else
@@ -1668,6 +1753,115 @@ public class RefluxEdit extends JFrame
 				writeConfig("SelectionColor.b", chosen.getBlue()+"");
 				selectionColorDialog.dispose();
 				break;
+				
+				case 37: //LAF
+				JDialog LAFOption = new JDialog();
+				LAFOption.setModal(true);
+				LAFOption.setTitle("Look and Feel option");
+				LAFOption.getContentPane().setBackground(Color.WHITE);
+				boolean DefaultL = false;
+				boolean WindowsL = false;
+				//boolean Synth = false;
+				boolean Nimbus = false;
+				try
+				{
+					TMP1 = getConfig("LAF");
+					if (TMP1 == null) throw new Exception();
+				}
+				catch (Exception ex)
+				{
+					TMP1 = "Default";
+				}
+				finally
+				{
+					switch (TMP1)
+					{
+						case "Default":
+						DefaultL = true;
+						break;
+						
+						case "Windows":
+						WindowsL = true;
+						break;
+						
+						//case "Synth":
+						//Synth = true;
+						//break;
+						
+						case "Nimbus":
+						Nimbus = true;
+						break;
+					}					
+				}
+				final MyRadioButton isDefaultL = new MyRadioButton("Use default Look and Feel", DefaultL, 1);
+				final MyRadioButton isWindowsL = new MyRadioButton("Use Windows Look and Feel", WindowsL, 2);
+				//final MyRadioButton isSynth = new MyRadioButton("Use Synth Look and Feel", Synth, 3);
+				final MyRadioButton isNimbus = new MyRadioButton("Use Nimbus Look and Feel", Nimbus, 4);
+				ActionListener listener3 = new ActionListener()
+				{
+					public void actionPerformed(ActionEvent ev)
+					{
+						switch (((MyRadioButton)(ev.getSource())).getIndex())
+						{
+							case 1:
+							isDefaultL.setSelected(true);
+							isWindowsL.setSelected(false);
+							//isSynth.setSelected(false);
+							isNimbus.setSelected(false);
+							TMP1 = "Default";
+							break;
+							
+							case 2:
+							isDefaultL.setSelected(false);
+							isWindowsL.setSelected(true);
+							//isSynth.setSelected(false);
+							isNimbus.setSelected(false);
+							TMP1 = "Windows";
+							break;
+							
+							/*case 3:
+							isDefaultL.setSelected(false);
+							isWindowsL.setSelected(false);
+							isSynth.setSelected(true);
+							isNimbus.setSelected(false);
+							TMP1 = "Synth";
+							break;*/
+							
+							case 4:
+							isDefaultL.setSelected(false);
+							isWindowsL.setSelected(false);
+							//isSynth.setSelected(false);
+							isNimbus.setSelected(true);
+							TMP1 = "Nimbus";
+							break;
+						}
+					}
+				};
+				isDefaultL.addActionListener(listener3);
+				isWindowsL.addActionListener(listener3);
+				//isSynth.addActionListener(listener3);	
+				isNimbus.addActionListener(listener3);	
+				LAFOption.setLayout(new GridLayout(3,1,0,0));
+				LAFOption.add(isDefaultL);
+				LAFOption.add(isWindowsL);
+				//LAFOption.add(isSynth);
+				LAFOption.add(isNimbus);
+				LAFOption.setSize(250,140);
+				LAFOption.setLocationRelativeTo(w);
+				LAFOption.setVisible(true);				
+				writeConfig("LAF", TMP1);
+				JOptionPane.showMessageDialog(w, "The Look and Feel will be changed after restart.", "Done", JOptionPane.INFORMATION_MESSAGE);
+				break;
+				
+				case 38: //print
+				try
+				{
+					boolean printed = TEXTAREA.print();
+				}
+				catch (PrinterException ex)
+				{
+				}
+				break;
 			}
 		}
 	}
@@ -1708,9 +1902,9 @@ public class RefluxEdit extends JFrame
 		TMP1 = getConfig("Encoding");
 		if (TMP1.equals("default"))
 		{
-			BufferedWriter bw1 = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), "UTF-8"));
-			bw1.write(TEXTAREA.getText());
-			bw1.close();
+			FileWriter writer = new FileWriter(f);
+			TEXTAREA.write(writer);
+			writer.close();
 		}
 		else
 		{
@@ -1765,7 +1959,7 @@ public class RefluxEdit extends JFrame
 		}
 	}
 	
-	public String getConfig(String name)
+	public static String getConfig(String name)
 	{
 		try
 		{
@@ -1778,7 +1972,7 @@ public class RefluxEdit extends JFrame
 		return prop.getProperty(name);
 	}
 	
-	public void writeConfig(String key, String value)
+	public static void writeConfig(String key, String value)
 	{
 		prop.setProperty(key, value);
 		try
@@ -1866,6 +2060,11 @@ public class RefluxEdit extends JFrame
 		public int getPosition()
 		{
 			return this.position;
+		}
+		
+		public void setPosition(int position)
+		{
+			this.position = position;
 		}
 	}
 }

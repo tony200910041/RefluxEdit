@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.gui;
 
 import java.awt.*;
@@ -26,6 +31,8 @@ public class LargeOpenDialog extends JDialog implements Resources, ColorConstant
 		this.add(quick);
 		this.add(charset);
 		this.add(cancel);
+		//extra tooltip
+		quick.setToolTipText("Load text from a file path or a URL");
 	}
 	
 	public static void showOpenDialog()

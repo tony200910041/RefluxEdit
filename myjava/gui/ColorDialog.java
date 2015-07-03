@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.gui;
 
 import java.awt.*;
@@ -66,7 +71,7 @@ public class ColorDialog extends JDialog implements ActionListener
 	{
 		ColorDialog dialog = new ColorDialog(parent);
 		dialog.pack();
-		dialog.setLocationRelativeTo(null);
+		dialog.setLocationRelativeTo(parent);
 		dialog.setVisible(true);
 		if (dialog.isInsert)
 		{

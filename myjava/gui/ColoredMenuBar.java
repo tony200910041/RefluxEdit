@@ -1,8 +1,15 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.gui;
 
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import exec.*;
+import myjava.gui.common.*;
 
 public class ColoredMenuBar extends JMenuBar
 {
@@ -48,42 +55,53 @@ public class ColoredMenuBar extends JMenuBar
 		/*
 		 * JMenuItems
 		 */
-		menu1.add(new MyMenuItem("New file", "NEW", 1));
-		menu1.add(new MyMenuItem("Open file", "OPEN", 2).setAccelerator(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
-		menu1.add(new MyMenuItem("Open file (quick)", null, 3));
-		menu1.add(new MyMenuItem("Open file (charset)",null, 51));
+		MyMenu menu1_1 = new MyMenu("New");
+		menu1_1.setIcon(SourceManager.icon("NEW"));
+		menu1.add(menu1_1);
+		menu1_1.add(new MyMenuItem("New file", "NEW", 1));
+		menu1_1.add(new MyMenuItem("New file from clipboard", "NEWCLIPBOARD16", 56));
+		menu1_1.add(new MyMenuItem("New Java class", "NEWJAVA16", 57));
+		MyMenu menu1_2 = new MyMenu("Open");
+		menu1_2.setIcon(SourceManager.icon("OPEN"));
+		menu1.add(menu1_2);
+		menu1_2.add(new MyMenuItem("Open file", "OPEN", 2, KeyEvent.VK_O));
+		menu1_2.add(new MyMenuItem("Open file (quick)", null, 3));
+		menu1_2.add(new MyMenuItem("Open file (charset)",null, 51));
 		menu1.add(new JSeparator());
-		menu1.add(new MyMenuItem("Save as", "SAVE", 4).setAccelerator(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
+		menu1.add(new MyMenuItem("Save as", "SAVE", 4, KeyEvent.VK_S));
 		menu1.add(new MyMenuItem("Save", null, 5));
-		menu1.add(new MyMenuItem("Export to image", "EXPORT16", 43).setAccelerator(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
+		menu1.add(new MyMenuItem("Export to image", "EXPORT16", 43, KeyEvent.VK_E));
 		menu1.add(new JSeparator());
-		menu1.add(new MyMenuItem("Print", "PRINT16", 38).setAccelerator(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
+		menu1.add(new MyMenuItem("Print", "PRINT16", 38, KeyEvent.VK_P));
 		menu1.add(new MyMenuItem("Close", "CLOSE", 6));
 		//
-		menu2.add(new MyMenuItem("Undo", "UNDO", 7).setAccelerator(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
-		menu2.add(new MyMenuItem("Redo", "REDO", 8).setAccelerator(KeyEvent.VK_Y, ActionEvent.CTRL_MASK));
+		menu2.add(new MyMenuItem("Undo", "UNDO", 7, KeyEvent.VK_Z));
+		menu2.add(new MyMenuItem("Redo", "REDO", 8, KeyEvent.VK_Y));
 		menu2.add(new JSeparator());
-		menu2.add(new MyMenuItem("Select all", null, 9).setAccelerator(KeyEvent.VK_A, ActionEvent.CTRL_MASK));
+		menu2.add(new MyMenuItem("Select all", null, 9, KeyEvent.VK_A));
 		menu2.add(new MyMenuItem("Select all and copy", null, 10));
 		menu2.add(new JSeparator());
-		menu2.add(new MyMenuItem("Cut", "CUT", 11).setAccelerator(KeyEvent.VK_X, ActionEvent.CTRL_MASK));
-		menu2.add(new MyMenuItem("Copy", "COPY", 12).setAccelerator(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
-		menu2.add(new MyMenuItem("Paste", "PASTE", 13).setAccelerator(KeyEvent.VK_V, ActionEvent.CTRL_MASK));
+		menu2.add(new MyMenuItem("Cut", "CUT", 11, KeyEvent.VK_X));
+		menu2.add(new MyMenuItem("Copy", "COPY", 12, KeyEvent.VK_C));
+		menu2.add(new MyMenuItem("Paste", "PASTE", 13, KeyEvent.VK_V));
 		menu2.add(new MyMenuItem("Paste on next line", null, 14));
-		menu2.add(new MyMenuItem("Delete", "DELETE16", 15));
+		menu2.add(new MyMenuItem("Delete", "DELETE16", 15, KeyEvent.VK_DELETE, 0));
 		menu2.add(new JSeparator());
-		menu2.add(new MyMenuItem("Increase indentation", "INDENT+", 18).setAccelerator(KeyEvent.VK_I, ActionEvent.CTRL_MASK));
-		menu2.add(new MyMenuItem("Decrease indentation", "INDENT-", 19).setAccelerator(KeyEvent.VK_U, ActionEvent.CTRL_MASK));
+		menu2.add(new MyMenuItem("Increase indentation", "INDENT+", 18, KeyEvent.VK_I));
+		menu2.add(new MyMenuItem("Decrease indentation", "INDENT-", 19, KeyEvent.VK_U));
 		//
 		menu3.add(new MyMenuItem("Enable/disable editing", "EDIT16", 17));
 		menu3.add(new MyMenuItem("Enable/disable always on top", "ONTOP16", 21));
 		menu3.add(new MyMenuItem("Undo record dialog", null, 52));
+		menu3.add(new MyMenuItem("Clipboard listener", null, 29));
+		menu3.add(new JSeparator());
+		menu3.add(new MyMenuItem("Goto line", "GOTOLINE16", 47));
 		//
 		menu4.add(new MyMenuItem("Options", "OPTIONS16", 39));
 		menu4.add(new JSeparator());
 		menu4.add(new MyMenuItem("Compile code", "COMPILE16", 53));
-		menu4.add(new MyMenuItem("Word count", null, 22).setAccelerator(KeyEvent.VK_F2, ActionEvent.CTRL_MASK));
-		menu4.add(new MyMenuItem("Character count", null, 44).setAccelerator(KeyEvent.VK_F3, ActionEvent.CTRL_MASK));
+		menu4.add(new MyMenuItem("Word count", null, 22, KeyEvent.VK_F2));
+		menu4.add(new MyMenuItem("Character count", null, 44, KeyEvent.VK_F3));
 		menu4.add(new MyMenuItem("Delete blank lines", null, 35));
 		menu4.add(new MyMenuItem("Reverse text", null, 50));
 		//
@@ -99,7 +117,7 @@ public class ColoredMenuBar extends JMenuBar
 		menu4_2.add(new MyMenuItem("Unescape string", null, 55));
 		//
 		menu4.add(new JSeparator());
-		menu4.add(new MyMenuItem("Search and replace", "SEARCH16", 24).setAccelerator(KeyEvent.VK_F, ActionEvent.CTRL_MASK));
+		menu4.add(new MyMenuItem("Search and replace", "SEARCH16", 24, KeyEvent.VK_F));
 		menu4.add(new MyMenuItem("Show JColorChooser", "COLORCHOOSER16", 40));
 		menu4.add(new MyMenuItem("Base converter (2-36)", "BASE16", 41));
 		menu4.add(new MyMenuItem("Regex matcher", "REGEX16", 23));
@@ -114,7 +132,8 @@ public class ColoredMenuBar extends JMenuBar
 		menu5.add(new MyMenuItem("Insert unicode character", null, 45));
 		menu5.add(new MyMenuItem("Insert unicode value", null, 46));
 		//
-		menu6.add(new MyMenuItem("About RefluxEdit", "APPICON16", 16).setAccelerator(KeyEvent.VK_F1, ActionEvent.CTRL_MASK));
+		menu6.add(new MyMenuItem("About RefluxEdit", "APPICON16", 16, KeyEvent.VK_F1));
+		menu6.add(new MyMenuItem("About MPL 2.0", null, 58));
 		menu6.add(new MyMenuItem("Visit SourceForge page", "VISIT16", 48));
 	}
 	

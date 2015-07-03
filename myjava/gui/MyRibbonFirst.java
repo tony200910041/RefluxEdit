@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.gui;
 
 import java.awt.*;
@@ -50,7 +55,7 @@ public class MyRibbonFirst extends MyPureButton implements MouseListener, Resour
 		/*
 		 * buttons:
 		 */
-		menuDialog.add(new MyItemButton("New File", "NEW80", 1));
+		menuDialog.add(new MyItemButton("New File", "NEW80", -3));
 		menuDialog.add(new MyItemButton("Open File", "OPEN80", -2));
 		menuDialog.add(new MyItemButton("Save As", "SAVEAS80", 4));
 		menuDialog.add(new MyItemButton("Save", "SAVE80", 5));
@@ -72,7 +77,7 @@ public class MyRibbonFirst extends MyPureButton implements MouseListener, Resour
 		public MyItemButton(String item, String icon, int x)
 		{
 			super(item);
-			this.x = x; //x=-10: cancel, x=-2: open dialog
+			this.x = x; //x=-10: cancel, x=-2: open dialog, x=-3: new dialog
 			if (icon != null)
 			{
 				this.setVerticalTextPosition(SwingConstants.BOTTOM);
@@ -105,6 +110,10 @@ public class MyRibbonFirst extends MyPureButton implements MouseListener, Resour
 			if (x == -2)
 			{
 				LargeOpenDialog.showOpenDialog();
+			}
+			if (x == -3)
+			{
+				LargeNewDialog.showNewDialog();
 			}
 			else
 			{

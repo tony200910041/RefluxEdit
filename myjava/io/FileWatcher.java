@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.io;
 
 import java.io.*;
@@ -15,8 +20,12 @@ public abstract class FileWatcher implements Runnable, AutoCloseable
 	 * enabled
 	 */
 	private boolean isEnabled = true;
-	/*
-	 * constructor
+	/**
+	 * Creates a new FileWatcher which listens to changes of the given file.
+	 * 
+	 * @param  file  a file whose changes have to be listened
+	 * @see  WatchService
+	 * @see  WatchKey
 	 */
 	public FileWatcher(File file)
 	{
@@ -37,6 +46,12 @@ public abstract class FileWatcher implements Runnable, AutoCloseable
 		thread.start();
 	}
 	
+	/**
+	 * Returns a WatchKey object representing the registration of the file specified in this watcher.
+	 * Note that an InternalError is thrown when the registration fails.
+	 * 
+	 * @return  a WatchKey representing the registration of the file specified in the watcher.
+	 */
 	protected WatchKey getKey()
 	{
 		try
@@ -50,11 +65,20 @@ public abstract class FileWatcher implements Runnable, AutoCloseable
 		}
 	}
 	
+	/**
+	 * Enables or disables the watcher. The watcher will not generate WatchEvents if it is disabled.
+	 * 
+	 * @param  If true, the watcher is enabled. If false, the watcher is disabled.
+	 */
 	public void setEnabled(boolean isEnabled)
 	{
 		this.isEnabled = isEnabled;
 	}
 	
+	/**
+	 * Loop continuously in the background to detect file changes.
+	 * This method should not be called directly.
+	 */
 	@Override
 	public void run()
 	{
@@ -105,12 +129,22 @@ public abstract class FileWatcher implements Runnable, AutoCloseable
 		}
 	}
 	
+	/**
+	 * Closes the watcher. Upon return this watch becomes invalid.
+	 * This method has no effect if this watcher has already been closed.
+	 */
 	@Override
 	public void close()
 	{
 		this.key.cancel();
 	}
 	
+	/**
+	 * Determines whether this watcher is valid.
+	 * A FileWatcher is valid upon creation and remains until it is closed. 
+	 * 
+	 * @return  true if this watcher is valid; false if not
+	 */
 	public boolean isValid()
 	{
 		return this.key.isValid();

@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.gui;
 
 import java.awt.*;
@@ -30,7 +35,14 @@ public class MyWhiteFileChooser extends JFileChooser implements Resources
 	{
 		MyWhiteFileChooser.decorate(this);
 		this.setBackground(Color.WHITE);
-		this.setPreferredSize(new Dimension(506,405));
+		if (isWindows)
+		{
+			this.setPreferredSize(new Dimension(561,388));
+		}
+		else
+		{
+			this.setPreferredSize(new Dimension(506,405));
+		}
 	}
 	
 	private static void decorate(Container container)
@@ -40,7 +52,7 @@ public class MyWhiteFileChooser extends JFileChooser implements Resources
 			if (!(c instanceof JPanel))
 			{
 				c.setFont(f13);
-				c.setBackground(Color.WHITE);
+				if (!isWindows) c.setBackground(Color.WHITE);
 				c.setForeground(Color.BLACK);
 			}
 			if (c instanceof Container) decorate((Container)c);

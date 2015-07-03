@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.gui;
 
 import java.awt.*;
@@ -19,7 +24,10 @@ public class MyTextField extends JTextField implements MouseListener, Resources,
 		/*
 		 * not using bord1 in Resources for Windows Look and Feel
 		 */
-		this.setBorder(bord1);
+		if (!LAF.contains("windows"))
+		{
+			this.setBorder(bord1);
+		}
 		this.setDragEnabled(true);
 		this.addMouseListener(this);
 		this.setPreferredSize(new Dimension(this.getSize().width,23));

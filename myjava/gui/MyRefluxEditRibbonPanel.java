@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.gui;
 
 import java.awt.*;
@@ -49,9 +54,12 @@ public class MyRefluxEditRibbonPanel extends MyRibbonPanel
 		tab2_3.add(new MyRibbonButton("Indent\u2193", "INDENT-", "<html><font size=\"4\"><b>Decrease indentation&nbsp;&nbsp;&nbsp;Ctrl+U</b></font><br>Decrease the indentation of the selected text by 1</html>", true, 19));
 		tab2.add(tab2_3);
 		// View
-		tab3.add(new MyRibbonButton("<html>Editing/<br>viewing</html>", "EDIT32", "<html><font size=\"4\"><b>Enable/disable editing</b></font><br>Click here to disable/re-enable editing.<br></html>", false, 17));
-		tab3.add(new MyRibbonButton("<html>On top</html>", "ONTOP", "<html><font size=\"4\"><b>Enable/disable always on top</b></font><br>Click here to enable/disable RefluxEdit always staying on top.</html>", false, 21));
+		tab3.add(new MyRibbonButton("<html><center>Editing/<br>viewing</center></html>", "EDIT32", "<html><font size=\"4\"><b>Enable/disable editing</b></font><br>Click here to disable/re-enable editing.<br></html>", false, 17));
+		tab3.add(new MyRibbonButton("<html><center>Always<br>On top</center></html>", "ONTOP", "<html><font size=\"4\"><b>Enable/disable always on top</b></font><br>Click here to enable/disable RefluxEdit always staying on top.</html>", false, 21));
 		tab3.add(new MyRibbonButton("<html><center><font color=\"green\">Undo</font><br>dialog</center></htnml>", "UNDODIALOG32", "<html><font size=\"4\"><b>Undo record dialog</b></font><br>Show the undo record dialog.</html>", false, 52));
+		tab3.add(new MyRibbonButton("<html><center>Clipboard<br>listener</center></html>", "PASTE32", "<html><font size=\"4\"><b>Clipboard listener</b></font><br>Show the clipboard listener dialog, which monitors clipboard changes.</html>", false, 29));
+		tab3.add(createSeparator());
+		tab3.add(new MyRibbonButton("<html><center>Goto<br>line</center></html>", "GOTOLINE32", "<html><font size=\"4\"><b>Goto line</b></font><br>Goto specific line immediately.</html>", false, 47));
 		MyPanel panel1 = new MyPanel(MyPanel.CENTER);
 		panel1.setPreferredSize(new Dimension(1,85));
 		tab3.add(panel1);
@@ -104,7 +112,9 @@ public class MyRefluxEditRibbonPanel extends MyRibbonPanel
 		panel2.setPreferredSize(new Dimension(5,85));
 		tab6.add(panel2);
 		tab6.add(new MyRibbonButton("<html><center>About<br>RefluxEdit</center></html>", "APPICON32", "<html><font size=\"4\"><b>About RefluxEdit&nbsp;&nbsp;&nbsp;Ctrl+F1</b></font><br>RefluxEdit is a lightweight plain text editor written in Java by tony200910041.<br>SourceForge page: http://refluxedit.sourceforge.net</html>", false, 16));
+		tab6.add(new MyRibbonButton("<html><center>About<br>MPL 2.0</center></html>", "LICENSE32", "<html><font size=\"4\"><b>About Mozilla Public License 2.0</b></font><br>RefluxEdit is released under MPL 2.0. You are welcome to learn more about this license.</html>", false, 58));
 		tab6.add(new MyRibbonButton("<html><center>Visit<br>SourceForge</center></html>", "VISIT32", "<html><font size=\"4\"><b>Visit SourceForge homepage</b></font><br>http://refluxedit.sourceforge.net/</html>", false, 48));
+		tab6.add(createSeparator());
 		tab6.add(new MyRibbonButton("<html>Options</html>", "OPTIONS32", "<html><font size=\"4\"><b>Options</b></font><br>Miscellaneous options</html>", false, 39));
 		//"<html><font size=\"4\"><b></b></font><br></html>"
 	}

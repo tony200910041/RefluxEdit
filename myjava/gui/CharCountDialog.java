@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.gui;
 
 import java.awt.*;
@@ -114,7 +119,7 @@ public class CharCountDialog extends JDialog implements Resources
 		{
 			JLabel label = (JLabel)(super.getTableCellRendererComponent(table,value,isSelected,hasFocus,row,column));
 			String s = value.toString();
-			if (isInteger(s))
+			if (isInteger(s)&&(column != 0))
 			{
 				label.setText(s + " (" + f3dp.format(Integer.parseInt(s)*100.0/CharCountDialog.this.text.length()) + "%)");
 			}

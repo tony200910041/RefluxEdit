@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.gui;
 
 /**
@@ -8,7 +13,7 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.event.*;
-import java.util.Vector;
+import java.util.*;
 import myjava.gui.common.*;
 
 public class MyFontChooser extends JPanel implements ActionListener, ChangeListener, Resources
@@ -26,6 +31,9 @@ public class MyFontChooser extends JPanel implements ActionListener, ChangeListe
 		this.selectedFont = f;
 		this.setBackground(Color.WHITE);
 		this.setLayout(new FlowLayout());
+		/*
+		 * setup JComboBox
+		 */
 		for (Font font: usableFonts)
 		{
 			comboBox.addItem(font.getFontName());
@@ -35,16 +43,20 @@ public class MyFontChooser extends JPanel implements ActionListener, ChangeListe
 		comboBox.setBackground(Color.WHITE);
 		comboBox.addActionListener(this);
 		this.add(comboBox);
-		
+		/*
+		 * setup JSpinner
+		 */
 		int size = f.getSize();
 		if ((size>=1)||(size<=200))
 		{
 			spinner.setValue(size);
 		}
-		spinner.setFont(f13);
+		spinner.setFont(new Font("Microsoft Jhenghei", Font.PLAIN, 14));
 		spinner.addChangeListener(this);
 		this.add(spinner);
-		
+		/*
+		 * setup JRadioButton
+		 */
 		switch (f.getStyle())
 		{
 			case 0: //plain
@@ -71,7 +83,7 @@ public class MyFontChooser extends JPanel implements ActionListener, ChangeListe
 		{
 			super(str, isSelected);
 			this.setFont(f13);
-			this.setBackground(Color.WHITE);
+			this.setOpaque(false);
 			this.setFocusable(false);
 			this.x = x;
 			this.addActionListener(this);

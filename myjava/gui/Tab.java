@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.gui;
 
 import java.awt.*;
@@ -11,6 +16,7 @@ import java.nio.file.*;
 import java.nio.charset.*;
 import java.util.*;
 import java.text.*;
+import java.net.*;
 import exec.*;
 import myjava.io.*;
 import myjava.gui.common.*;
@@ -39,6 +45,7 @@ public class Tab extends JPanel implements DocumentListener, Resources
 	private File file;
 	private FileWatcher watcher;
 	private BorderLayout layout = new BorderLayout();
+	private boolean isNew = true;
 	/*
 	 * for adding to JTabbedPane
 	 */
@@ -69,13 +76,13 @@ public class Tab extends JPanel implements DocumentListener, Resources
 		this.bottomP2.add(fileLabel);
 		this.add(bottomPanel, BorderLayout.PAGE_END);
 		//
-		this.textArea.getDocument().addDocumentListener(this);
 		this.update();
+		this.textArea.getDocument().addDocumentListener(this);
 		//
 		tabPanel.add(label);
 		tabPanel.setOpaque(false);
 		tabPanel.setFocusable(false);
-		tabPanel.addMouseListener(new MouseAdapter()
+		MouseAdapter mouseListener = new MouseAdapter()
 		{
 			@Override
 			public void mouseReleased(MouseEvent ev)
@@ -98,13 +105,23 @@ public class Tab extends JPanel implements DocumentListener, Resources
 					}
 				}
 			}
-		});
+			
+			@Override
+			public void mouseEntered(MouseEvent ev)
+			{
+				JTabbedPane tPane = MainPanel.getInstance().getTabbedPane();
+				MouseEvent me = SwingUtilities.convertMouseEvent(tabPanel,ev,tPane);
+				tPane.getMouseListeners()[0].mouseEntered(me);
+			}
+		};
+		tabPanel.addMouseListener(mouseListener);
+		tabPanel.addMouseMotionListener(mouseListener);
 		//
-		popup.add(new MyPopupMenuItem("New tab",-14));
-		popup.add(new MyPopupMenuItem("Save as",-12));
+		popup.add(new MyPopupMenuItem("New tab","NEW",-14));
+		popup.add(new MyPopupMenuItem("Save as","SAVE",-12));
 		popup.add(new MyPopupMenuItem("Save",-13));
 		popup.addSeparator();
-		popup.add(new MyPopupMenuItem("Close",-11));
+		popup.add(new MyPopupMenuItem("Close","CLOSE",-11));
 	}
 	
 	public Tab()
@@ -120,11 +137,14 @@ public class Tab extends JPanel implements DocumentListener, Resources
 		 */
 		for (Tab tab: MainPanel.getAllTab())
 		{
-			if (tab.file == null)
+			if (tab.isNew)
 			{
-				if (tab.textArea.getText().isEmpty())
+				if (tab.file == null)
 				{
-					return tab;
+					if (tab.textArea.getText().isEmpty())
+					{
+						return tab;
+					}
 				}
 			}
 		}
@@ -165,33 +185,40 @@ public class Tab extends JPanel implements DocumentListener, Resources
 		if (countWords)
 		{
 			bottomPanel.add(bottomP1, BorderLayout.LINE_START);
+			this.updateCount();
 		}
 		// textArea
 		this.textArea.update();
+		this.revalidate();
+		this.repaint();
 	}
 	
 	@Override
 	public void insertUpdate(DocumentEvent ev)
 	{
+		this.isNew = false;
+		this.textArea.setSaved(false);
 		this.updateCount();
 	}
 	
 	@Override
 	public void changedUpdate(DocumentEvent ev)
 	{
+		this.isNew = false;
+		this.textArea.setSaved(false);
 		this.updateCount();
 	}
 	
 	@Override
 	public void removeUpdate(DocumentEvent ev)
 	{
+		this.isNew = false;
+		this.textArea.setSaved(false);
 		this.updateCount();
 	}
 	
 	public void updateCount()
 	{
-		//isSaved = false
-		this.textArea.setSaved(false);
 		//word count
 		if (this.countWords&&this.enableCountWords)
 		{		
@@ -270,7 +297,7 @@ public class Tab extends JPanel implements DocumentListener, Resources
 			 * default1 mode: use PrintWriter
 			 */
 			dest.delete();
-			PrintWriter out = new PrintWriter(dest);
+			PrintWriter out = new PrintWriter(new FileOutputStream(dest),true);
 			String[] strs = this.textArea.getText().split("\n");
 			for (String str: strs)
 			{
@@ -284,9 +311,10 @@ public class Tab extends JPanel implements DocumentListener, Resources
 			 * default2 mode: use FileOutputStream
 			 */
 			byte[] bytes = this.textArea.getText().replace("\n", lineSeparator).getBytes();
-			FileOutputStream out = new FileOutputStream(dest);
-			out.write(bytes);
-			out.close();
+			BufferedOutputStream output = new BufferedOutputStream(new FileOutputStream(dest));
+			output.write(bytes,0,bytes.length);
+			output.flush();
+			output.close();
 		}
 		else
 		{
@@ -294,9 +322,10 @@ public class Tab extends JPanel implements DocumentListener, Resources
 			 * use specified encoding
 			 */
 			byte[] bytes = this.textArea.getText().replace("\n", lineSeparator).getBytes(encoding);
-			FileOutputStream out = new FileOutputStream(dest);
-			out.write(bytes);
-			out.close();
+			BufferedOutputStream output = new BufferedOutputStream(new FileOutputStream(dest));
+			output.write(bytes,0,bytes.length);
+			output.flush();
+			output.close();
 			JOptionPane.showMessageDialog(SwingUtilities.windowForComponent(this), "You are using " + encoding + " encoding (beta).\nPlease check if the this.file is saved correctly.", "Saved", JOptionPane.WARNING_MESSAGE);
 		}
 		/*
@@ -501,6 +530,30 @@ public class Tab extends JPanel implements DocumentListener, Resources
 	
 	public void open(File src)
 	{
+		if (src.exists()&&(src.isFile()))
+		{
+			this.open0(src);
+		}
+		else
+		{
+			error("Cannot read file " + src.getPath() + "!");
+		}
+	}
+	
+	public void openAndWait(File src) throws Exception
+	{
+		if (src.exists()&&(src.isFile()))
+		{
+			this.open0(src).get();
+		}
+		else
+		{
+			error("Cannot read file " + src.getPath() + "!");
+		}
+	}
+	
+	private SwingWorker<?,?> open0(File src)
+	{
 		MainPanel.setSelectedComponent(Tab.this);
 		Window parent = SwingUtilities.windowForComponent(Tab.this);
 		if (watcher != null)
@@ -517,6 +570,10 @@ public class Tab extends JPanel implements DocumentListener, Resources
 		 */
 		this.getTextArea().setAutoBackup(false);
 		this.getTextArea().setOpening(true);
+		/*
+		 * cannot be new tab
+		 */
+		this.isNew = false;
 		/*
 		 * show "loading"
 		 */
@@ -547,9 +604,22 @@ public class Tab extends JPanel implements DocumentListener, Resources
 			}
 		});
 		worker.execute();
+		return worker;
 	}
 	
-	public void open(final File src, final String charset)
+	public void open(File src, String charset)
+	{
+		if (src.exists()&&(src.isFile()))
+		{
+			this.open0(src,charset);
+		}
+		else
+		{
+			error("Cannot read file " + src.getPath() + "!");
+		}
+	}
+	
+	private Thread open0(final File src, final String charset)
 	{
 		MainPanel.setSelectedComponent(Tab.this);
 		Window parent = SwingUtilities.windowForComponent(Tab.this);
@@ -564,6 +634,10 @@ public class Tab extends JPanel implements DocumentListener, Resources
 		this.enableCountWords = false;
 		this.getTextArea().setAutoBackup(false);
 		this.getTextArea().setOpening(true);
+		/*
+		 * cannot be new tab
+		 */
+		this.isNew = false;
 		/*
 		 * show "loading"
 		 */
@@ -637,16 +711,21 @@ public class Tab extends JPanel implements DocumentListener, Resources
 			}
 		});
 		thread.start();
-		/*try
+		return thread;
+	}
+	
+	public void open(URL url) throws IOException
+	{
+		this.getTextArea().setOpening(true);
+		this.isNew = false;
+		BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+		String text;
+		while ((text=reader.readLine()) != null)
 		{
-			/*
-			 * wait until thread ends
-			 
-			thread.join();
+			textArea.append(text+"\n");
 		}
-		catch (InterruptedException ex)
-		{
-		}*/
+		textArea.setCaretPosition(0);
+		this.getTextArea().setOpening(false);
 	}
 		
 	public String getEncoding(File f)
@@ -838,6 +917,16 @@ public class Tab extends JPanel implements DocumentListener, Resources
 		return this.textArea;
 	}
 	
+	public JLayer<JTextArea> getLayer()
+	{
+		return this.layer1;
+	}
+	
+	public MyUmbrellaLayerUI getLayerUI()
+	{
+		return this.layerUI;
+	}
+	
 	public UndoDialog getUndoDialog()
 	{
 		return this.undoDialog;
@@ -974,6 +1063,19 @@ public class Tab extends JPanel implements DocumentListener, Resources
 			this.x = x;
 		}
 		
+		MyPopupMenuItem(String text, String icon, int x)
+		{
+			this(text,x);
+			try
+			{
+				this.setIcon(icon(icon));
+			}
+			catch (Exception ex)
+			{
+				//fail sliently
+			}
+		}
+		
 		@Override
 		public void actionPerformed(ActionEvent ev)
 		{
@@ -987,30 +1089,34 @@ public class Tab extends JPanel implements DocumentListener, Resources
 					}
 					else
 					{
-						int option = JOptionPane.showConfirmDialog(SwingUtilities.windowForComponent(Tab.this),"The file hasn't been saved yet.\nWould you like to save it?","Confirm close",JOptionPane.YES_NO_OPTION);
-						if (option == JOptionPane.NO_OPTION)
+						int option = JOptionPane.showConfirmDialog(SwingUtilities.windowForComponent(Tab.this),"The file hasn't been saved yet.\nWould you like to save it?","Confirm close",JOptionPane.YES_NO_CANCEL_OPTION);
+						if (option == JOptionPane.YES_OPTION)
+						{
+							File dest = Tab.this.file;
+							if (dest == null)
+							{
+								dest = FileChooser.showPreferredFileDialog((Frame)SwingUtilities.windowForComponent(Tab.this),FileChooser.SAVE,new String[0]);
+							}
+							if (dest != null)
+							{
+								try
+								{
+									Tab.this.save(Tab.this.file,false);
+									MainPanel.close(Tab.this);
+								}
+								catch (Exception ex)
+								{
+									exception(ex);
+									return;
+								}
+							}
+						}
+						else if (option == JOptionPane.NO_OPTION)
 						{
 							MainPanel.close(Tab.this);
 							break;
 						}
-						File dest = Tab.this.file;
-						if (dest == null)
-						{
-							dest = FileChooser.showPreferredFileDialog((Frame)SwingUtilities.windowForComponent(Tab.this),FileChooser.SAVE,new String[0]);
-						}
-						if (dest != null)
-						{
-							try
-							{
-								Tab.this.save(Tab.this.file,false);
-								MainPanel.close(Tab.this);
-							}
-							catch (Exception ex)
-							{
-								exception(ex);
-								return;
-							}
-						}
+						else break;
 					}
 				}
 				break;

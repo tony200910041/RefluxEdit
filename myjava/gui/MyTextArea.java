@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.gui;
 
 import java.awt.*;
@@ -11,7 +16,7 @@ import myjava.gui.*;
 import myjava.util.*;
 import static exec.SourceManager.*;
 
-public class MyTextArea extends JTextArea
+public class MyTextArea extends JTextArea implements MouseListener
 {
 	/*
 	 * static properties, apply to all MyTextArea
@@ -98,25 +103,25 @@ public class MyTextArea extends JTextArea
 		this.undoManager = new UndoManager(this);
 		//general
 		this.setDragEnabled(true);
-		this.setText("");
 		this.setSelectedTextColor(Color.BLACK);
 		this.update();
 		//
 		this.defaultDropTarget = this.getDropTarget();
-		TextAreaListener taListener = new TextAreaListener();
-		this.addMouseListener(taListener);
-		this.addKeyListener(taListener);
+		this.addMouseListener(this);
+		this.setupInputMap();
 		//build popup
-		this.popup.add(new MyMenuItem("Cut", "CUT", 11));
-		this.popup.add(new MyMenuItem("Copy", "COPY", 12));
-		this.popup.add(new MyMenuItem("Paste", "PASTE", 13));
-		this.popup.add(new MyMenuItem("Delete", "DELETE16", 15));
+		this.popup.add(new MyMenuItem("Cut", "CUT", 11, KeyEvent.VK_X));
+		this.popup.add(new MyMenuItem("Copy", "COPY", 12, KeyEvent.VK_C));
+		this.popup.add(new MyMenuItem("Paste", "PASTE", 13, KeyEvent.VK_V));
+		this.popup.add(new MyMenuItem("Delete", "DELETE16", 15, KeyEvent.VK_DELETE, 0));
 		this.popup.add(new JSeparator());
-		this.popup.add(new MyMenuItem("Select all", "SELECT", 9));
+		this.popup.add(new MyMenuItem("Select all", "SELECT", 9, KeyEvent.VK_A));
 		this.popup.add(new MyMenuItem("Select all and copy", null, 10));
 		this.popup.add(new JSeparator());
-		this.popup.add(new MyMenuItem("Increase indentation", "INDENT+", 18).setAccelerator(KeyEvent.VK_I, ActionEvent.CTRL_MASK));
-		this.popup.add(new MyMenuItem("Decrease indentation", "INDENT-", 19).setAccelerator(KeyEvent.VK_U, ActionEvent.CTRL_MASK));
+		this.popup.add(new MyMenuItem("Increase indentation", "INDENT+", 18, KeyEvent.VK_I));
+		this.popup.add(new MyMenuItem("Decrease indentation", "INDENT-", 19, KeyEvent.VK_U));
+		this.popup.add(new JSeparator());
+		this.popup.add(new MyMenuItem("Word count", null, 22, KeyEvent.VK_F2));
 	}
 	
 	public static void setGlobalProperties(boolean isEditable, boolean isLineWrap, boolean isWrapStyleWord, int tabSize, Color selectionColor, Font font, boolean autoIndent)
@@ -174,123 +179,40 @@ public class MyTextArea extends JTextArea
 		return this.isOpening;
 	}
 	
-	class TextAreaListener implements KeyListener, MouseListener
+	private void setupInputMap()
 	{
-		TextAreaListener()
-		{
-			super();
-		}
-		
-		@Override
-		public void keyTyped(KeyEvent ev)
-		{
-			if (!ev.isControlDown())
-			{
-				undoManager.clearRedoList();
-			}
-		}
-		
-		@Override
-		public void keyPressed(KeyEvent ev)
-		{
-			//handle shortcut			
-			if (ev.isControlDown())
-			{				
-				MyMenuItem menuItem = null;
-				int code = ev.getKeyCode();
-				if (code == KeyEvent.VK_Z)
-				{
-					menuItem = new MyMenuItem(null, null, 7);
-				}
-				else if (code == KeyEvent.VK_Y)
-				{
-					menuItem = new MyMenuItem(null, null, 8);
-				}
-				else if (code == KeyEvent.VK_S)
-				{
-					menuItem = new MyMenuItem(null, null, 4);
-				}
-				else if (code == KeyEvent.VK_F1)
-				{
-					menuItem = new MyMenuItem(null, null, 16);
-				}
-				else if (code == KeyEvent.VK_F)
-				{
-					menuItem = new MyMenuItem(null, null, 24);
-				}
-				else if (code == KeyEvent.VK_O)
-				{
-					menuItem = new MyMenuItem(null, null, 2);
-				}
-				else if (code == KeyEvent.VK_F2)
-				{
-					menuItem = new MyMenuItem(null, null, 22);
-				}
-				else if (code == KeyEvent.VK_F3)
-				{
-					menuItem = new MyMenuItem(null, null, 44);
-				}
-				else if (code == KeyEvent.VK_P)
-				{
-					menuItem = new MyMenuItem(null, null, 38);
-				}
-				else if (code == KeyEvent.VK_I)
-				{
-					menuItem = new MyMenuItem(null, null, 18);
-				}
-				else if (code == KeyEvent.VK_U)
-				{
-					menuItem = new MyMenuItem(null, null, 19);
-				}
-				else if (code == KeyEvent.VK_E)
-				{
-					menuItem = new MyMenuItem(null, null, 43);
-				}
-				try
-				{
-					menuItem.dispatchEvent(new MouseEvent(menuItem, MouseEvent.MOUSE_RELEASED, 1, MouseEvent.NOBUTTON, 0, 0, 1, false));
-				}
-				catch (Exception ex)
-				{
-				}
-			}
-		}
-		
-		@Override
-		public void keyReleased(KeyEvent ev)
-		{
-		}
-		
-		@Override
-		public void mouseReleased(MouseEvent ev)
-		{
-			if (ev.isPopupTrigger())
-			{
-				popup.show(MyTextArea.this, ev.getX(), ev.getY());
-			}
-		}
-		
-		@Override
-		public void mousePressed(MouseEvent ev)
-		{
-			//reset MyTextArea.this drop target: remove receiving file info outside
-			MyTextArea.this.setDropTarget(defaultDropTarget);
-		}
-		
-		@Override
-		public void mouseClicked(MouseEvent ev)
-		{
-		}
-		
-		@Override
-		public void mouseEntered(MouseEvent ev)
-		{
-		}
-		
-		@Override
-		public void mouseExited(MouseEvent ev)
-		{
-		}
+		InputMap inputMap = this.getInputMap();
+		ActionMap actionMap = this.getActionMap();
+		/*
+		 * InputMap
+		 */
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK), "export");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.CTRL_MASK), "search");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, ActionEvent.CTRL_MASK), "about");		
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, ActionEvent.CTRL_MASK), "wordcount");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F3, ActionEvent.CTRL_MASK), "charcount");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.CTRL_MASK), "indent+");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK), "open");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK), "print");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK), "saveas");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_U, ActionEvent.CTRL_MASK), "indent-");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, ActionEvent.CTRL_MASK), "redo");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK), "undo");
+		/*
+		 * ActionMap
+		 */
+		actionMap.put("export", new MyListener(43));
+		actionMap.put("search", new MyListener(24));
+		actionMap.put("about", new MyListener(16));
+		actionMap.put("wordcount", new MyListener(22));
+		actionMap.put("charcount", new MyListener(44));
+		actionMap.put("indent+", new MyListener(18));
+		actionMap.put("open", new MyListener(2));
+		actionMap.put("print", new MyListener(38));
+		actionMap.put("saveas", new MyListener(4));
+		actionMap.put("indent-", new MyListener(19));
+		actionMap.put("redo", new MyListener(8));
+		actionMap.put("undo", new MyListener(7));
 	}
 	
 	public UndoManager getUndoManager()
@@ -311,5 +233,36 @@ public class MyTextArea extends JTextArea
 	public MyIndentFilter getFilter()
 	{
 		return this.indentFilter;
+	}
+	
+	@Override
+	public void mouseReleased(MouseEvent ev)
+	{
+		if (ev.isPopupTrigger())
+		{
+			popup.show(MyTextArea.this, ev.getX(), ev.getY());
+		}
+	}
+	
+	@Override
+	public void mousePressed(MouseEvent ev)
+	{
+		//reset MyTextArea.this drop target: remove receiving file info outside
+		MyTextArea.this.setDropTarget(defaultDropTarget);
+	}
+	
+	@Override
+	public void mouseClicked(MouseEvent ev)
+	{
+	}
+	
+	@Override
+	public void mouseEntered(MouseEvent ev)
+	{
+	}
+	
+	@Override
+	public void mouseExited(MouseEvent ev)
+	{
 	}
 }

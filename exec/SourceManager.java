@@ -1,9 +1,15 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package exec;
 
 import java.awt.*;
 import javax.swing.*;
 import java.io.*;
 import java.util.*;
+import java.net.*;
 
 public final class SourceManager
 {
@@ -69,6 +75,11 @@ public final class SourceManager
 				setConfig("Caret.save", "true");
 				setConfig("CheckUpdate", "true");
 				setConfig("ConfirmDrag", "true");
+				setConfig("useTray", "true");
+				setConfig("CloseToTray", "false");
+				setConfig("showHint", "false");
+				setConfig("FirstTime.welcome", "true");
+				setConfig("FirstTime.clipboardListener", "true");
 				saveConfig();
 			}
 			catch (IOException ex)
@@ -81,11 +92,16 @@ public final class SourceManager
 		}
 	}
 	
+	public static URL get(String url)
+	{
+		return SourceManager.class.getResource(url);
+	}
+	
 	public static ImageIcon icon(String name)
 	{
 		try
 		{
-			return new ImageIcon(SourceManager.class.getResource("/SRC/" + name + ".PNG"));
+			return new ImageIcon(get("/SRC/" + name + ".PNG"));
 		}
 		catch (Exception ex)
 		{

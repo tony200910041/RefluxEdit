@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.gui;
 
 import java.awt.*;
@@ -5,9 +10,17 @@ import java.awt.geom.*;
 import javax.swing.*;
 import javax.swing.plaf.*;
 import exec.*;
+import myjava.gui.common.*;
 
 public class MyUmbrellaLayerUI extends LayerUI<JTextArea>
 {
+	/*
+	 * static member
+	 * affect all instances
+	 */
+	private static final Color TRANSPARENT_GRAY = new Color(0,0,0,150);
+	private static final Color TRANSPARENT_YELLOW = new Color(255,254,208,150);
+	private static final Font TEXT_FONT = new Font(Resources.f13.getName(),Font.PLAIN,65);
 	private static boolean paintUmbrella;
 	private static Color color;
 	static
@@ -22,7 +35,10 @@ public class MyUmbrellaLayerUI extends LayerUI<JTextArea>
 			color = new Color(251,231,51,60);
 		}
 	}
-	
+	/*
+	 * instance fields
+	 */
+	private boolean drop = false;
 	public MyUmbrellaLayerUI()
 	{
 		super();
@@ -48,16 +64,44 @@ public class MyUmbrellaLayerUI extends LayerUI<JTextArea>
 		return color;
 	}
 	
+	public void setDrop(boolean drop)
+	{
+		this.drop = drop;
+	}
+	
 	@Override
 	public void paint(Graphics g, JComponent c)
 	{
 		super.paint(g,c);
-		if (this.paintUmbrella)
+		Graphics2D g2d = (Graphics2D)g;
+		Rectangle rect = c.getVisibleRect();
+		int width = rect.width;
+		int height = rect.height;
+		if (this.drop)
+		{			
+			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+			g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+			g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+			g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+			g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+			g2d.setColor(TRANSPARENT_GRAY);
+			g2d.fillRect(rect.x,rect.y,width,height);
+			/*
+			 * draw the word "Drag"
+			 */
+			String text = "Drop here";
+			g2d.setColor(TRANSPARENT_YELLOW);
+			g2d.setFont(TEXT_FONT);
+			FontMetrics metrics = g2d.getFontMetrics();
+			int stringWidth = metrics.stringWidth(text);
+			int stringHeight = metrics.getAscent()-metrics.getDescent();
+			/*
+			 * now calculate location
+			 */
+			g2d.drawString(text,rect.x+(width-stringWidth)/2,rect.y+(height+stringHeight)/2);
+		}
+		else if (this.paintUmbrella)
 		{
-			Graphics2D g2d = (Graphics2D)g;
-			Rectangle rect = c.getVisibleRect();
-			int width = rect.width;
-			int height = rect.height;
 			int x = rect.x;
 			int y = rect.y;
 			int radius = (int)((Math.min(width,height)-20)/2.43);

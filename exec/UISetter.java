@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package exec;
 
 import java.awt.*;
@@ -11,27 +16,28 @@ public final class UISetter implements Resources
 	 */
 	public static void initialize()
 	{
-		UIManager.put("OptionPane.messageFont", f13);
-		UIManager.put("OptionPane.buttonFont", f13);
-		UIManager.put("OptionPane.okButtonText", "OK");
-		UIManager.put("OptionPane.yesButtonText", "YES");
-		UIManager.put("OptionPane.noButtonText", "NO");
-		UIManager.put("ComboBox.background", Color.WHITE);
-		UIManager.put("MenuItem.acceleratorForeground", new Color(34,131,132));
-		UIManager.put("PopupMenu.border", bord1);
-		UIManager.put("Separator.foreground", Color.BLACK);
-		UIManager.put("ComboBox.font", f13);
-		UIManager.put("TextField.font", f13);
-		UIManager.put("Label.font", f13);
-		UIManager.put("TabbedPane.font", f13);
-		UIManager.put("RadioButton.font", f13);
-		UIManager.put("CheckBox.font", f13);
-		UIManager.put("Button.font", f13);
-		UIManager.put("TitledBorder.font", f13);
-		UIManager.put("Spinner.font", f13);
-		UIManager.put("PopupMenu.background", Color.WHITE);
-		UIManager.put("ToolTip.border", bord1);
-		UIManager.put("ToolTip.background", Color.WHITE);
+		UIDefaults defaults = UIManager.getLookAndFeelDefaults();
+		defaults.put("OptionPane.messageFont", f13);
+		defaults.put("OptionPane.buttonFont", f13);
+		defaults.put("OptionPane.okButtonText", "OK");
+		defaults.put("OptionPane.yesButtonText", "YES");
+		defaults.put("OptionPane.noButtonText", "NO");
+		defaults.put("ComboBox.background", Color.WHITE);
+		defaults.put("MenuItem.acceleratorForeground", new Color(34,131,132));
+		defaults.put("PopupMenu.border", bord1);
+		defaults.put("Separator.foreground", Color.BLACK);
+		defaults.put("ComboBox.font", f13);
+		defaults.put("TextField.font", f13);
+		defaults.put("Label.font", f13);
+		defaults.put("TabbedPane.font", f13);
+		defaults.put("RadioButton.font", f13);
+		defaults.put("CheckBox.font", f13);
+		defaults.put("Button.font", f13);
+		defaults.put("TitledBorder.font", f13);
+		defaults.put("Spinner.font", f13);
+		defaults.put("PopupMenu.background", Color.WHITE);
+		defaults.put("ToolTip.border", bord1);
+		defaults.put("ToolTip.background", Color.WHITE);
 		ToolTipManager.sharedInstance().setInitialDelay(100);
 		ToolTipManager.sharedInstance().setDismissDelay(6500);
 	}

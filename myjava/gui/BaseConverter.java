@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.gui;
 
 import java.awt.*;
@@ -200,11 +205,19 @@ public class BaseConverter extends JDialog implements DocumentListener, ActionLi
 		String result = "";
 		if (converter.insertDenary.isSelected())
 		{
-			result+=converter.denary.getText()+" ";
+			String denary = converter.denary.getText();
+			if (!denary.isEmpty())
+			{
+				result += denary + " ";
+			}
 		}
 		if (converter.insertOtherBase.isSelected())
 		{
-			result+=converter.otherBase.getText()+" ";
+			String otherBase = converter.otherBase.getText();
+			if (!otherBase.isEmpty())
+			{
+				result += otherBase + " ";
+			}
 		}
 		return result;
 	}

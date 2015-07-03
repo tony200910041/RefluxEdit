@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package exec;
 
 import java.awt.*;
@@ -34,6 +39,7 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 	 */
 	private static final Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();
 	private static final ImageIcon questionIcon = SourceManager.createQuestionMessageIcon();
+	private static final boolean useTray = SystemTray.isSupported();
 	/*
 	 * important settings:
 	 */
@@ -51,26 +57,40 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 	private static FADetector detector = new FADetector()
 	{
 		@Override
-		public synchronized void hasNewFile()
+		public synchronized void hasNewFile(File[] files)
 		{
-			File received = this.getFile();
-			if (received != null)
+			if (files != null)
 			{
-				if (received.exists())
+				outFor:
+				for (File received: files)
 				{
-					for (Tab tab: MainPanel.getAllTab())
+					if (received.exists())
 					{
-						if (received.equals(tab.getFile()))
+						if (!w.isVisible())
 						{
-							//select existing tab
-							MainPanel.setSelectedComponent(tab);
-							return;
+							w.setVisible(true);
+						}
+						for (Tab tab: MainPanel.getAllTab())
+						{
+							if (received.equals(tab.getFile()))
+							{
+								//select existing tab
+								MainPanel.setSelectedComponent(tab);
+								continue outFor;
+							}
+						}
+						//create new tab and load file
+						Tab newTab = Tab.getNewTab();
+						MainPanel.add(newTab);
+						try
+						{
+							newTab.openAndWait(received);
+						}
+						catch (Exception ex)
+						{
+							exception(ex);
 						}
 					}
-					//create new tab and load file
-					Tab newTab = Tab.getNewTab();					
-					MainPanel.add(newTab);
-					newTab.open(received);
 				}
 			}
 		}
@@ -93,8 +113,7 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 					{
 						if (args.length >= 1)
 						{
-							//load file
-							detector.setFile(new File(args[0]));
+							detector.setFiles(convertToFileArray(args));
 						}
 						System.exit(0);
 					}
@@ -117,13 +136,14 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 				w = new RefluxEdit();
 				w.restoreFrame();
 				w.build();
+				w.createTray();
 				SplashScreen splash = SplashScreen.getSplashScreen();
 				if (splash != null)
 				{
 					splash.close();
 				}
 				w.setVisible(true);
-				writeConfig("LastStartupTimeTaken", System.currentTimeMillis()-initialTime + "ms");
+				setConfig("LastStartupTimeTaken", System.currentTimeMillis()-initialTime + "ms");
 				if (getBoolean0("CheckUpdate"))
 				{
 					(new Thread()
@@ -136,11 +156,33 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 					}).start();
 				}
 				detector.setInstance(true);
+				if (getBoolean0("FirstTime.welcome"))
+				{
+					Point p = MainPanel.getSelectedTab().getTextArea().getLocationOnScreen();
+					ToolTipMessage.showMessage(p.x+5, p.y+5, "Welcome!", "Welcome to RefluxEdit!");
+					setConfig("FirstTime.welcome","false");
+				}
+				saveConfig();
+				ClipboardDialog.initialize();
+				if (getBoolean0("showHint"))
+				{
+					HintDialog.showHintDialog(w);
+				}
 				if (args.length >= 1)
 				{
-					Tab newTab = Tab.getNewTab();
-					MainPanel.add(newTab);
-					newTab.open(new File(args[0]));
+					for (File argFile: convertToFileArray(args))
+					{
+						Tab newTab = Tab.getNewTab();
+						MainPanel.add(newTab);
+						try
+						{
+							newTab.openAndWait(argFile);
+						}
+						catch (Exception ex)
+						{
+							exception(ex);
+						}
+					}
 				}
 			}
 			
@@ -178,7 +220,7 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 				break;
 			}
 		}
-		catch (Throwable ex)
+		catch (Exception ex)
 		{
 		}
 		
@@ -193,98 +235,21 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 		/*
 		 * confirm closing dialog
 		 */
-		this.addWindowListener(new WindowAdapter()
+		WindowAdapter windowListener = new WindowAdapter()
 		{
 			@Override
 			public void windowClosing(WindowEvent ev)
 			{
-				//load confirm dialog
-				int option;
-				boolean isSaved = true;
-				outFor:
-				for (Tab tab: MainPanel.getAllTab())
+				loadConfig();
+				if (useTray&&getBoolean0("useTray")&&getBoolean0("CloseToTray"))
 				{
-					if ((!tab.getTextArea().isSaved())&&(!tab.getTextArea().getText().isEmpty()))
-					{
-						isSaved = false;
-						break outFor;
-					}
-				}
-				if (isSaved)
-				{
-					option = JOptionPane.showConfirmDialog(RefluxEdit.this, "Do you really want to close RefluxEdit?", "Confirm close", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, questionIcon);
+					//close to tray
+					RefluxEdit.this.setVisible(false);
 				}
 				else
 				{
-					String[] options = new String[]{"<html><center>Close<br>RefluxEdit</center></html>","Cancel","<html><center>Save all and Close<br>(use system encoding)</center></html>"};
-					option = JOptionPane.showOptionDialog(RefluxEdit.this, "NOT YET SAVED!\nDo you really want to close RefluxEdit?", "Confirm close", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, questionIcon, options, options[1]);
+					RefluxEdit.this.confirmClose();
 				}
-				if (option == JOptionPane.YES_OPTION)
-				{
-					this.finalSaveSettings();
-				}
-				else if ((option == JOptionPane.CANCEL_OPTION)&&(!isSaved))
-				{
-					//save and close
-					try
-					{
-						/*
-						 * iterate through tab list to save file
-						 */
-						for (Tab tab: new ArrayList<Tab>(MainPanel.getAllTab()))
-						{
-							if (!tab.getTextArea().isSaved())
-							{
-								File tabFile = tab.getFile();
-								if (tabFile!=null)
-								{
-									tab.save(tabFile,false); //not using encoding
-									MainPanel.close(tab);
-								}
-								else
-								{
-									File dest = FileChooser.showPreferredFileDialog(RefluxEdit.this, FileChooser.SAVE, new String[0]);
-									if (dest != null)
-									{
-										tab.save(dest,false);
-										MainPanel.close(tab);
-									}
-									else return; //don't close RefluxEdit
-								}
-							}
-							else
-							{
-								MainPanel.close(tab);
-							}
-						}
-						this.finalSaveSettings();
-					}
-					catch (IOException ex)
-					{
-						exception(ex);
-					}
-				}
-			}
-			
-			void finalSaveSettings()
-			{
-				Tab tab = MainPanel.getSelectedTab();
-				Dimension d = RefluxEdit.this.getSize();
-				Point l = RefluxEdit.this.getLocation();
-				loadConfig();
-				setConfig("Size.x", d.width + "");
-				setConfig("Size.y", d.height + "");
-				setConfig("Location.x", l.x + "");
-				setConfig("Location.y", l.y + "");
-				setConfig("isMaxmized", String.valueOf(RefluxEdit.this.getExtendedState() == JFrame.MAXIMIZED_BOTH));
-				//save caret position
-				for (Tab t: MainPanel.getAllTab())
-				{
-					setCaret(t.getFile(), t.getTextArea().getCaretPosition());
-				}
-				saveConfig();
-				detector.setInstance(false);
-				System.exit(0);
 			}
 						
 			@Override
@@ -296,7 +261,27 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 					tab.getTextArea().setDropTarget(new MyDropTarget(tab));
 				}
 			}
-		});
+			
+			@Override
+			public void windowLostFocus(WindowEvent ev)
+			{
+				//to center print dialog
+				Window win = ev.getOppositeWindow();
+				if (win != null)
+				{
+					if (win.getClass().getName().contains("print") && (win instanceof JDialog))
+					{
+						JDialog dialog = (JDialog)win;
+						dialog.setLocationRelativeTo(RefluxEdit.this);
+						dialog.setResizable(true);
+						dialog.setAlwaysOnTop(RefluxEdit.this.isAlwaysOnTop());
+						dialog.setIconImages(RefluxEdit.this.getIconImages());
+					}
+				}
+			}
+		};
+		this.addWindowListener(windowListener);
+		this.addWindowFocusListener(windowListener);
 		/*
 		 * set parent
 		 */
@@ -388,9 +373,6 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 			switch (LAF)
 			{
 				case "System":
-				menubar.setStyle(ColoredMenuBar.WHITE);
-				break;
-				
 				case "Nimbus":
 				break;			
 				
@@ -437,11 +419,155 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 		this.add(MainPanel.getInstance());
 	}
 	
+	/*
+	 * system tray
+	 */
+	public void createTray()
+	{
+		if (useTray&&getBoolean0("useTray"))
+		{
+			//JPopupMenu
+			JPopupMenu popup = new JPopupMenu();
+			popup.add(new MyPopupMenuItem("Show/Hide",null,-1));
+			popup.add(new JSeparator());
+			popup.add(new MyPopupMenuItem("New file","NEW",1));
+			popup.add(new MyPopupMenuItem("New file (clipboard)","NEWCLIPBOARD16",56));
+			popup.add(new MyPopupMenuItem("Open file","OPEN",2));
+			popup.add(new JSeparator());
+			popup.add(new MyPopupMenuItem("About RefluxEdit","APPICON16",16));
+			popup.add(new MyPopupMenuItem("Close","CLOSE",6));
+			MyTrayIcon icon = new MyTrayIcon(icon("APPICON16").getImage(), "RefluxEdit " + VERSION_NO, popup);
+			icon.addMouseListener(new MouseAdapter()
+			{
+				@Override
+				public void mouseReleased(MouseEvent ev)
+				{
+					if (!ev.isPopupTrigger())
+					{
+						RefluxEdit.this.setVisible(!RefluxEdit.this.isVisible());
+					}
+				}
+			});
+			try
+			{
+				SystemTray.getSystemTray().add(icon);
+			}
+			catch (Exception ex)
+			{
+				//shouldn't happen
+				throw new InternalError();
+			}
+		}
+	}
+	
+	/*
+	 * confirm close
+	 */
+	public void confirmClose()
+	{
+		this.setVisible(true);
+		//load confirm dialog
+		int option;
+		boolean isSaved = true;
+		outFor:
+		for (Tab tab: MainPanel.getAllTab())
+		{
+			if (!tab.getTextArea().isSaved())
+			{
+				isSaved = false;
+				break outFor;
+			}
+		}
+		if (isSaved)
+		{
+			option = JOptionPane.showConfirmDialog(this, "Do you really want to close RefluxEdit?", "Confirm close", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, questionIcon);
+		}
+		else
+		{
+			String[] options = new String[]{"<html><center>Close<br>RefluxEdit</center></html>","Cancel","<html><center>Save all and Close<br>(use system encoding)</center></html>"};
+			option = JOptionPane.showOptionDialog(this, "NOT YET SAVED!\nDo you really want to close RefluxEdit?", "Confirm close", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, questionIcon, options, options[1]);
+		}
+		if (option == JOptionPane.YES_OPTION)
+		{
+			this.close();
+		}
+		else if ((option == JOptionPane.CANCEL_OPTION)&&(!isSaved))
+		{
+			//save and close
+			try
+			{
+				/*
+				 * iterate through tab list to save file
+				 */
+				for (Tab tab: new ArrayList<Tab>(MainPanel.getAllTab()))
+				{
+					if (!tab.getTextArea().isSaved())
+					{
+						File tabFile = tab.getFile();
+						if (tabFile!=null)
+						{
+							tab.save(tabFile,false); //not using encoding
+							MainPanel.close(tab);
+						}
+						else
+						{
+							File dest = FileChooser.showPreferredFileDialog(this, FileChooser.SAVE, new String[0]);
+							if (dest != null)
+							{
+								tab.save(dest,false);
+								MainPanel.close(tab);
+							}
+							else return; //don't close RefluxEdit
+						}
+					}
+					else
+					{
+						MainPanel.close(tab);
+					}
+				}
+				this.close();
+			}
+			catch (IOException ex)
+			{
+				exception(ex);
+			}
+		}
+	}
+	
+	/*
+	 * close RefluxEdit
+	 */
+	public void close()
+	{
+		Tab tab = MainPanel.getSelectedTab();
+		Dimension d = RefluxEdit.this.getSize();
+		Point l = RefluxEdit.this.getLocation();
+		setConfig("Size.x", d.width + "");
+		setConfig("Size.y", d.height + "");
+		setConfig("Location.x", l.x + "");
+		setConfig("Location.y", l.y + "");
+		setConfig("isMaxmized", String.valueOf(RefluxEdit.this.getExtendedState() == JFrame.MAXIMIZED_BOTH));
+		//save caret position
+		for (Tab t: MainPanel.getAllTab())
+		{
+			setCaret(t.getFile(), t.getTextArea().getCaretPosition());
+		}
+		saveConfig();
+		detector.setInstance(false);
+		System.exit(0);
+	}
+	
+	/*
+	 * singleton instance getter
+	 */	
 	public static RefluxEdit getInstance()
 	{
 		return w;
 	}
 	
+	/*
+	 * MyRibbonFirst: FILE button
+	 */
 	public JComponent getPageStartComponent()
 	{
 		return this.topPanel;
@@ -467,5 +593,25 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 			this.revalidate();
 			this.repaint();
 		}
+	}
+	
+	/*
+	 * convert from String[] to File[]
+	 */
+	private static ArrayList<File> convertToFileArray(String[] paths)
+	{
+		ArrayList<File> list = new ArrayList<>();
+		for (String arg: paths)
+		{
+			if (arg != null)
+			{
+				File file = new File(arg);
+				if (file.exists())
+				{
+					list.add(file);
+				}
+			}
+		}
+		return list;
 	}
 }

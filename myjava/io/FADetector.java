@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.io;
 
 /**
@@ -83,14 +88,14 @@ public abstract class FADetector
 			@Override
 			public void fileChanged(WatchEvent ev)
 			{
-				FADetector.this.hasNewFile();
+				FADetector.this.hasNewFile(FADetector.this.getFiles());
 			}
 		};
 	}
 	
 	public boolean hasInstance()
 	{
-		return ("true").equals(read(FILE_INSTANCE));
+		return ("true").equals(read(FILE_INSTANCE).replace("\n",""));
 	}
 	
 	public void setInstance(boolean has)
@@ -110,7 +115,7 @@ public abstract class FADetector
 	
 	public boolean getResponse()
 	{
-		return ("true").equals(read(FILE_RESPONSE));
+		return ("true").equals(read(FILE_RESPONSE).replace("\n",""));
 	}
 	
 	public boolean awaitResponse(long timeout)
@@ -146,12 +151,25 @@ public abstract class FADetector
 		}
 	}
 	
-	public void setFile(File file)
+	public void setFiles(File[] files)
 	{
-		write(FILE_PATH, file.getPath());
+		this.setFiles(Arrays.asList(files));		
 	}
 	
-	public File getFile()
+	public void setFiles(List<File> files)
+	{
+		StringBuilder builder = new StringBuilder();
+		for (File file: files)
+		{
+			if (file != null)
+			{
+				builder.append(file.getPath()+"\n");
+			}
+		}
+		write(FILE_PATH, builder.toString());
+	}
+	
+	public File[] getFiles()
 	{
 		try
 		{
@@ -162,14 +180,19 @@ public abstract class FADetector
 			//pass
 		}
 		String s = read(FILE_PATH);
-		if (s != null)
+		String[] paths = s.split("\n");
+		List<File> list = new ArrayList<>();
+		for (String path: paths)
 		{
-			return new File(s);
+			if (!path.isEmpty())
+			{
+				list.add(new File(path));
+			}
 		}
-		else return null;
+		return list.toArray(new File[list.size()]);
 	}
 	
-	public abstract void hasNewFile();
+	public abstract void hasNewFile(File[] files);
 	
 	private static String getFAFilePath()
 	{
@@ -213,7 +236,15 @@ public abstract class FADetector
 		try (BufferedReader reader = new BufferedReader(new FileReader(file)))
 		{
 			reader.readLine(); //discard the first line
-			return reader.readLine();
+			String string = "", buffer = "";
+			while ((buffer = reader.readLine()) != null)
+			{
+				if (!buffer.isEmpty())
+				{
+					string += buffer + "\n";
+				}
+			}
+			return string;
 		}
 		catch (Exception ex)
 		{

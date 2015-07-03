@@ -1,0 +1,11 @@
+You can read a text file from a URL by entering it in Open file (quick) dialog.
+As of RefluxEdit 5.0alpha, multi-tab edit is supported.
+RefluxEdit's source code uses Allman indent style.
+RefluxEdit does not use new API in Java SE 8.
+To count the number of words, press Ctrl+F2.
+RefluxEdit's ribbon UI is introduced in 3.0alpha.
+You can open text files by drag-and-drop.
+You can change RefluxEdit's Look and Feel in Tools->Options->Look and Feel, or HELP->Options->Look and Feel in ribbon UI.
+The three files REFLUXEDIT_DO_NOT_REMOVE_# are used for file association.
+You can open a new tab by right-clicking any tabs and choose "New tab".
+The escape/unescape string functions are implemented by I/O operations.

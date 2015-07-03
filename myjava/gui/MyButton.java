@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.gui;
 
 /**
@@ -11,10 +16,7 @@ import javax.swing.border.*;
 import myjava.gui.common.*;
 
 public class MyButton extends JButton implements ActionListener, MouseListener, Resources
-{
-	private static final String LAF = UIManager.getLookAndFeel().getName().toLowerCase();
-	private static final boolean isWindows = LAF.contains("windows");
-	private static final boolean isNimbus = LAF.contains("nimbus");
+{	
 	private static Color background = Color.WHITE;
 	private static Color foreground = Color.BLACK;
 	private static Dimension dimension = new Dimension(50,28);	
@@ -25,6 +27,7 @@ public class MyButton extends JButton implements ActionListener, MouseListener, 
 		if ((!isWindows)&&(!isNimbus))
 		{
 			this.setBorder(bord1);
+			this.setFocusPainted(false);
 		}
 		else if (isNimbus)
 		{
@@ -34,8 +37,7 @@ public class MyButton extends JButton implements ActionListener, MouseListener, 
 		{
 			this.setBackground(background);
 			this.setForeground(foreground);
-			this.setPreferredSize(dimension);
-			this.setFocusPainted(false);
+			this.setPreferredSize(dimension);			
 		}
 		else
 		{

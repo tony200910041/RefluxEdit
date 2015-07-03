@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.gui;
 
 import java.awt.*;
@@ -5,12 +10,11 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
 import myjava.gui.*;
+import myjava.gui.common.*;
 
-public class RegexDialog extends JDialog implements DocumentListener
+public class RegexDialog extends JDialog implements DocumentListener, ColorConstants
 {
 	private static final Font f20 = new Font("Microsoft Jhenghei",Font.PLAIN,20);
-	private static final Color RED = new Color(255,133,133);
-	private static final Color GREEN = new Color(201,255,197);
 	private JTextField string = new JTextField();
 	private JTextField regex = new JTextField();
 	private JLabel match = new JLabel("Regex matcher");

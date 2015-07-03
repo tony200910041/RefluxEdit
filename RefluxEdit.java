@@ -1,166 +1,202 @@
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.datatransfer.*;
-
-import javax.swing.* ;
-import javax.swing.border.*;
+import javax.swing.*;
 import javax.swing.filechooser.*;
-import javax.swing.plaf.ColorUIResource;
-
+import javax.swing.border.*;
 import java.io.*;
 import java.util.Properties;
-import java.util.Locale;
+import java.util.Arrays;
+import MyJava.MyFileChooser;
+import MyJava.FileChooser;
+import MyJava.MyFileFilter;
+import MyJava.MyColorChooser;
 
 public class RefluxEdit extends JFrame
 {
-	//values:
-	int i, j, k, l, timematch, confirmvalue, returnvalue;
+	private static final float VERSION_NO = (float)2.0;
+	private static final Font f13 = new Font("Microsoft Jhenghei", Font.PLAIN, 13);
+	private static final File SettingsFile = new File(getSettingsFilePath() + "\\REFLUXEDITPREF.PROPERTIES\\");
+	private static final Properties prop = new Properties();
 	
-	byte wordamended = 0;
-	byte currentstring = 0;
+	private static final int WIDTH = (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth();
+	private static final int HEIGHT = (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight();
 	
-	boolean ready = false;
+	JTextArea TEXTAREA = new JTextArea();
+	JLabel currentFile = new JLabel(" ");
+	JMenuBar menubar;
 	
-	//Conponents:
-	JButton saveas = new JButton("Save As");
-	JButton save = new JButton("Save");
-	JButton open = new JButton("Open");
-	JButton newfile = new JButton("New");
-	
-	JLabel current = new JLabel("\n");
-	
-	JTextArea TEXTAREA = new JTextArea(12, 30);
-	JScrollPane jsp = new JScrollPane(TEXTAREA);
-	
-	JFileChooser chooser = new JFileChooser();
-	FileNameExtensionFilter[] filter1 = {new FileNameExtensionFilter("Text files", "txt", "ini", "log", "java", "py", "bat", "cmd", "htm", "html", "xml", "php"), new FileNameExtensionFilter("Text (*.txt, *.ini, *.log)", "txt", "ini", "log"), new FileNameExtensionFilter("Command (*.bat, *.cmd)", "bat", "cmd"), new FileNameExtensionFilter("Website and programming (*.htm, *.html, *.xml, *.php, *.java, *.py)", "htm", "html", "xml", "php", "java", "py")};
-	
-	//GUI:
-	static RefluxEdit w;
-	Font J1 = new Font("Microsoft Jhenghei", Font.PLAIN, 12);
-	Font J2 = new Font("Microsoft Jhenghei", Font.PLAIN, 15);
-	
-	Border bord1 = new LineBorder(Color.BLACK, 1);
-
-	Color darkblue = new Color(37,47,104);
-	Color brown = new Color(120,77,26);
-	
-	//others:
+	JFileChooser WindowsChooser;
+	MyFileChooser JavaChooser;
+	JFileChooser chooser;
 	File file = null;
-	File chooserdefault = new File("./");
-	File SettingsFile = new File(getJARPath() + "\\REFLUXEDITPREF.PROPERTIES\\");
-	Properties prop = new Properties();
-
-	String str = "";
-	String tmp;
-	String tmp1;
-	String tmp3;
 	
-	String[] backup = {"", "", "", "", "", "", "", "", "", ""};
-	String[] arg;
+	private static final Clipboard clipbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
 	
-	Transferable tmp2;		
-	Clipboard systemclipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+	UndoManager undoManager = new UndoManager(20);
 	
-	UIManager uim = new UIManager();
+	static RefluxEdit w;
+	JPanel topPanel = new JPanel();
+	JPanel bottomPanel = new JPanel();
+	static int i, j, k, l, m;
+	static String TMP1, TMP2, TMP3, TMP4;
 	
-	public static void main(String[] args)
+	public static void main(final String[] args)
 	{
-		w = new RefluxEdit(args);
-		w.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		w.setMinimumSize(new Dimension(275,250));
-		w.setTitle("RefluxEdit 1.2");
-		w.setResizable(true);
-		w.setVisible(true);
-		w.addWindowListener(new WindowAdapter()
+		final SplashScreen splash = SplashScreen.getSplashScreen();
+		splash.createGraphics();
+		SwingUtilities.invokeLater(new Runnable()
 		{
+			@Override
+			public void run()
+			{
+				w = new RefluxEdit("RefluxEdit " + VERSION_NO);
+				w.restoreFrame();
+				w.buildWindowsChooser();
+				(new SwingWorker<Void, Void>()
+				{
+					@Override
+					public Void doInBackground()
+					{
+						w.restoreChoosers();
+						return null;
+					}
+				}).execute();				
+				
+				(new SwingWorker<Void, Void>()
+				{
+					@Override
+					public Void doInBackground()
+					{
+						w.restoreMenus();
+						return null;
+					}
+				}).execute();
+				
+				(new SwingWorker<Void, Void>()
+				{
+					@Override
+					public Void doInBackground()
+					{
+						w.restoreTextArea();
+						return null;
+					}
+				}).execute();
+				if (args.length == 1)
+				{
+					try
+					{
+						w.openToTextArea(new File(args[0]));
+					}
+					catch (Exception ex)
+					{
+					}
+				}
+				splash.close();
+				w.setVisible(true);
+			}
+		});
+	}
+	
+	public RefluxEdit(String title)
+	{
+		super(title);
+		final RefluxEdit frame = this;
+		this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		this.setMinimumSize(new Dimension(275,250));
+		this.setLayout(new BorderLayout());
+		this.initialize();
+		menubar = new JMenuBar();
+		this.setJMenuBar(menubar);
+		
+		currentFile.setFont(f13);
+		topPanel.add(new MyButton("New", -1));
+		topPanel.add(new MyButton("Open", 2));
+		topPanel.add(new MyButton("Save as", 4));
+		topPanel.add(new MyButton("Save", 5));
+		bottomPanel.add(currentFile);
+		
+		this.add(topPanel, BorderLayout.PAGE_START);
+		this.add(bottomPanel, BorderLayout.PAGE_END);
+		this.add(new JLabel("  "), BorderLayout.LINE_START);
+		this.add(new JLabel("  "), BorderLayout.LINE_END);
+		this.add(new JScrollPane(TEXTAREA), BorderLayout.CENTER);
+		
+		UIManager.put("OptionPane.messageFont", f13);
+		UIManager.put("OptionPane.buttonFont", f13);
+		UIManager.put("OptionPane.okButtonText", "OK");
+		UIManager.put("OptionPane.yesButtonText", "YES");
+		UIManager.put("OptionPane.noButtonText", "NO");
+		UIManager.put("Button.background", Color.WHITE);
+		UIManager.put("ComboBox.font", f13);
+		
+		this.addWindowListener(new WindowAdapter()
+		{
+			@Override
 			public void windowClosing(WindowEvent ev)
 			{
-				WriteSize();
-				Object[] options = {"YES", "NO"};
-				int close = JOptionPane.showOptionDialog(null, "Do you really want to close RefluxEdit?", "Confirm exit", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);
-				if (close == JOptionPane.YES_OPTION)
+				int x = JOptionPane.showConfirmDialog(frame, "Do you really want to close RefluxEdit?", "Confirm close", JOptionPane.YES_NO_OPTION);
+				if (x == JOptionPane.YES_OPTION)
 				{
+					writeConfig("Size.x", getSize().getWidth() + "");
+					writeConfig("Size.y", getSize().getHeight() + "");
+					writeConfig("Location.x", getLocation().getX() + "");
+					writeConfig("Location.y", getLocation().getY() + "");
 					System.exit(0);
 				}
 			}
 		});
 	}
 	
-	public RefluxEdit(String[] s)
+	public void initialize()
 	{
-		//create setting file if not exists
+		//this.setSize(300,600);
+		//this.setLocationRelativeTo(null);
+		//size
 		if (!SettingsFile.exists())
 		{
 			try
 			{
 				PrintWriter writer = new PrintWriter(SettingsFile, "UTF-8");
 				writer.close();
-				WriteConfig("LineWrap", "true");
-				WriteConfig("WrapByWord", "true");
-				WriteConfig("Editing", "true");
-				WriteConfig("Location.x", "0");
-				WriteConfig("Location.y", "0");
-				WriteConfig("Size.x", "460");
-				WriteConfig("Size.y", "395");
-				WriteConfig("AutoAddTxt", "true");
+				writeConfig("Size.x", "460");
+				writeConfig("Size.y", "395");
+				writeConfig("Location.x", "0");
+				writeConfig("Location.y", "0");
+				writeConfig("isEditable", "true");
+				writeConfig("LineWrap", "true");
+				writeConfig("WrapStyleWord", "true");
+				writeConfig("Encoding", "default");
+				writeConfig("ChooserStyle", "Java");
+				writeConfig("OnTop", "false");
+				writeConfig("TabSize", "4");
+				writeConfig("SelectionColor.r", "244");
+				writeConfig("SelectionColor.g", "223");
+				writeConfig("SelectionColor.b", "255");
 			}
 			catch (Exception ex)
 			{
 			}
 		}
-		//restore settings
-		try
-		{
-			TEXTAREA.setLineWrap(Boolean.parseBoolean(getConfig("LineWrap")));
-		}
-		catch (Exception ex)
-		{
-		}
-		try
-		{	
-			TEXTAREA.setWrapStyleWord(Boolean.parseBoolean(getConfig("WrapByWord")));
-		}
-		catch (Exception ex)
-		{
-		}
-		try
-		{
-			if (Boolean.parseBoolean(getConfig("Editing")))
-			{
-				TEXTAREA.setBackground(Color.WHITE);
-				TEXTAREA.setEditable(true);
-			}
-			else
-			{
-				TEXTAREA.setBackground(new Color(245,245,245));
-				TEXTAREA.setEditable(false);
-			}
-		}
-		catch (Exception ex)
-		{
-		}
-		/*System.out.println(getConfig("Location.x"));
-		System.out.println(getConfig("Location.y"));
-		System.out.println(getConfig("Size.x"));
-		System.out.println(getConfig("Size.y"));*/
+	}
+	
+	public void restoreFrame()
+	{
 		try
 		{
 			i = (int)Double.parseDouble(getConfig("Size.x"));
 			j = (int)Double.parseDouble(getConfig("Size.y"));
-			if (i > (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth())
+			if (i > WIDTH)
 			{
-				i = (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth();
+				i = WIDTH;
 			}		
-			if (j > (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight())
+			if (j > HEIGHT)
 			{
-				j = (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight();
+				j = HEIGHT;
 			}
 		}
 		catch (Exception ex)
 		{
-			i = 0;
-			j = 0;
 		}
 		if ((i>=275)&&(j>=250))
 		{
@@ -168,26 +204,25 @@ public class RefluxEdit extends JFrame
 		}
 		else
 		{
-			this.setSize(275, 250);
+			this.setSize(275,250);
 		}
 		
+		//location
 		try
 		{
 			k = (int)Double.parseDouble(getConfig("Location.x"));
 			l = (int)Double.parseDouble(getConfig("Location.y"));
-			if ((k+i) > (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth())
+			if ((k+i) > WIDTH)
 			{
-				k = (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth()-i;
+				k = WIDTH-i;
 			}
-			if ((l+j) > (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight())
+			if ((l+j) > HEIGHT)
 			{
-				l = (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight()-j;
+				l = HEIGHT-j;
 			}
 		}
 		catch (Exception ex)
 		{
-			k = 0;
-			l = 0;
 		}	
 		if ((k>=0)&&(l>=0))
 		{
@@ -197,1258 +232,1408 @@ public class RefluxEdit extends JFrame
 		{
 			this.setLocation(0, 0);
 		}
-		
-		//set language: English
-		JComponent.setDefaultLocale(Locale.ENGLISH);
-		chooser = new JFileChooser();
-		
-		//Menu bar:
-		JMenuBar menubar1 = new JMenuBar();
-		menubar1.setFont(J1);
-		menubar1.setBackground(new Color(242,254,255));
-		
-		JMenu menu1 = new JMenu("File");
-		menu1.setMnemonic(KeyEvent.VK_F);
-		menu1.setFont(J1);
-		JMenuItem item1 = new JMenuItem("New File       ");
-		JMenuItem item2 = new JMenuItem("Open File");
-		JMenuItem item3 = new JMenuItem("Save As...");
-		JMenuItem item4 = new JMenuItem("Save");
-		JMenuItem item5 = new JMenuItem("Close");
-		JMenuItem item29 = new JMenuItem("Open File (Quick)");
-		item1.setFont(J1);
-		item2.setFont(J1);
-		item3.setFont(J1);
-		item4.setFont(J1);
-		item5.setFont(J1);
-		item29.setFont(J1);
-		item1.setBackground(Color.WHITE);
-		item2.setBackground(Color.WHITE);
-		item3.setBackground(Color.WHITE);
-		item4.setBackground(Color.WHITE);
-		item5.setBackground(Color.WHITE);
-		item29.setBackground(Color.WHITE);
-		
-		JMenu menu2 = new JMenu("Edit");
-		menu2.setMnemonic(KeyEvent.VK_E);
-		menu2.setFont(J1);
-		JMenuItem item9 = new JMenuItem("Select All");
-		JMenuItem item10 = new JMenuItem("Select All and copy");
-		JMenuItem item11 = new JMenuItem("Copy");
-		JMenuItem item12 = new JMenuItem("Paste");
-		JMenuItem item13 = new JMenuItem("Cut");
-		JMenuItem item14 = new JMenuItem("Paste on next line");
-		JMenuItem item15 = new JMenuItem("Delete");
-		
-		item9.setFont(J1);
-		item10.setFont(J1);
-		item11.setFont(J1);
-		item12.setFont(J1);
-		item13.setFont(J1);
-		item14.setFont(J1);
-		item15.setFont(J1);
-		
-		item9.setBackground(Color.WHITE);
-		item10.setBackground(Color.WHITE);
-		item11.setBackground(Color.WHITE);
-		item12.setBackground(Color.WHITE);
-		item13.setBackground(Color.WHITE);
-		item14.setBackground(Color.WHITE);
-		item15.setBackground(Color.WHITE);
+		//ontop
+		try
+		{
+			this.setAlwaysOnTop(getConfig("OnTop").equals("true"));
+		}
+		catch (Exception ex)
+		{
+			this.setAlwaysOnTop(false);
+		}
+		//icon
+		try
+		{
+			this.setIconImage((new ImageIcon(getClass().getResource("/MyJava/SRC/APPICON.PNG"))).getImage());
+		}
+		catch (Exception ex)
+		{
+		}
+	}
 	
-		JMenu menu3 = new JMenu("Help");
-		menu3.setMnemonic(KeyEvent.VK_H);
-		menu3.setFont(J1);
-		JMenuItem item8 = new JMenuItem("About       ");
-		item8.setFont(J1);
-		item8.setBackground(Color.WHITE);
+	public void buildWindowsChooser()
+	{
+		LookAndFeel LAF = UIManager.getLookAndFeel();
+		try
+		{
+			UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+			WindowsChooser = new JFileChooser();
+			UIManager.setLookAndFeel(LAF);
+			LAF = null;
+		}
+		catch (Throwable ex)
+		{
+			WindowsChooser = new MyFileChooser("Choose a text file:");
+		}
+	}
+	
+	public void restoreChoosers()
+	{
+		JComponent.setDefaultLocale(java.util.Locale.ENGLISH);
+		JavaChooser = new MyFileChooser("Choose a text file:");		
+		JavaChooser.addChoosableFileFilter(new FileNameExtensionFilter("Text file", new String[]{"txt", "java", "py", "php", "html", "htm", "xml", "bot", "properties"}));
+		WindowsChooser.addChoosableFileFilter(new FileNameExtensionFilter("Text file", new String[]{"txt", "java", "py", "php", "html", "htm", "xml", "bot", "properties"}));
+		WindowsChooser.setPreferredSize(new Dimension(560,390));
+		WindowsChooser.setDialogTitle("Choose a text file:");
+		WindowsChooser.setCurrentDirectory(new File("./"));
+		FileChooser.addFileFilter(new MyFileFilter()
+		{
+			@Override
+			public boolean accept(File f)
+			{
+				String FILE = f.getPath().toLowerCase();
+				return (FILE.endsWith("txt"))||(FILE.endsWith("java"))||(FILE.endsWith("py"))||(FILE.endsWith("php"))||(FILE.endsWith("html"))||(FILE.endsWith("htm"))||(FILE.endsWith("xml"))||(FILE.endsWith("bot"))||(FILE.endsWith("properties"));
+			}
+			
+			@Override
+			public String getDescription()
+			{
+				return new String("Text Files");
+			}
+		});
+	}
+	
+	public void restoreMenus()
+	{
+		menubar.setBackground(new Color(242,254,255));
+		MyMenu menu1 = new MyMenu("File");
+		MyMenu menu2 = new MyMenu("Edit");
+		MyMenu menu3 = new MyMenu("Tools");
+		MyMenu menu4 = new MyMenu("Insert");
+		MyMenu menu5 = new MyMenu("Help");
 		
-		JMenu menu4 = new JMenu("Tools");
-		menu4.setMnemonic(KeyEvent.VK_T);
-		menu4.setFont(J1);
-		JMenuItem item6 = new JMenuItem("Disable/Enable editing");
-		JMenuItem item7 = new JMenuItem("Disable/Enable auto word wrap");
-		JMenuItem item16 = new JMenuItem("Convert to uppercase");
-		JMenuItem item17 = new JMenuItem("Convert to lowercase");
-		JMenuItem item18 = new JMenuItem("Find");
-		JMenuItem item19 = new JMenuItem("Replace");
-		JMenuItem item20 = new JMenuItem("Disable/Enable wrapping by words");
-		JMenuItem item21 = new JMenuItem("Insert ten equal signs");
-		JMenuItem item22 = new JMenuItem("Insert four spaces");
-		JMenuItem item23 = new JMenuItem("Undo");
-		JMenuItem item24 = new JMenuItem("Redo");
-		JMenuItem item25 = new JMenuItem("Delete blank line");
-		JMenuItem item26 = new JMenuItem("Insert key words (html)");
-		JMenuItem item27 = new JMenuItem("Insert key words (Java)");
-		JMenuItem item28 = new JMenuItem("Generate random words");
-		JMenuItem item30 = new JMenuItem("Convert to invert case");
-		JMenuItem item31 = new JMenuItem("Disable/Enable automatically add .txt when saving");
-		
-		item6.setFont(J1);
-		item7.setFont(J1);
-		item16.setFont(J1);
-		item17.setFont(J1);
-		item18.setFont(J1);
-		item19.setFont(J1);
-		item20.setFont(J1);
-		item21.setFont(J1);
-		item22.setFont(J1);
-		item23.setFont(J1);
-		item24.setFont(J1);
-		item25.setFont(J1);
-		item26.setFont(J1);
-		item27.setFont(J1);
-		item28.setFont(J1);
-		item30.setFont(J1);
-		item31.setFont(J1);
-				
-		item6.setBackground(Color.WHITE);
-		item7.setBackground(Color.WHITE);
-		item16.setBackground(Color.WHITE);
-		item17.setBackground(Color.WHITE);
-		item18.setBackground(Color.WHITE);
-		item19.setBackground(Color.WHITE);
-		item20.setBackground(Color.WHITE);
-		item21.setBackground(Color.WHITE);
-		item22.setBackground(Color.WHITE);
-		item23.setBackground(Color.WHITE);
-		item24.setBackground(Color.WHITE);
-		item25.setBackground(Color.WHITE);
-		item26.setBackground(Color.WHITE);
-		item27.setBackground(Color.WHITE);
-		item28.setBackground(Color.WHITE);
-		item30.setBackground(Color.WHITE);
-		item31.setBackground(Color.WHITE);
-		
-		menu1.add(item1);
-		menu1.add(item2);
-		menu1.add(item29);
+		menu1.add(new MyMenuItem("New file", 1));
+		menu1.add(new MyMenuItem("Open file", 2));
+		menu1.add(new MyMenuItem("Open file (quick)", 3));
 		menu1.add(new JSeparator());
-		menu1.add(item3);
-		menu1.add(item4);
+		menu1.add(new MyMenuItem("Save as", 4));
+		menu1.add(new MyMenuItem("Save", 5));
 		menu1.add(new JSeparator());
-		menu1.add(item5);		
-
-		menu2.add(item23);
-		menu2.add(item24);
+		menu1.add(new MyMenuItem("Close", 6));
+		
+		menu2.add(new MyMenuItem("Undo", 7));
+		menu2.add(new MyMenuItem("Redo", 8));
 		menu2.add(new JSeparator());
-		menu2.add(item9);
-		menu2.add(item10);
+		menu2.add(new MyMenuItem("Select all", 9));
+		menu2.add(new MyMenuItem("Select all and copy", 10));
 		menu2.add(new JSeparator());
-		menu2.add(item13);
-		menu2.add(item11);
-		menu2.add(item12);		
-		menu2.add(item14);
-		menu2.add(item15);
+		menu2.add(new MyMenuItem("Cut", 11));
+		menu2.add(new MyMenuItem("Copy", 12));
+		menu2.add(new MyMenuItem("Paste", 13));
+		menu2.add(new MyMenuItem("Paste on next line", 14));
+		menu2.add(new MyMenuItem("Delete", 15));
 		
-		menu4.add(item6);
-		menu4.add(item7);
-		menu4.add(item20);
-		menu4.add(item31);
+		menu5.add(new MyMenuItem("About RefluxEdit", 16));
+		
+		menu3.add(new MyMenuItem("Enable/disable editing", 17));
+		menu3.add(new MyMenuItem("Enable/disable always on top", 21));
+		menu3.add(new MyMenuItem("Line Wrap options", 18));
+		menu3.add(new MyMenuItem("Encoding options", 19));
+		menu3.add(new MyMenuItem("FileChooser options", 20));
+		menu3.add(new MyMenuItem("Tab size options", 29));
+		menu3.add(new MyMenuItem("Selection color options", 36));
+		menu3.add(new JSeparator());
+		menu3.add(new MyMenuItem("Word count (beta)", 22));
+		menu3.add(new MyMenuItem("Delete blank lines", 35));
+		menu3.add(new JSeparator());
+		menu3.add(new MyMenuItem("Search", 23));
+		menu3.add(new MyMenuItem("Replace", 24));
+		menu3.add(new MyMenuItem("Replace in selection", 25));
+		menu3.add(new JSeparator());
+		menu3.add(new MyMenuItem("Convert to upper case", 26));
+		menu3.add(new MyMenuItem("Convert to lower case", 27));
+		menu3.add(new MyMenuItem("Convert to invert case", 28));
+		
+		menu4.add(new MyMenuItem("Insert ten equal signs", 30));
+		menu4.add(new MyMenuItem("Insert four spaces", 31));
+		menu4.add(new MyMenuItem("Generate random words", 32));
 		menu4.add(new JSeparator());
-		menu4.add(item18);
-		menu4.add(item19);
-		menu4.add(new JSeparator());
-		menu4.add(item16);
-		menu4.add(item17);
-		menu4.add(item30);	
-		menu4.add(new JSeparator());
-		menu4.add(item21);
-		menu4.add(item22);
-		menu4.add(item26);
-		menu4.add(item27);
-		menu4.add(item28);
-		menu4.add(item25);
-		
-		menu3.add(item8);
-		
-		menubar1.add(new JLabel(" "));
-		menubar1.add(menu1);
-		menubar1.add(new JLabel(" "));
-		menubar1.add(menu2);
-		menubar1.add(new JLabel(" "));
-		menubar1.add(menu4);
-		menubar1.add(new JLabel(" "));
-		menubar1.add(menu3);
-		this.setJMenuBar(menubar1);
-		
-		item1.addMouseListener(new MouseLis(6));
-		item2.addMouseListener(new MouseLis(3));
-		item3.addMouseListener(new MouseLis(1));
-		item4.addMouseListener(new MouseLis(2));
-		item5.addMouseListener(new MouseLis(5));
-		item6.addMouseListener(new MouseLis(7));
-		item7.addMouseListener(new MouseLis(8));
-		item8.addMouseListener(new MouseLis(9));
-		item9.addMouseListener(new MouseLis(10));
-		item10.addMouseListener(new MouseLis(11));
-		item11.addMouseListener(new MouseLis(12));
-		item12.addMouseListener(new MouseLis(13));
-		item13.addMouseListener(new MouseLis(14));
-		item14.addMouseListener(new MouseLis(15));
-		item15.addMouseListener(new MouseLis(16));
-		item16.addMouseListener(new MouseLis(17));
-		item17.addMouseListener(new MouseLis(18));
-		item18.addMouseListener(new MouseLis(19));
-		item19.addMouseListener(new MouseLis(20));
-		item20.addMouseListener(new MouseLis(21));
-		item21.addMouseListener(new MouseLis(22));
-		item22.addMouseListener(new MouseLis(23));
-		item23.addMouseListener(new MouseLis(24));
-		item24.addMouseListener(new MouseLis(25));
-		item25.addMouseListener(new MouseLis(26));
-		item26.addMouseListener(new MouseLis(27));
-		item27.addMouseListener(new MouseLis(28));
-		item28.addMouseListener(new MouseLis(29));
-		item29.addMouseListener(new MouseLis(30));
-		item30.addMouseListener(new MouseLis(31));
-		item31.addMouseListener(new MouseLis(32));
-		
-		getContentPane().setLayout(new BorderLayout());
-		
-		saveas.setPreferredSize(new Dimension(60,30));
-		save.setPreferredSize(new Dimension(60,30));
-		open.setPreferredSize(new Dimension(60,30));
-		newfile.setPreferredSize(new Dimension(60,30));
-		
-		saveas.setBackground(Color.WHITE);
-		save.setBackground(Color.WHITE);
-		open.setBackground(Color.WHITE);
-		newfile.setBackground(Color.WHITE);
-		
-		saveas.setForeground(brown);
-		save.setForeground(brown);
-		open.setForeground(brown);
-		newfile.setForeground(brown);
-		
-		saveas.setFont(J1);
-		save.setFont(J1);
-		open.setFont(J1);
-		newfile.setFont(J1);
-		
-		saveas.setBorder(bord1);
-		save.setBorder(bord1);
-		open.setBorder(bord1);
-		newfile.setBorder(bord1);
-		
-		TEXTAREA.setFont(J2);
-		TEXTAREA.setTabSize(3);
-		
-		current.setFont(J1);	
-		
-		setFileChooserStyle(chooser.getComponents());
-		chooser.setPreferredSize(new Dimension(520, 450));
-		
-		uim.put("OptionPane.buttonFont", J1);
-		uim.put("OptionPane.messageFont", J1);		
-		
-		uim.put("OptionPane.okButtonText", "OK");
-		
-		uim.put("Button.background", Color.WHITE);
-		uim.put("PopupMenu.background", Color.WHITE);
-		uim.put("MenuItem.background", Color.WHITE);
-		uim.put("RadioButtonMenuItem.background", Color.WHITE);
-		
-		uim.put("PopupMenu.foreground", darkblue);
-		uim.put("MenuItem.foreground", darkblue);
-		uim.put("Menu.foreground", J1);
-		uim.put("RadioButtonMenuItem.foreground", darkblue);
-		
-		uim.put("PopupMenu.font", J1);
-		uim.put("MenuItem.font", J1);
-		uim.put("Menu.font", J1);
-		uim.put("RadioButtonMenuItem.font", J1);
-		uim.put("TextField.font", J1);
-		
-		jsp.getHorizontalScrollBar().setBackground(new Color(245,245,245));
-		jsp.getHorizontalScrollBar().getComponent(0).setBackground(new Color(245,245,245));
-		jsp.getHorizontalScrollBar().getComponent(1).setBackground(new Color(245,245,245));
-		
-		jsp.getVerticalScrollBar().setBackground(new Color(245,245,245));
-		jsp.getVerticalScrollBar().getComponent(0).setBackground(new Color(245,245,245));
-		jsp.getVerticalScrollBar().getComponent(1).setBackground(new Color(245,245,245));
-		
-		jsp.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		jsp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		jsp.setBorder(bord1);
-		
-		saveas.addMouseListener(new MouseLis(1));
-		save.addMouseListener(new MouseLis(2));
-		open.addMouseListener(new MouseLis(3));
-		newfile.addMouseListener(new MouseLis(4));
-		
-		// create JPanel so that more than one objects can be added into the layout
-		JPanel p1 = new JPanel();
-		p1.add(newfile);
-		p1.add(open);
-		p1.add(saveas);
-		p1.add(save);
-		
-		JPanel p2 = new JPanel();
-		p2.add(current);
-				
-		getContentPane().add(p1, BorderLayout.PAGE_START);
-		getContentPane().add(jsp, BorderLayout.CENTER);
-		getContentPane().add(p2, BorderLayout.PAGE_END);
-		getContentPane().add(new JLabel("  "), BorderLayout.LINE_START);
-		getContentPane().add(new JLabel("  "), BorderLayout.LINE_END);
-		
+		menu4.add(new MyMenuItem("Insert key words (Java)", 33));
+		menu4.add(new MyMenuItem("Insert key words (html)", 34));
+		//next one: 37
+	}
+	
+	public void restoreTextArea()
+	{
+		TEXTAREA.setFont(new Font(f13.getFontName(), f13.getStyle(), f13.getSize()+2));
+		TEXTAREA.setText("");
 		TEXTAREA.addKeyListener(new KeyAdapter()
 		{
-			public void keyTyped(KeyEvent e)
-			{	
-				if (currentstring != 0)
+			int time = 0;
+			@Override
+			public void keyTyped(KeyEvent ev)
+			{
+				time++;
+				if (time == 10)
 				{
-					currentstring = 0;
-					for (i=0; i<=9; i++)
-					{
-						backup[i] = "";
-					}
-					backup[1] = TEXTAREA.getText();
-				}
-				wordamended++;
-				if (wordamended == 10)
-				{
-					SwitchBackup();
+					undoManager.backup(TEXTAREA.getText());
+					time = 0;
 				}
 			}
 		});
-		
-		this.addWindowListener(new WindowAdapter()
-		{
-            public void windowClosing(WindowEvent ev)
-            {
-				WriteConfig("LineWrap", TEXTAREA.getLineWrap() + "");
-				WriteConfig("WrapByWord", TEXTAREA.getWrapStyleWord() + "");
-				WriteConfig("Editing", TEXTAREA.isEditable() + "");
-			}
-		});	
-		
+		//editable
 		try
 		{
-			this.setIconImage((new ImageIcon(getClass().getResource("/SRC/APPICON.PNG"))).getImage());
+			boolean isEditable = getConfig("isEditable").equals("true");
+			if (isEditable)
+			{
+				TEXTAREA.setEditable(true);
+				TEXTAREA.setBackground(Color.WHITE);
+			}
+			else
+			{
+				TEXTAREA.setEditable(false);
+				TEXTAREA.setBackground(new Color(230,230,230));
+			}
 		}
 		catch (Exception ex)
 		{
+			TEXTAREA.setEditable(true);
 		}
-		
-		//open file by command line/file association
-		if (s.length == 1)
-		{
-			if ((new File(s[0])).exists())
-			{
-				file = new File(s[0]);
-				Openfile();
-			}
-		}
-	}
-	
-	public void Savefile()
-	{
+		//wrapping
 		try
 		{
-			FileWriter fw1 = new FileWriter(file);
-			TEXTAREA.write(fw1);
-			fw1.close();
-			System.out.println(file);
-			tmp = file + "";
-			if (tmp.length() > 50)
-			{
-				tmp = tmp.substring(0, 25) + "..." + tmp.substring(tmp.length()-25, tmp.length());
-			}
-			current.setText("File: " + tmp);
-			tmp = null;
-			TEXTAREA.requestFocus();
+			TEXTAREA.setLineWrap(getConfig("LineWrap").equals("true"));
 		}
 		catch (Exception ex)
 		{
-			JOptionPane.showMessageDialog(null, "Cannot save file!\nException message\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			TEXTAREA.setLineWrap(true);
 		}
-	} 
-	
-	public void Openfile()
-	{
+		//wrap, word
 		try
 		{
-			TEXTAREA.setText(null);
-			str = null;
-			BufferedReader br1 = new BufferedReader(new FileReader(file));
-			while ((str = br1.readLine()) != null)
-			{
-				TEXTAREA.append(str);
-				TEXTAREA.append("\n");
-			}
-			br1.close();
-			TEXTAREA.setCaretPosition(0);
-			tmp = file + "";
-			if (tmp.length() > 50)
-			{
-				tmp = tmp.substring(0, 25) + "..." + tmp.substring(tmp.length()-25, tmp.length());
-			}
-			current.setText("File: " + tmp);
-			tmp = null;
-			str = null;
-			TEXTAREA.requestFocus();
+			TEXTAREA.setWrapStyleWord(getConfig("WrapStyleWord").equals("true"));
 		}
 		catch (Exception ex)
 		{
-			JOptionPane.showMessageDialog(null, "Cannot open file!\nException message:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			TEXTAREA.setWrapStyleWord(true);
 		}
-	}
-	
-	public void Newfile()
-	{
-		TEXTAREA.setText(null);
-		file = null;
-		str = null;
-		current.setText(" ");
-		for (i=0; i<=9; i++)
+		//tab size
+		try
 		{
-			backup[i] = "";
+			TEXTAREA.setTabSize(Integer.parseInt(getConfig("TabSize")));
 		}
-		currentstring = 0;
-		wordamended = 0;
+		catch (Exception ex)
+		{
+			TEXTAREA.setTabSize(4);
+		}
+		//selection color
+		try
+		{
+			TEXTAREA.setSelectionColor(new Color(Byte.parseByte(getConfig("SelectionColor.r")), Byte.parseByte(getConfig("SelectionColor.g")), Byte.parseByte(getConfig("SelectionColor.b"))));
+		}
+		catch (Exception ex)
+		{
+			TEXTAREA.setSelectionColor(new Color(244,223,255));
+		}
 	}
 	
-	public void SaveChooser()
+	class MyButton extends JButton
 	{
-		chooser.addChoosableFileFilter(filter1[0]);
-		chooser.addChoosableFileFilter(filter1[1]);
-		chooser.addChoosableFileFilter(filter1[2]);
-		chooser.addChoosableFileFilter(filter1[3]);
-		chooser.setFileFilter(filter1[0]);
-		chooser.setCurrentDirectory(chooserdefault);
-		chooser.setDialogTitle("Choose save location:");
-		chooser.setFileHidingEnabled(false);
-		//added:
-		chooser.setDialogType(JFileChooser.SAVE_DIALOG);
-		//
-		chooser.setApproveButtonText("Save");
+		public MyButton(String str, int x)
+		{
+			super(str);
+			this.setBackground(Color.WHITE);
+			this.setForeground(new Color(120,77,26));
+			this.setPreferredSize(new Dimension(60,30));
+			this.setFocusable(false);
+			this.setFont(f13);
+			this.setBorder(new LineBorder(Color.BLACK, 1));
+			this.addMouseListener(new MyListener(x));
+		}
+	}
+	
+	class MyLabel extends JLabel
+	{
+		public MyLabel(String str)
+		{
+			super(str);
+			this.setFont(f13);
+		}
+	}
+	
+	class MyMenu extends JMenu
+	{
+		public MyMenu(String str)
+		{
+			super(str);
+			this.setFont(f13);
+			this.setBackground(Color.WHITE);
+			this.setForeground(Color.BLACK);
+			menubar.add(new JLabel(" "));
+			menubar.add(this);
+		}
+	}
+	
+	class MyMenuItem extends JMenuItem
+	{
+		public MyMenuItem(String str, int x)
+		{
+			super(str);
+			this.setFont(f13);
+			this.setBackground(Color.WHITE);
+			this.setForeground(Color.BLACK);
+			this.addMouseListener(new MyListener(x));
+		}
+	}
+	
+	class MyListener extends MouseAdapter
+	{
+		private int x;
+		private boolean isOnNew = false;
+		public MyListener(int x)
+		{
+			this.x = x;
+		}
 		
-		//returnvalue = chooser.showSaveDialog(null);
-		returnvalue = chooser.showSaveDialog(null);
-		chooserdefault = chooser.getCurrentDirectory();
-		if (returnvalue == chooser.APPROVE_OPTION) 
+		public void cannotEdit()
 		{
-			file = chooser.getSelectedFile();
-			
-			if (file.exists())
-			{	
-				Object[] options2 = {"YES", "NO"};
-				confirmvalue = JOptionPane.showOptionDialog(null, "Replace existing file?", "Replace?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options2, options2[1]);
-				if (confirmvalue == JOptionPane.YES_OPTION)
+			JOptionPane.showMessageDialog(w, "Editing the text is DISABLED!\nPlease enable editing!", "Error", JOptionPane.WARNING_MESSAGE);
+		}
+		
+		public void cannotOpen(Throwable ex)
+		{
+			JOptionPane.showMessageDialog(w, "Cannot open file!\nError message: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		}
+		
+		public int isOverride()
+		{
+			return JOptionPane.showConfirmDialog(w, "Override old file?", "Warning", JOptionPane.WARNING_MESSAGE);
+		}
+		
+		public String toInvertCase(String str)
+		{
+			char c;
+			char[] chars = str.toCharArray();
+			for (i=0; i<chars.length; i++)
+			{
+				c = chars[i];
+				if (Character.isUpperCase(c))
 				{
-					Savefile();
+					chars[i] = Character.toLowerCase(c);
+				}
+				else if (Character.isLowerCase(c))
+				{
+					chars[i] = Character.toUpperCase(c);
 				}
 			}
-			if (!file.exists())
+			return new String(chars);
+		}
+		
+		public String toLetter(int a)
+		{
+			switch (a)
 			{
-				try
+				case 1: return "a";
+				case 2: return "b";
+				case 3: return "c";
+				case 4: return "d";
+				case 5: return "e";
+				case 6: return "f";
+				case 7: return "g";
+				case 8: return "h";
+				case 9: return "i";
+				case 10: return "j";
+				case 11: return "k";
+				case 12: return "l";
+				case 13: return "m";
+				case 14: return "n";
+				case 15: return "o";
+				case 16: return "p";
+				case 17: return "q";
+				case 18: return "r";
+				case 19: return "s";
+				case 20: return "t";
+				case 21: return "u";
+				case 22: return "v";
+				case 23: return "w";
+				case 24: return "x";
+				case 25: return "y";
+				default:
+				case 26: return "z";
+			}
+		}
+		
+		public String toLetter2(int a)
+		{
+			return ("abcdefghijklmnopqrstuvwxyz").substring(i-1, i);
+		}
+		
+		@Override
+		public void mouseExited(MouseEvent ev)
+		{
+			if (x == -1)
+			{
+				isOnNew = false;
+				((MyButton)(ev.getSource())).setText("New");
+			}
+		}
+		
+		@Override
+		public void mouseReleased(MouseEvent ev)		
+		{
+			outswitch:
+			switch (x)
+			{
+				case -1:
+				case 1: //new file
+				if (isOnNew)
 				{
-					if ((!(file + "").contains("."))&&(Boolean.parseBoolean(getConfig("AutoAddTxt"))))
+					currentFile.setText(" ");
+					file = null;
+					TEXTAREA.setText("");
+					isOnNew = false;
+				}
+				else
+				{
+					if (ev.getSource() instanceof MyButton)
 					{
-						file = new File(file + ".txt");
-					}
-					PrintWriter pw1 = new PrintWriter(file, "UTF-8");
-					pw1.close();
-				}
-				catch (Exception ex)
-				{
-				}
-				Savefile();
-			}
-		}
-	}
-	
-	public void OpenChooser()
-	{
-		chooser.addChoosableFileFilter(filter1[0]);
-		chooser.addChoosableFileFilter(filter1[1]);
-		chooser.addChoosableFileFilter(filter1[2]);
-		chooser.addChoosableFileFilter(filter1[3]);
-		chooser.setFileFilter(filter1[0]);
-		chooser.setCurrentDirectory(chooserdefault);
-		chooser.setDialogTitle("Choose file location:");
-		chooser.setFileHidingEnabled(false);
-		chooser.setDialogType(JFileChooser.OPEN_DIALOG);
-		chooser.setApproveButtonText("Choose");				
-		
-		returnvalue = chooser.showOpenDialog(null);
-		chooserdefault = chooser.getCurrentDirectory();
-		if (returnvalue == chooser.APPROVE_OPTION) 
-		{
-			file = chooser.getSelectedFile();
-			Openfile();
-		}
-	}
-	
-	public void SearchWord()
-	{
-		i = 0;
-		timematch = 0;
-		uim.put("OptionPane.okButtonText", "Find");
-		uim.put("OptionPane.cancelButtonText", "Cancel");
-		tmp = JOptionPane.showInputDialog(null, "Enter the word(s) you want to find:");
-		if (tmp != null)
-		{
-			for (i=i; i<=TEXTAREA.getText().length()-tmp.length(); i++)
-			{
-				if ((TEXTAREA.getText()).substring(i, i+tmp.length()).compareTo(tmp) == 0)
-				{
-					TEXTAREA.setSelectionStart(i);
-					TEXTAREA.setSelectionEnd(i+tmp.length());
-					timematch++;
-					tmp = JOptionPane.showInputDialog(null, "Enter the word(s) you want to find:", tmp) + "";
-					if (tmp.compareTo("null") != 0)
-					{
-						continue;
+						((MyButton)(ev.getSource())).setText("Really?");
+						isOnNew = true;
 					}
 					else
 					{
-						uim.put("OptionPane.okButtonText", "OK");
-						uim.put("OptionPane.cancelButtonText", "NO");
-						break;
+						currentFile.setText(" ");
+						file = null;
+						TEXTAREA.setText("");
+						isOnNew = false;
 					}
 				}
-			}
-			uim.put("OptionPane.okButtonText", "OK");
-			if (timematch == 1)
-			{
-				tmp = "Aborted or reached the end of the file! 1 result.";
-			}
-			else if (timematch == 0)
-			{
-				tmp = "Aborted or reached the end of the file! NO result.";
-			}
-			else
-			{
-				tmp = "Aborted or reached the end of the file! " + timematch + " results.";
-			}
-			JOptionPane.showMessageDialog(null, tmp, "End", JOptionPane.WARNING_MESSAGE);
-		}
-		tmp = null;
-		uim.put("OptionPane.okButtonText", "OK");
-		uim.put("OptionPane.cancelButtonText", "NO");
-	}
-	
-	public void ReplaceWord()
-	{
-		i = 0;
-		timematch = 0;
-		uim.put("OptionPane.okButtonText", "Enter");
-		uim.put("OptionPane.cancelButtonText", "Cancel");
-		tmp = JOptionPane.showInputDialog(null, "Enter the word(s) you want to be replaced:");
-		if (tmp != null)
-		{
-			tmp1 = JOptionPane.showInputDialog(null, "Enter the new word(s):");
-			if (tmp1 != null)
-			{
-				for (i=i; i<=TEXTAREA.getText().length()-tmp.length(); i++)
-				{
-					if ((TEXTAREA.getText()).substring(i, i+tmp.length()).compareTo(tmp) == 0)
-					{
-						TEXTAREA.setSelectionStart(i);
-						TEXTAREA.setSelectionEnd(i+tmp.length());
-						TEXTAREA.replaceSelection(tmp1);
-						i+=tmp1.length();
-						timematch++;
-					}
-				}
-				uim.put("OptionPane.okButtonText", "OK");
-				if (timematch == 1)
-				{
-					tmp = "One word replaced!";
-				}
-				else if (timematch == 0)
-				{
-					tmp = "NO word replaced!.";
-				}
-				else
-				{
-					tmp = timematch + " word replaced!";
-				}
-				JOptionPane.showMessageDialog(null, tmp, "End", JOptionPane.WARNING_MESSAGE);
-			}
-		}
-		tmp = null;
-		tmp1 = null;
-		uim.put("OptionPane.okButtonText", "OK");
-		uim.put("OptionPane.cancelButtonText", "NO");
-	}
-
-	public void SwitchBackup()
-	{
-		for (i=9; i>=2; i--)
-		{
-			backup[i] = backup[i-1];
-		}
-		backup[1] = TEXTAREA.getText();
-		wordamended = 0;
-	}
-	
-	public void InsertKeyWord(Object[] options)
-	{
-		uim.put("OptionPane.cancelButtonText", "Cancel");
-		uim.put("ComboBox.font", J1);
-		tmp = (String)JOptionPane.showInputDialog(null, "Choose the key words you want to insert:", "Insert key words", JOptionPane.INFORMATION_MESSAGE, null, options, options[0]); 
-		uim.put("OptionPane.cancelButtonText", "NO");
-		if (tmp != null)
-		{
-			SwitchBackup();
-			TEXTAREA.insert(tmp, TEXTAREA.getCaretPosition());
-			TEXTAREA.requestFocus();
-		}
-	}
-	
-	public void CannotParseInt()
-	{
-		JOptionPane.showMessageDialog(null, "Please enter a positive integer!", "Error", JOptionPane.ERROR_MESSAGE);
-	}
-	
-	public String NumberToLetter(long a)
-	{
-		if (a == 1)
-		{
-			return "a";
-		}
-		if (a == 2)
-		{
-			return "b";
-		}
-		if (a == 3)
-		{
-			return "c";
-		}
-		if (a == 4)
-		{
-			return "d";
-		}
-		if (a == 5)
-		{
-			return "e";
-		}
-		if (a == 6)
-		{
-			return "f";
-		}
-		if (a == 7)
-		{
-			return "g";
-		}
-		if (a == 8)
-		{
-			return "h";
-		}
-		if (a == 9)
-		{
-			return "i";
-		}
-		if (a == 10)
-		{
-			return "j";
-		}
-		if (a == 11)
-		{
-			return "k";
-		}
-		if (a == 12)
-		{
-			return "l";
-		}
-		if (a == 13)
-		{
-			return "m";
-		}
-		if (a == 14)
-		{
-			return "n";
-		}
-		if (a == 15)
-		{
-			return "o";
-		}
-		if (a == 16)
-		{
-			return "p";
-		}
-		if (a == 17)
-		{
-			return "q";
-		}
-		if (a == 18)
-		{
-			return "r";
-		}
-		if (a == 19)
-		{
-			return "s";
-		}
-		if (a == 20)
-		{
-			return "t";
-		}
-		if (a == 21)
-		{
-			return "u";
-		}
-		if (a == 22)
-		{
-			return "v";
-		}
-		if (a == 23)
-		{
-			return "w";
-		}
-		if (a == 24)
-		{
-			return "x";
-		}
-		if (a == 25)
-		{
-			return "y";
-		}
-		else
-		{
-			return "z";
-		}
-	}
-	
-	public void ShowNotEditable(String str)
-	{
-		JOptionPane.showMessageDialog(null, "Editing the text is DISABLED!\nPlease enable editing before " + str, "NOT Editable", JOptionPane.WARNING_MESSAGE);
-	}
-	
-	public String UC(String str)
-	{
-		str = str.replace("a", "A");
-		str = str.replace("b", "B");
-		str = str.replace("c", "C");
-		str = str.replace("d", "D");
-		str = str.replace("e", "E");
-		str = str.replace("f", "F");
-		str = str.replace("g", "G");
-		str = str.replace("h", "H");
-		str = str.replace("i", "I");
-		str = str.replace("j", "J");
-		str = str.replace("k", "K");
-		str = str.replace("l", "L");
-		str = str.replace("m", "M");
-		str = str.replace("n", "N");
-		str = str.replace("o", "O");
-		str = str.replace("p", "P");
-		str = str.replace("q", "Q");
-		str = str.replace("r", "R");
-		str = str.replace("s", "S");
-		str = str.replace("t", "T");
-		str = str.replace("u", "U");
-		str = str.replace("v", "V");
-		str = str.replace("w", "W");
-		str = str.replace("x", "X");
-		str = str.replace("y", "Y");
-		str = str.replace("z", "Z");
-		return str;
-	}
-	
-	public String LC(String str)
-	{
-		str = str.replace("A", "a");
-		str = str.replace("B", "b");
-		str = str.replace("C", "c");
-		str = str.replace("D", "d");
-		str = str.replace("E", "e");
-		str = str.replace("F", "f");
-		str = str.replace("G", "g");
-		str = str.replace("H", "h");
-		str = str.replace("I", "i");
-		str = str.replace("J", "j");
-		str = str.replace("K", "k");
-		str = str.replace("L", "l");
-		str = str.replace("M", "m");
-		str = str.replace("N", "n");
-		str = str.replace("O", "o");
-		str = str.replace("P", "p");
-		str = str.replace("Q", "q");
-		str = str.replace("R", "r");
-		str = str.replace("S", "s");
-		str = str.replace("T", "t");
-		str = str.replace("U", "u");
-		str = str.replace("V", "v");
-		str = str.replace("W", "w");
-		str = str.replace("X", "x");
-		str = str.replace("Y", "y");
-		str = str.replace("Z", "x");
-		return str;
-	}
-	
-	public String IC(String str)
-	{
-		tmp1 = "";
-		for (i=0; i<str.length(); i++)
-		{
-			char TMP_C = str.charAt(i);
-			if (Character.isUpperCase(TMP_C))
-			{
-				tmp1 = tmp1 + LC(TMP_C + "");
-				System.out.println("Convert to lowercase: " + tmp1);
-			}
-			else if (Character.isLowerCase(TMP_C))
-			{
-				tmp1 = tmp1 + UC(TMP_C + "");
-				System.out.println("Convert to uppercase: " + tmp1);
-			}
-			else
-			{
-				tmp1 = tmp1 + TMP_C;
-				System.out.println("No conversion: " + tmp1);
-			}	
-		}
-		return tmp1;
-	}
-	
-	class MouseLis extends MouseAdapter
-	{
-		int select;
-		public MouseLis(int select)
-		{
-			this.select = select;
-		}		
-		
-		public void mouseExited(MouseEvent e)
-		{
-			switch (select)
-			{
-				case 4:
-				newfile.setText("New");
-				ready = false;
 				break;
 				
-				case 2:
-				save.setText("Save");
-				break;
-			}
-		}
-		
-		public void mouseReleased(MouseEvent e)
-		{
-			switch (select)
-			{
-				case 2:
-				if (file == null)
+				case 2: //open file
+				TMP1 = getConfig("ChooserStyle");
+				if (TMP1 == null)
 				{
+					TMP1 = "Java";
 				}
-				else
+				if (TMP1.equals("Java"))
 				{
-					Savefile();
-					save.setText("Saved");
+					chooser = JavaChooser;
+				}
+				else if (TMP1.equals("Windows"))
+				{
+					chooser = WindowsChooser;
+				}
+				switch (TMP1)
+				{
+					case "Java":					
+					case "Windows":
+					i = chooser.showOpenDialog(w);
+					if (i == JFileChooser.APPROVE_OPTION)
+					{
+						try
+						{
+							openToTextArea(chooser.getSelectedFile());
+						}
+						catch (IOException ex)
+						{
+							cannotOpen(ex);
+						}
+					}
+					break;
+										
+					case "Beta":
+					try
+					{
+						File[] f_a = FileChooser.showFileChooser(new File(getSettingsFilePath()));
+						if (f_a == null) break outswitch;
+						openToTextArea(f_a[0]);
+					}
+					catch (Exception ex)
+					{
+						cannotOpen(ex);
+					}
 					break;
 				}
-				
-				case 1:
-				SaveChooser();
 				break;
 				
-				case 3:
-				OpenChooser();
-				break;
-				
-				case 4:
-				if (ready)
+				case 3: //open quick
+				TMP1 = JOptionPane.showInputDialog(w, "Please enter the path:", "Input", JOptionPane.QUESTION_MESSAGE);
+				if ((TMP1 != null)&&(!TMP1.isEmpty()))
 				{
-					Newfile();
-					newfile.setText("New");
-					ready = false;
+					try
+					{
+						openToTextArea(new File(TMP1));
+					}
+					catch (Exception ex)
+					{
+						cannotOpen(ex);
+					}
+				}
+				break;
+				 
+				case 4: //save as
+				File f1 = null;
+				boolean save1 = false;
+				try
+				{
+					TMP1 = getConfig("ChooserStyle");
+					if (TMP1 == null) throw new Exception();
+				}
+				catch (Throwable ex)
+				{
+					TMP1 = "Java";
+				}
+				if (TMP1.equals("Beta"))
+				{
+					outdo1:
+					do
+					{
+						File[] f_a = FileChooser.showFileChooser(new File(getSettingsFilePath()));
+						if (f_a == null) break outswitch;
+						f1 = f_a[0];
+						if (f1 != null)
+						{
+							if (f1.exists())
+							{
+								save1 = (isOverride() == JOptionPane.YES_OPTION);
+							}
+							else break outdo1;
+						}
+						else break outswitch;
+					} while (!save1);
 				}
 				else
 				{
-					newfile.setText("Really?");
-					ready = true;
+					if (TMP1.equals("Java"))
+					{
+						chooser = JavaChooser;
+					}
+					else
+					{
+						chooser = WindowsChooser;
+					}
+					outdo2:
+					do
+					{
+						i = chooser.showSaveDialog(w);
+						if (i == JFileChooser.APPROVE_OPTION)
+						{
+							f1 = chooser.getSelectedFile();
+							if (f1.exists())
+							{
+								save1 = (isOverride() == JOptionPane.YES_OPTION);
+							}
+							else break outdo2;
+						}
+						else break outswitch;
+					} while (!save1);
+				}
+				TMP1 = f1.getPath();
+				if (!TMP1.contains("."))
+				{
+					f1 = new File(TMP1 + ".txt");
+				}
+				try
+				{
+					save(f1);
+				}
+				catch (IOException ex)
+				{
 				}
 				break;
 				
-				case 5:
-				WriteConfig("LineWrap", TEXTAREA.getLineWrap() + "");
-				WriteConfig("WrapByWord", TEXTAREA.getWrapStyleWord() + "");
-				WriteConfig("Editing", TEXTAREA.isEditable() + "");
-				/*WriteConfig("Size.x", w.getSize().getWidth() + "");
-				WriteConfig("Size.y", w.getSize().getHeight() + "");
-				WriteConfig("Location.x", w.getLocation().getX() + "");
-				WriteConfig("Location.y", w.getLocation().getY() + "");*/
-				WriteSize();
-				System.exit(0);
+				case 5: //save
+				File f2 = null;
+				boolean save2 = false;				
+				if (file == null)
+				{
+					try
+					{
+						TMP1 = getConfig("ChooserStyle");
+						if (TMP1 == null) throw new Exception();
+					}
+					catch (Throwable ex)
+					{
+						TMP1 = "Java";
+					}
+					
+					if (TMP1.equals("Beta"))
+					{
+						outdo3:
+						do
+						{
+							File[] f_a = FileChooser.showFileChooser(new File(getSettingsFilePath()));
+							if (f_a == null) break outswitch;
+							f2 = f_a[0];
+							if (f2 != null)
+							{
+								if (f2.exists())
+								{
+									save1 = (isOverride() == JOptionPane.YES_OPTION);
+								}
+								else break outdo3;
+							}
+							else break outswitch;
+						} while (!save2);
+					}
+					else
+					{
+						if (TMP1.equals("Java"))
+						{
+							chooser = JavaChooser;
+						}
+						else
+						{
+							chooser = WindowsChooser;
+						}				
+						outdo4:
+						do
+						{
+							i = chooser.showSaveDialog(w);
+							if (i == JFileChooser.APPROVE_OPTION)
+							{
+								f2 = chooser.getSelectedFile();
+								if (f2.exists())
+								{
+									save2 = (isOverride() == JOptionPane.YES_OPTION);
+								}
+								else break outdo4;
+							}
+							else break outswitch;
+						} while (!save2);
+					}
+				}
+				else
+				{
+					f2 = file;
+				}
+				try
+				{
+					save(f2);
+				}
+				catch (IOException ex)
+				{
+				}
 				break;
 				
-				case 6:
-				Newfile();
+				case 6: //close
+				w.dispatchEvent(new WindowEvent(w, WindowEvent.WINDOW_CLOSING));
 				break;
 				
-				case 7:
+				case 7: //undo
+				if (TEXTAREA.isEditable())
+				{
+					if (undoManager.getPosition() == 0)
+					{
+						undoManager.setInitial(TEXTAREA.getText());
+					}
+					TMP1 = undoManager.undo();
+					if (TMP1 != null)
+					{
+						TEXTAREA.setText(TMP1);
+					}
+				}
+				else
+				{
+					cannotEdit();
+				}
+				break;
+				
+				case 8: //redo
+				if (TEXTAREA.isEditable())
+				{
+					TMP1 = undoManager.redo();
+					if (TMP1 != null)
+					{
+						TEXTAREA.setText(TMP1);
+					}
+				}
+				else
+				{
+					cannotEdit();
+				}
+				break;
+				
+				case 9: //select all
+				TEXTAREA.selectAll();
+				break;
+				
+				case 10: //select all and copy
+				TEXTAREA.selectAll();
+				clipbrd.setContents(new StringSelection(TEXTAREA.getText()), null);
+				break;
+				
+				case 11: //cut
+				if (TEXTAREA.isEditable())
+				{
+					undoManager.backup(TEXTAREA.getText());
+					clipbrd.setContents(new StringSelection(TEXTAREA.getSelectedText()), null);
+					TEXTAREA.replaceSelection(null);
+				}
+				else
+				{
+					cannotEdit();
+				}
+				break;
+				
+				case 12: //copy
+				if (TEXTAREA.isEditable())
+				{
+					clipbrd.setContents(new StringSelection(TEXTAREA.getSelectedText()), null);
+				}
+				else
+				{
+					cannotEdit();
+				}
+				break;
+				
+				case 13: //paste
+				if (TEXTAREA.isEditable())
+				{
+					try
+					{
+						TMP1 = clipbrd.getData(DataFlavor.stringFlavor).toString();
+					}
+					catch (Exception ex)
+					{
+						break;
+					}
+					undoManager.backup(TEXTAREA.getText());
+					TEXTAREA.insert(TMP1, TEXTAREA.getCaretPosition());
+				}
+				else
+				{
+					cannotEdit();
+				}
+				break;
+				
+				case 14: //paste on next line
+				if (TEXTAREA.isEditable())
+				{
+					try
+					{
+						TMP1 = clipbrd.getData(DataFlavor.stringFlavor).toString();
+					}
+					catch (Exception ex)
+					{
+						break;
+					}
+					undoManager.backup(TEXTAREA.getText());
+					TEXTAREA.insert("\n" + TMP1, TEXTAREA.getCaretPosition());
+				}
+				else
+				{
+					cannotEdit();
+				}
+				break;
+				
+				case 15: //delete
+				TEXTAREA.replaceSelection(null);
+				break;
+				
+				case 16: //about RefluxEdit
+				JOptionPane.showMessageDialog(w, "RefluxEdit " + VERSION_NO + " -- a lightweight plain text editor written in Java.\nBy tony200910041, http://tony200910041.wordpress.com\nDistributed under MPL 2.0.", "About RefluxEdit " + VERSION_NO, JOptionPane.INFORMATION_MESSAGE);
+				break;
+				
+				case 17: //editing
 				if (TEXTAREA.isEditable())
 				{
 					TEXTAREA.setEditable(false);
-					TEXTAREA.setBackground(new Color(245,245,245));
+					TEXTAREA.setBackground(new Color(230,230,230));
+					writeConfig("isEditable", "false");
 				}
 				else
 				{
 					TEXTAREA.setEditable(true);
 					TEXTAREA.setBackground(Color.WHITE);
+					writeConfig("isEditable", "true");
 				}
 				break;
 				
-				case 8:
-				if (TEXTAREA.getLineWrap())
+				case 18: //wrap option
+				JDialog wrap = new JDialog();
+				wrap.setModal(true);
+				wrap.setTitle("Wrap option");
+				wrap.setSize(300,80);
+				wrap.setLocationRelativeTo(w);
+				wrap.getContentPane().setBackground(Color.WHITE);
+				MyRadioButton lineWrap = new MyRadioButton("Line Wrap", TEXTAREA.getLineWrap(), 0);
+				MyRadioButton wrapStyleWord = new MyRadioButton("Wrap by word", TEXTAREA.getWrapStyleWord(), 0);
+				wrap.setLayout(new FlowLayout());
+				wrap.add(lineWrap);
+				wrap.add(wrapStyleWord);
+				wrap.setVisible(true);				
+				boolean isWrap = lineWrap.isSelected();
+				boolean isWrapStyleWord = wrapStyleWord.isSelected();
+				writeConfig("LineWrap", isWrap + "");
+				writeConfig("WrapStyleWord", isWrapStyleWord + "");
+				TEXTAREA.setLineWrap(isWrap);
+				TEXTAREA.setWrapStyleWord(isWrapStyleWord);
+				wrap.dispose();
+				break;
+				
+				case 19: //encoding
+				JDialog encoding = new JDialog();
+				encoding.setModal(true);
+				encoding.setTitle("Encoding option");
+				encoding.setSize(300,150);
+				encoding.setLocationRelativeTo(w);
+				encoding.getContentPane().setBackground(Color.WHITE);
+				boolean _default = false;
+				boolean ISO88591 = false;
+				boolean UTF8 = false;
+				boolean UTF16 = false;
+				try
 				{
-					TEXTAREA.setLineWrap(false);
+					TMP1 = getConfig("Encoding");
+					if (TMP1 == null) throw new Exception();
 				}
-				else
+				catch (Exception ex)
 				{
-					TEXTAREA.setLineWrap(true);
+					TMP1 = "default";
 				}
-				break;
-				
-				case 9:
-				JOptionPane.showConfirmDialog(null, "RefluxEdit 1.2 is a very small text editor written in Java.\nBy tony200910041\nhttp://tony200910041.wordpress.com\nDistributed under MPL2.0.", "About RefluxEdit", JOptionPane.PLAIN_MESSAGE);
-				break;
-				
-				//Select all
-				case 10:
-				TEXTAREA.selectAll();
-				break;
-				
-				//Select all and copy
-				case 11:
-				TEXTAREA.selectAll();
-				systemclipboard.setContents(new StringSelection(TEXTAREA.getText()), null);
-				break;
-				
-				//Copy
-				case 12:
-				if (TEXTAREA.getSelectedText() != null)
+				finally
 				{
-					systemclipboard.setContents(new StringSelection(TEXTAREA.getSelectedText()), null);
-				}
-				break;
-				
-				//Paste
-				case 13:
-				if (TEXTAREA.isEditable())
-				{
-					tmp2 = systemclipboard.getContents(this);
-					try
+					switch (TMP1)
 					{
-						SwitchBackup();
-						TEXTAREA.insert(tmp2.getTransferData(DataFlavor.stringFlavor) + "", TEXTAREA.getCaretPosition());
-						TEXTAREA.requestFocus();
-					}
-					catch (Exception ex)
-					{
-					}
-				}
-				else
-				{
-					ShowNotEditable("pasting word(s)");
-				}
-				break;
-				
-				//Cut
-				case 14:
-				if ((TEXTAREA.getSelectedText() != null)&&(TEXTAREA.isEditable()))
-				{
-					SwitchBackup();
-					systemclipboard.setContents(new StringSelection(TEXTAREA.getSelectedText()), null);
-					TEXTAREA.replaceSelection(null);
-				}
-				else if (!TEXTAREA.isEditable())
-				{
-					ShowNotEditable("cutting word(s)!");
-				}
-				break;
-				
-				//Paste on next line
-				case 15:
-				if (TEXTAREA.isEditable())
-				{
-					tmp2 = systemclipboard.getContents(this);
-					try
-					{
-						SwitchBackup();
-						TEXTAREA.insert("\n" + tmp2.getTransferData(DataFlavor.stringFlavor) + "", TEXTAREA.getCaretPosition());
-						TEXTAREA.requestFocus();
-					}
-					catch (Exception ex)
-					{
+						case "default":
+						_default = true;
+						break;
+						
+						case "ISO-8859-1":
+						ISO88591 = true;
+						break;
+						
+						case "UTF-8":
+						UTF8 = true;
+						break;
+						
+						case "UTF-16":
+						UTF16 = true;
+						break;
 					}
 				}
+				final MyRadioButton isDefault = new MyRadioButton("Use default Java encoding", _default, 1);
+				final MyRadioButton isISO88591 = new MyRadioButton("Use ISO-8859-1 (beta)", ISO88591, 2);
+				final MyRadioButton isUTF8 = new MyRadioButton("Use UTF-8 (beta)", UTF8, 3);
+				final MyRadioButton isUTF16 = new MyRadioButton("Use UTF-16BE (beta)", UTF16, 4);
+				
+				isDefault.addActionListener(new ActionListener()
+				{
+					public void actionPerformed(ActionEvent ev)
+					{
+						switch (((MyRadioButton)(ev.getSource())).getIndex())
+						{
+							case 1:
+							isDefault.setSelected(true);
+							isISO88591.setSelected(false);
+							isUTF8.setSelected(false);
+							isUTF16.setSelected(false);
+							TMP1 = "default";
+							break;
+							
+							case 2:
+							isDefault.setSelected(false);
+							isISO88591.setSelected(true);
+							isUTF8.setSelected(false);
+							isUTF16.setSelected(false);
+							TMP1 = "ISO-8859-1";
+							break;
+							
+							case 3:
+							isDefault.setSelected(false);
+							isISO88591.setSelected(false);
+							isUTF8.setSelected(true);
+							isUTF16.setSelected(false);
+							TMP1 = "UTF-8";
+							break;
+							
+							case 4:
+							isDefault.setSelected(false);
+							isISO88591.setSelected(false);
+							isUTF8.setSelected(false);
+							isUTF16.setSelected(true);
+							TMP1 = "UTF-16";
+							break;
+						}
+					}
+				});
+				ActionListener listener1 = isDefault.getActionListeners()[0];
+				isISO88591.addActionListener(listener1);
+				isUTF8.addActionListener(listener1);
+				isUTF16.addActionListener(listener1);		
+				encoding.setLayout(new GridLayout(4,1,0,0));
+				encoding.add(isDefault);
+				encoding.add(isISO88591);
+				encoding.add(isUTF8);
+				encoding.add(isUTF16);				
+				encoding.setVisible(true);				
+				writeConfig("Encoding", TMP1);
+				break;
+				
+				case 20: //file chooser
+				JDialog chooserOption = new JDialog();
+				chooserOption.setModal(true);
+				chooserOption.setTitle("Encoding option");
+				chooserOption.setSize(300,120);
+				chooserOption.setLocationRelativeTo(w);
+				chooserOption.getContentPane().setBackground(Color.WHITE);
+				boolean Java = false;
+				boolean Windows = false;
+				boolean Beta = false;
+				try
+				{
+					TMP1 = getConfig("ChooserStyle");
+					if (TMP1 == null) throw new Exception();
+				}
+				catch (Exception ex)
+				{
+					TMP1 = "Java";
+				}
+				finally
+				{
+					switch (TMP1)
+					{
+						case "Java":
+						Java = true;
+						break;
+						
+						case "Windows":
+						Windows = true;
+						break;
+						
+						case "Beta":
+						Beta = true;
+						break;
+					}					
+				}
+				final MyRadioButton isJava = new MyRadioButton("Use Java JFileChooser", Java, 1);
+				final MyRadioButton isWindows = new MyRadioButton("Use Windows LAF chooser", Windows, 2);
+				final MyRadioButton isBeta = new MyRadioButton("Use beta chooser", Beta, 3);
+				isJava.addActionListener(new ActionListener()
+				{
+					public void actionPerformed(ActionEvent ev)
+					{
+						switch (((MyRadioButton)(ev.getSource())).getIndex())
+						{
+							case 1:
+							isJava.setSelected(true);
+							isWindows.setSelected(false);
+							isBeta.setSelected(false);
+							TMP1 = "Java";
+							break;
+							
+							case 2:
+							isJava.setSelected(false);
+							isWindows.setSelected(true);
+							isBeta.setSelected(false);
+							TMP1 = "Windows";
+							break;
+							
+							case 3:
+							isJava.setSelected(false);
+							isWindows.setSelected(false);
+							isBeta.setSelected(true);
+							TMP1 = "Beta";
+							break;
+						}
+					}
+				});
+				ActionListener listener2 = isJava.getActionListeners()[0];
+				isJava.addActionListener(listener2);
+				isWindows.addActionListener(listener2);
+				isBeta.addActionListener(listener2);		
+				chooserOption.setLayout(new GridLayout(3,1,0,0));
+				chooserOption.add(isJava);
+				chooserOption.add(isWindows);
+				chooserOption.add(isBeta);				
+				chooserOption.setVisible(true);				
+				writeConfig("ChooserStyle", TMP1);
+				break;
+				
+				case 21: //always on top
+				if (w.isAlwaysOnTop())
+				{
+					writeConfig("OnTop", "false");
+					w.setAlwaysOnTop(false);
+				}
 				else
 				{
-					ShowNotEditable("pasting word(s)");
+					writeConfig("OnTop", "true");
+					w.setAlwaysOnTop(true);
 				}
 				break;
 				
-				//Delete
-				case 16:
+				case 22: //word count
+				TMP1 = TEXTAREA.getText();
+				if ((i = TMP1.replace("\n", "").length()) == 0)
+				{
+					JOptionPane.showMessageDialog(w, "Number of words (separated by space): 0\nNumber of characters: 0\nNumber of rows: " + TEXTAREA.getLineCount(), "Word count", JOptionPane.INFORMATION_MESSAGE);
+				}
+				else
+				{
+					JOptionPane.showMessageDialog(w, "Number of words (separated by space): " + TMP1.split("\\s+").length + "\nNumber of characters: " + i + "\nNumber of rows: " + TEXTAREA.getLineCount(), "Word count", JOptionPane.INFORMATION_MESSAGE);
+				}
+				break;
+				
+				case 23: //search
+				TMP1 = null;
+				i = 0;
+				j = TEXTAREA.getText().length();
+				k = 0;
+				TMP1 = JOptionPane.showInputDialog(w, "Please enter the word you want to search:", "Search", JOptionPane.QUESTION_MESSAGE);
+				if ((TMP1 != null)&&(!TMP1.isEmpty())&&(TMP1.length() <= j))
+				{
+					for (i=0; i<=j-TMP1.length(); i++)
+					{
+						if (TEXTAREA.getText().substring(i, i+TMP1.length()).equals(TMP1))
+						{
+							TEXTAREA.setSelectionStart(i);
+							TEXTAREA.setSelectionEnd(i+TMP1.length());
+							k++;
+							JOptionPane.showMessageDialog(w, "Found: " + k + " result(s)", "Results", JOptionPane.INFORMATION_MESSAGE);
+						}
+					}
+					JOptionPane.showMessageDialog(w, "Done. " + k + " result(s) found.", "Results", JOptionPane.INFORMATION_MESSAGE);
+				}
+				break;
+				
+				case 24: //replace
+				case 25: //replace, selection
 				if (TEXTAREA.isEditable())
 				{
-					TEXTAREA.replaceSelection(null);
-					SwitchBackup();
+					final JDialog replace = new JDialog();
+					replace.setTitle("Replace");
+					replace.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+					replace.getContentPane().setBackground(Color.WHITE);
+					replace.setLayout(new GridLayout(3,1,0,0));
+					final JTextField wd1 = new JTextField(10);
+					wd1.setFont(f13);
+					final JTextField wd2 = new JTextField(10);
+					wd2.setFont(f13);
+					JPanel original = new JPanel();
+					original.setBackground(Color.WHITE);
+					original.add(new MyLabel("Original: "));
+					original.add(wd1);
+					replace.add(original);
+					JPanel replaced = new JPanel();
+					replaced.setBackground(Color.WHITE);
+					replaced.add(new MyLabel("Replaced by: "));
+					replaced.add(wd2);
+					replace.add(replaced);
+					JPanel panel_button = new JPanel();
+					panel_button.setBackground(Color.WHITE);
+					JButton button = new JButton("Start");
+					panel_button.add(button);
+					replace.add(panel_button);
+					button.setFont(f13);
+					button.setPreferredSize(new Dimension(60,30));
+					button.setBorder(new LineBorder(Color.BLACK, 1));
+					button.setFocusable(false);
+					button.addMouseListener(new MouseAdapter()
+					{
+						@Override
+						public void mouseReleased(MouseEvent ev)
+						{
+							TMP1 = wd1.getText();
+							TMP2 = wd2.getText();
+							if (x == 24)
+							{
+								TMP3 = TEXTAREA.getText();
+							}
+							else if (x == 25)
+							{
+								TMP3 = TEXTAREA.getSelectedText();
+							}
+							TMP4 = TEXTAREA.getText();						
+							replace.setVisible(false);
+							replace.dispose();
+							j = TMP1.length();
+							k = 0;
+							for (i=0; i<=TMP3.length()-j; i++)
+							{
+								if (TMP3.substring(i, i+j).equals(TMP1))
+								{
+									TMP3 = TMP3.substring(0, i) + TMP2 + TMP3.substring(i+j, TMP3.length());
+									k++;
+									i+=TMP2.length()-1;
+								}
+							}
+							if (k != 0)
+							{
+								undoManager.backup(TMP4);
+							}
+							if (x == 24)
+							{
+								TEXTAREA.setText(TMP3);
+							}
+							else if (x == 25)
+							{
+								TEXTAREA.replaceSelection(TMP3);
+							}
+							JOptionPane.showMessageDialog(w, k + " time(s) replaced.", "Replace", JOptionPane.INFORMATION_MESSAGE);
+						}
+					});
+					replace.pack();
+					replace.setLocationRelativeTo(w);
+					replace.setVisible(true);
 				}
 				else
 				{
-					ShowNotEditable("deleting word(s)");
+					cannotEdit();
 				}
 				break;
 				
-				//uppercase
-				case 17:
+				case 26: //upper case
 				if (TEXTAREA.isEditable())
 				{
-					SwitchBackup();
-					TEXTAREA.replaceSelection(UC(TEXTAREA.getSelectedText()));
+					undoManager.backup(TEXTAREA.getText());
+					TMP1 = TEXTAREA.getSelectedText();
+					if (TMP1 != null)
+					{
+						TEXTAREA.replaceSelection(TMP1.toUpperCase());
+					}
+					else
+					{
+						TEXTAREA.setText(TEXTAREA.getText().toUpperCase());
+					}
 				}
 				else
 				{
-					ShowNotEditable("case conversion!");
+					cannotEdit();
 				}
 				break;
 				
-				//lowercase
-				case 18:
+				case 27: //lower case
 				if (TEXTAREA.isEditable())
 				{
-					SwitchBackup();					
-					TEXTAREA.replaceSelection(LC(TEXTAREA.getSelectedText()));
+					undoManager.backup(TEXTAREA.getText());
+					TMP1 = TEXTAREA.getSelectedText();
+					if (TMP1 != null)
+					{
+						TEXTAREA.replaceSelection(TMP1.toLowerCase());
+					}
+					else
+					{
+						TEXTAREA.setText(TEXTAREA.getText().toLowerCase());
+					}
 				}
 				else
 				{
-					ShowNotEditable("case conversion!");
+					cannotEdit();
 				}
 				break;
 				
-				//search
-				case 19:
-				SearchWord();				
-				break;
-				
-				//replace
-				case 20:
+				case 28: //invert case
 				if (TEXTAREA.isEditable())
 				{
-					ReplaceWord();
+					undoManager.backup(TEXTAREA.getText());
+					TMP1 = TEXTAREA.getSelectedText();
+					if (TMP1 != null)
+					{
+						TEXTAREA.replaceSelection(toInvertCase(TMP1));
+					}
+					else
+					{
+						TEXTAREA.setText(toInvertCase(TEXTAREA.getText()));
+					}
 				}
 				else
 				{
-					ShowNotEditable("replacing word(s)!");
+					cannotEdit();
 				}
 				break;
 				
-				case 21:
-				if (TEXTAREA.getWrapStyleWord())
+				case 29: //tab size
+				JDialog tabSize = new JDialog();
+				tabSize.setTitle("Tab size");
+				tabSize.setModal(true);
+				tabSize.getContentPane().setBackground(Color.WHITE);
+				JSpinner spinnerTabSize = new JSpinner();
+				spinnerTabSize.setModel(new SpinnerNumberModel(TEXTAREA.getTabSize(), 1, 50, 1));
+				spinnerTabSize.setFont(f13);
+				tabSize.setLayout(new FlowLayout());
+				tabSize.add(new MyLabel("Tab size: "));
+				tabSize.add(spinnerTabSize);
+				tabSize.pack();
+				tabSize.setLocationRelativeTo(w);
+				tabSize.setVisible(true);
+				try
 				{
-					TEXTAREA.setWrapStyleWord(false);
+					i = Byte.parseByte(spinnerTabSize.getValue().toString());
 				}
-				else
+				catch (Exception ex)
 				{
-					TEXTAREA.setWrapStyleWord(true);
+					i = 4;
+				}
+				finally
+				{
+					TEXTAREA.setTabSize(i);
+					writeConfig("TabSize", i+"");
 				}
 				break;
 				
-				//insert 10 equal signs
-				case 22:
+				case 30: //10 equal signs
 				if (TEXTAREA.isEditable())
 				{
+					undoManager.backup(TEXTAREA.getText());
 					TEXTAREA.insert("\n==========\n", TEXTAREA.getCaretPosition());
 				}
 				else
 				{
-					ShowNotEditable("inserting characters!");
+					cannotEdit();
 				}
 				break;
 				
-				//insert four space
-				case 23:
+				case 31: //four spaces
 				if (TEXTAREA.isEditable())
 				{
+					undoManager.backup(TEXTAREA.getText());
 					TEXTAREA.insert("    ", TEXTAREA.getCaretPosition());
 				}
 				else
 				{
-					ShowNotEditable("inserting characters!");
+					cannotEdit();
 				}
 				break;
 				
-				//undo: 0: newest; 9: oldest
-				case 24:
+				case 32: //random word
 				if (TEXTAREA.isEditable())
 				{
-					if (currentstring == 0)
-					{
-						backup[0] = TEXTAREA.getText();
-					}
-					if (backup[currentstring+1] != "")
-					{
-						if (currentstring != 9)
-						{
-							currentstring++;
-							TEXTAREA.setText(backup[currentstring]);
-						}
-					}
-				}
-				else
-				{
-					ShowNotEditable("performing undo operation!");
-				}
-				break;
-				
-				//redo
-				case 25:
-				if (TEXTAREA.isEditable())
-				{
-					if (currentstring != 0)
-					{
-						currentstring--;
-						TEXTAREA.setText(backup[currentstring]);
-					}
-				}
-				else
-				{
-					ShowNotEditable("performing redo operation!");
-				}
-				break;
-				
-				//delete blank lines
-				case 26:
-				if (TEXTAREA.isEditable())
-				{
-					SwitchBackup();
-					str = "";
-					j = TEXTAREA.getLineCount();
-					for (i=j; i>=2; i--)
-					{
-						//i: the no of "\n"
-						for (k=1; k<=i; k++)
-						{
-							str = str + "\n";
-						}
-						TEXTAREA.setText(TEXTAREA.getText().replace(str, "\n"));
-						str = "";
-					}
-					str = null;
-				}
-				else
-				{
-					 ShowNotEditable("deleting blank line(s)!");
-				}
-				break;
-				
-				//Insert keywords (html):
-				case 27:
-				if (TEXTAREA.isEditable())
-				{
-					Object[] options1 = {"<a href=\"", "</a>", "<img alt=\"\" src=\"", "\n<br>\n", "target=\"_blank\""};
-					InsertKeyWord(options1);
-				}
-				else
-				{
-					ShowNotEditable("inserting characters!");
-				}
-				break;
-				
-				//Insert keywords (Java):
-				case 28:
-				if (TEXTAREA.isEditable())
-				{
-					Object[] options2 = {"Integer.parseInt(", "Double.parseDouble(", ".setText(", ".getText(", ".setBackground(", ".setForeground(", "getContentPane()", "JOptionPane.showMessageDialog(null, \"", "import java.awt.*;\nimport javax.swing.*;\n", ".addMouseListener(new MouseAdapter() {\n", "public void mouseReleased(MouseEvent ev) {\n", "public static void main(String[] args) {\n", ".setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);\n", ".setLocationRelativeTo(null);\n", ".setVisible(true);\n"};
-					InsertKeyWord(options2);
-				}
-				else
-				{
-					ShowNotEditable("inserting characters!");
-				}
-				break;
-				
-				//Generate random words
-				case 29:
-				if (TEXTAREA.isEditable())
-				{
-					uim.put("OptionPane.cancelButtonText", "Cancel");
-					tmp = JOptionPane.showInputDialog(null, "Enter the number of words: (1-100000)", "Generate random words", JOptionPane.QUESTION_MESSAGE);
-					if (tmp != null)
+					TMP1 = null;
+					TMP1 = JOptionPane.showInputDialog(w, "Please enter the number of words you want to generate:", "Input", JOptionPane.QUESTION_MESSAGE);
+					if (TMP1 != null)
 					{
 						try
 						{
-							k = Integer.parseInt(tmp);
+							m = Integer.parseInt(TMP1);
 						}
 						catch (NumberFormatException ex)
 						{
-							CannotParseInt();
-							break;
+							JOptionPane.showMessageDialog(w, "Please enter a positive integer!", "Error", JOptionPane.ERROR_MESSAGE);
+							break outswitch;
 						}
-						if (k < 1)
+						if (m >= 100000)
 						{
-							CannotParseInt();
-							break;
+							j = JOptionPane.showConfirmDialog(w, "Generating 100000 words or more may take very long time.\nContinue?", "Confirm", JOptionPane.YES_NO_OPTION);
+							if (j != JOptionPane.YES_OPTION) break outswitch;
 						}
-						if (k > 100000)
+						undoManager.backup(TEXTAREA.getText());
+						final RandomProgress prog = new RandomProgress(1, m);
+						//now start to generate
+						final Thread thr = new Thread()
 						{
-							Object[] options2 = {"YES", "NO"};
-							int cont = JOptionPane.showOptionDialog(null, "Generating more than 100000 random words may spend a long period of time.\nDo you want to continue?", "Confirm action", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options2, options2[1]);
-							if (cont == JOptionPane.NO_OPTION)
+							@Override
+							public void run()
 							{
-								break;
+								try
+								{
+									for (j=1; j<=m; j++)
+									{
+										k = (int)(Math.random()*9+1);
+										TMP1 = "";
+										for (l=1; l<=k; l++)
+										{
+											TMP1 = TMP1 + toLetter((int)(Math.random()*25+1));
+										}
+										TEXTAREA.insert(TMP1 + " ", TEXTAREA.getCaretPosition());
+										
+										if (j%50 == 0)
+										{
+											prog.setValue(j);
+										}
+									}
+									prog.dispose();
+									JOptionPane.showMessageDialog(w, "Done: " + (j-1) + " word(s) generated.\nTime taken: " + prog.timeUsed() + " second(s)", "Done", JOptionPane.INFORMATION_MESSAGE);
+								}
+								catch (Throwable ex)
+								{
+								}
 							}
-						}
-						SwitchBackup();
-						str = "";
-						TEXTAREA.insert("\n", TEXTAREA.getCaretPosition());
-						for (j=1; j<=k; j++)
+						};
+						thr.start();
+						prog.addWindowListener(new WindowAdapter()
 						{
-							tmp = "";
-							long m = Math.round(Math.random()*9+1);
-							for (l=1; l<=m; l++)
+							@Override
+							public void windowClosing(WindowEvent ev)
 							{
-								TEXTAREA.insert(NumberToLetter(Math.round(Math.random()*25+1)), TEXTAREA.getCaretPosition());
+								thr.interrupt();
+								double time = prog.timeUsed();
+								prog.dispose();
+								JOptionPane.showMessageDialog(w, "Aborted: " + j + " word(s) generated.\nTime taken: " + time + " second(s)", "Aborted", JOptionPane.INFORMATION_MESSAGE);
 							}
-							TEXTAREA.insert(" ", TEXTAREA.getCaretPosition());
-						}
+						});
 					}
-					TEXTAREA.requestFocus();
 				}
 				else
 				{
-					ShowNotEditable("inserting words!");
+					cannotEdit();
 				}
 				break;
 				
-				//open file (quick):
-				case 30:
-				uim.put("OptionPane.cancelButtonText", "Cancel");
-				str = JOptionPane.showInputDialog(null, "Please enter the path:", "Open file (quick)", JOptionPane.QUESTION_MESSAGE);
-				if (str != null)
-				{
-					file = new File(str);
-					Openfile();
-				}
-				str = null;
-				break;
-				
-				//Invert case:
-				case 31:
+				case 33: //keyword, Java
 				if (TEXTAREA.isEditable())
 				{
-					SwitchBackup();
-					TEXTAREA.replaceSelection(IC(TEXTAREA.getSelectedText()));
+					Object[] keywordJava = new Object[]{"public static void main(String[] args) {", "import java.awt.*;\nimport java.awt.event.*;\nimport javax.swing.*;", "class MyListener extends MouseAdapter {", "throw new Exception();", "Integer.parseInt(", "Double.parseDouble(", "JOptionPane.showMessageDialog(", "JOptionPane.showInputDialog", "public void mouseReleased(MouseEvent ev) {", "public void actionPeformed(ActionEvent ev) {", "public void windowClosing(WindowEvent ev) {", "System.out.println();"};
+					TMP1 = (String)JOptionPane.showInputDialog(w, "Please choose one:", "Keyword (Java)", JOptionPane.QUESTION_MESSAGE, null, keywordJava, keywordJava[0]);
+					if (TMP1 != null)
+					{
+						undoManager.backup(TEXTAREA.getText());
+						TEXTAREA.insert(TMP1, TEXTAREA.getCaretPosition());
+					}
 				}
 				else
 				{
-					ShowNotEditable("case conversion!");
+					cannotEdit();
 				}
 				break;
 				
-				case 32:
+				case 34: //keyword, html
+				if (TEXTAREA.isEditable())
 				{
-					WriteConfig("AutoAddTxt", !Boolean.parseBoolean(getConfig("AutoAddTxt")) + "");
+					Object[] keywordHTML = new Object[]{"<a target=\"_blank\" href=\"\">", "<img alt=\"\" src=\"\">", "<br>"};
+					TMP1 = (String)JOptionPane.showInputDialog(w, "Please choose one:", "Keyword (html)", JOptionPane.QUESTION_MESSAGE, null, keywordHTML, keywordHTML[0]);
+					if (TMP1 != null)
+					{
+						undoManager.backup(TEXTAREA.getText());
+						TEXTAREA.insert(TMP1, TEXTAREA.getCaretPosition());
+					}
+				}
+				else
+				{
+					cannotEdit();
 				}
 				break;
+				
+				case 35: //delete blank lines
+				if (TEXTAREA.isEditable())
+				{
+					TMP1 = TEXTAREA.getText();
+					undoManager.backup(TMP1);
+					i = TEXTAREA.getLineCount();					
+					for (j=i; j>=2; j--)
+					{
+						TMP2 = "\n";
+						for (k=1; k<j; k++)
+						{
+							TMP2 = TMP2 + "\n";
+						}
+						TMP1 = TMP1.replace(TMP2, "\n");
+					}
+					TEXTAREA.setText(TMP1);
+				}
+				else
+				{
+					cannotEdit();
+				}
+				break;
+				
+				case 36: //selection color
+				JDialog selectionColorDialog = new JDialog();
+				selectionColorDialog.setTitle("Selection Color");
+				selectionColorDialog.setLayout(new FlowLayout());
+				selectionColorDialog.setModal(true);
+				MyColorChooser colorChooser = new MyColorChooser();
+				colorChooser.setColor(TEXTAREA.getSelectionColor());
+				selectionColorDialog.add(colorChooser);
+				selectionColorDialog.add(new MyLabel("Default: (244, 223, 255)"));
+				selectionColorDialog.setSize(370,210);
+				selectionColorDialog.setLocationRelativeTo(w);
+				selectionColorDialog.getContentPane().setBackground(Color.WHITE);
+				selectionColorDialog.setVisible(true);
+				Color chosen = colorChooser.getColor();
+				TEXTAREA.setSelectionColor(chosen);
+				writeConfig("SelectionColor.r", chosen.getRed()+"");
+				writeConfig("SelectionColor.g", chosen.getGreen()+"");
+				writeConfig("SelectionColor.b", chosen.getBlue()+"");
+				selectionColorDialog.dispose();
+				break;
 			}
+		}
+	}
+	
+	class RandomProgress extends JDialog
+	{
+		private JProgressBar prog;
+		private double initialTime;
+		RandomProgress(int min, int max)
+		{
+			this.setTitle("Progress");
+			this.setLayout(new FlowLayout());
+			this.prog = new JProgressBar(min, max);
+			this.prog.setFont(f13);
+			this.prog.setString("Please wait...");
+			this.prog.setStringPainted(true);
+			this.add(prog);
+			this.pack();
+			this.setLocationRelativeTo(null);
+			this.setAlwaysOnTop(true);
+			this.setVisible(true);
+			this.initialTime = System.currentTimeMillis();
+		}
+		
+		public void setValue(int x)
+		{
+			this.prog.setValue(x);
+		}
+		
+		public double timeUsed()
+		{
+			return (System.currentTimeMillis() - this.initialTime)/1000.0;
+		}
+	}
+	
+	public void save(File f) throws IOException
+	{
+		TMP1 = getConfig("Encoding");
+		if (TMP1.equals("default"))
+		{
+			BufferedWriter bw1 = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), "UTF-8"));
+			bw1.write(TEXTAREA.getText());
+			bw1.close();
+		}
+		else
+		{
+			byte[] bytes = TEXTAREA.getText().getBytes(TMP1);
+			FileOutputStream output = new FileOutputStream(f);
+			output.write(bytes);
+			output.close();
+		}
+		file = f;
+		TMP1 = file.getPath();
+		if (TMP1.length() > 50)
+		{
+			currentFile.setText("Current file: " + TMP1.substring(0,25) + "..." + TMP1.substring(TMP1.length()-25, TMP1.length()));
+		}
+		else
+		{
+			currentFile.setText("Current file: " + TMP1);
+		}
+	}
+	
+	public void openToTextArea(File f) throws IOException
+	{
+		TEXTAREA.setText("");
+		BufferedReader br1 = new BufferedReader(new FileReader(f));
+		while ((TMP1 = br1.readLine()) != null)
+		{
+			TEXTAREA.append(TMP1 + "\n");
+		}
+		br1.close();
+		TMP1 = f.getPath();
+		file = f;
+		if (TMP1.length() > 50)
+		{
+			currentFile.setText("Current file: " + TMP1.substring(0,25) + "..." + TMP1.substring(TMP1.length()-25, TMP1.length()));
+		}
+		else
+		{
+			currentFile.setText("Current file: " + TMP1);
+		}
+		TEXTAREA.setCaretPosition(0);
+	}
+	
+	public static String getSettingsFilePath()
+	{
+		try
+		{			
+			return (new File(RefluxEdit.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath())).getParentFile().getPath();
+		}
+		catch (Exception ex)
+		{
+			return null;
 		}
 	}
 	
@@ -1462,11 +1647,10 @@ public class RefluxEdit extends JFrame
 		{
 			return null;
 		}
-		String configstr = prop.getProperty(name);
-		return configstr;
+		return prop.getProperty(name);
 	}
 	
-	public void WriteConfig(String key, String value)
+	public void writeConfig(String key, String value)
 	{
 		prop.setProperty(key, value);
 		try
@@ -1478,75 +1662,82 @@ public class RefluxEdit extends JFrame
 		}
 	}
 	
-	public File getJARPath()
+	class MyRadioButton extends JRadioButton
 	{
-		try
-		{			
-			return new File((new File(RefluxEdit.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath())).getParentFile().getPath());
-		}
-		catch (Exception ex)
+		private int x;
+		public MyRadioButton(String str, boolean isSelected, int x)
 		{
-			return null;
+			super(str, isSelected);
+			this.setFont(f13);
+			this.setBackground(Color.WHITE);
+			this.setFocusable(false);
+			this.x = x;
+		}
+		
+		public int getIndex()
+		{
+			return this.x;
 		}
 	}
 	
-	public void setFileChooserStyle(Component[] comp)  
-	{		
-		for (int x = 0; x < comp.length; x++)  
-		{
-			if (comp[x] instanceof Container)
-			{
-				setFileChooserStyle(((Container)comp[x]).getComponents());
-			}
-			try
-			{
-				comp[x].setFont(J1);
-				comp[x].setForeground(darkblue);
-				if (comp[x] instanceof JButton)
-				{
-					//set button
-					comp[x].setBackground(Color.WHITE);
-				}
-				if (comp[x] instanceof JList)
-				{
-					//set file field
-					comp[x].setBackground(Color.WHITE);
-				}
-				if (comp[x] instanceof JComboBox)
-				{
-					//set the choosing list
-					comp[x].setBackground(Color.WHITE);
-				}
-				if (comp[x] instanceof JTextField)
-				{
-					//set the text field
-					comp[x].setBackground(Color.WHITE);
-				}				
-				if (comp[x] instanceof JToggleButton)
-				{
-					comp[x].setBackground(Color.WHITE);
-				}
-				if (comp[x] instanceof JScrollBar)
-				{
-					comp[x].setBackground(Color.WHITE);
-					comp[x].setForeground(Color.WHITE);
-				}
-				if (comp[x] instanceof JLabel)
-				{
-					comp[x].setBackground(Color.WHITE);
-				}		
-			}  
-			catch (Exception ex)
-			{
-			}
-		}
-	}
-	
-	public static void WriteSize()
+	class UndoManager
 	{
-		w.WriteConfig("Size.x", w.getSize().getWidth() + "");
-		w.WriteConfig("Size.y", w.getSize().getHeight() + "");
-		w.WriteConfig("Location.x", w.getLocation().getX() + "");
-		w.WriteConfig("Location.y", w.getLocation().getY() + "");
+		private String[] backup;
+		private int position = 0;
+		private int no;
+		public UndoManager(int x)
+		{
+			backup = new String[x+1];
+			this.no = x;
+		}
+		
+		public void backup(String str)
+		{
+			for (i=no; i>1; i--)
+			{
+				backup[i] = backup[i-1];
+			}
+			backup[1] = str;
+		}
+		
+		public void setInitial(String str)
+		{
+			backup[0] = str;
+		}
+		
+		public String undo()
+		{
+			if (position < no)
+			{
+				if (backup[position+1] == null)
+				{
+					JOptionPane.showMessageDialog(w, "Reached undo limit!", "Error", JOptionPane.ERROR_MESSAGE);
+					return null;
+				}
+				position++;
+				return backup[position];
+			}
+			else return null;
+		}
+		
+		public String redo()
+		{
+			if (position >= 1)
+			{
+				position--;
+				return backup[position];
+			}
+			else if (position == 0)
+			{
+				JOptionPane.showMessageDialog(w, "Reached redo limit!", "Error", JOptionPane.ERROR_MESSAGE);
+				return null;
+			}
+			else return null;
+		}
+		
+		public int getPosition()
+		{
+			return this.position;
+		}
 	}
 }

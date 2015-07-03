@@ -28,3 +28,8 @@ body
 	background: #481800;
 	color: white;
 }
+
+a:link, a:visited, a:active
+{
+	color: black;
+}

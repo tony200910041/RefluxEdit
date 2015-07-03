@@ -1,0 +1,13 @@
+5.1
+
+
+0
+RefluxEdit 5.0
+-New function: show asterisk (*) for unsaved files
+-New function: drag tab to swap
+-New function: line counter
+-New function: convenient file browser dialog
+-New function: delete blank lines options
+-New function: open recent files
+-New function: custom file format
+...and 17 more changes

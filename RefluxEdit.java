@@ -28,8 +28,8 @@ public class RefluxEdit extends JFrame implements Resources
 {
 	// constants
 	private static final String VERSION_NO = "4.0";
-	private static final String BETA_STRING = "beta";
-	private static final String BETA_NO = "3";
+	private static final String BETA_STRING = "";
+	private static final String BETA_NO = "";
 	private static final String REV_STRING = "";
 	private static final String REV_NO = "";
 	private static final File settingsFile = new File(getsettingsFilePath(), "REFLUXEDITPREF.PROPERTIES");
@@ -51,7 +51,7 @@ public class RefluxEdit extends JFrame implements Resources
 	private JTextArea textArea = new JTextArea();
 	private JLayer<JTextArea> layer1 = new JLayer<>(textArea, new MyUmbrellaLayerUI());
 	private JScrollPane scrollPane = new JScrollPane(layer1);
-	private DropTarget dropTarget = textArea.getDropTarget();
+	private DropTarget defaultDropTarget = textArea.getDropTarget();
 	private TextAreaListener taListener = new TextAreaListener();
 	private MyPanel bottomP1 = new MyPanel(MyPanel.CENTER);
 	private MyPanel bottomP2 = new MyPanel(MyPanel.CENTER);
@@ -194,7 +194,6 @@ public class RefluxEdit extends JFrame implements Resources
 		UIManager.put("OptionPane.okButtonText", "OK");
 		UIManager.put("OptionPane.yesButtonText", "YES");
 		UIManager.put("OptionPane.noButtonText", "NO");
-		UIManager.put("Button.background", Color.WHITE);
 		UIManager.put("ComboBox.background", Color.WHITE);
 		UIManager.put("MenuItem.acceleratorForeground", new Color(34,131,132));
 		UIManager.put("MenuItem.selectionBackground", new Color(220,220,220));
@@ -305,12 +304,14 @@ public class RefluxEdit extends JFrame implements Resources
 				UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
 				menubar = new JMenuBar();
 				UIManager.put("nimbusInfoBlue", new Color(255,186,0));
+				UIManager.put("OptionPane.sameSizeButtons", true);
 				break;
 				
 				default:				
 				menubar = new ColoredMenuBar(getBoolean0("isUseNewMenuBar"));
 				isOtherLAF = false;
 				menubar.setBorderPainted(false);
+				UIManager.put("Button.background", Color.WHITE);
 				break;
 			}
 		}
@@ -421,6 +422,12 @@ public class RefluxEdit extends JFrame implements Resources
 				saveConfig();
 				System.exit(0);
 			}
+						
+			@Override
+			public void windowDeactivated(WindowEvent ev)
+			{
+				textArea.setDropTarget(taListener);
+			}
 		});
 	}
 	
@@ -506,7 +513,7 @@ public class RefluxEdit extends JFrame implements Resources
 	{
 		double version_no = Double.parseDouble(fragment[0]);
 		version_no+=getTestNumber(fragment[1])/10.0;
-		version_no+=Double.parseDouble(fragment[2])/100;
+		version_no+=(fragment[2].isEmpty()?0:Double.parseDouble(fragment[2]))/100;
 		version_no+=(fragment[3].isEmpty()?0:Double.parseDouble(fragment[3]))/1000;
 		return version_no;
 	}
@@ -525,6 +532,7 @@ public class RefluxEdit extends JFrame implements Resources
 			break;
 			
 			case "final":
+			case "":
 			default:
 			beta_version=2;
 			break;
@@ -804,8 +812,8 @@ public class RefluxEdit extends JFrame implements Resources
 			tab2.add(createSeparator());
 			JPanel tab2_3 = new JPanel(new GridLayout(2,1,10,10));
 			tab2_3.setOpaque(false);
-			tab2_3.add(new MyRibbonButton("Indent\u2191", "INDENT+", "<html><font size=\"4\"><b>Increase indentation</b></font><br>Increase the indentation of the selected text by 1</html>", true, 18));
-			tab2_3.add(new MyRibbonButton("Indent\u2193", "INDENT-", "<html><font size=\"4\"><b>Decrease indentation</b></font><br>Decrease the indentation of the selected text by 1</html>", true, 19));
+			tab2_3.add(new MyRibbonButton("Indent\u2191", "INDENT+", "<html><font size=\"4\"><b>Increase indentation&nbsp;&nbsp;&nbsp;Ctrl+I</b></font><br>Increase the indentation of the selected text by 1</html>", true, 18));
+			tab2_3.add(new MyRibbonButton("Indent\u2193", "INDENT-", "<html><font size=\"4\"><b>Decrease indentation&nbsp;&nbsp;&nbsp;Ctrl+U</b></font><br>Decrease the indentation of the selected text by 1</html>", true, 19));
 			tab2.add(tab2_3);
 			// View
 			tab3.add(new MyRibbonButton("<html>Editing/<br>viewing</html>", "EDIT32", "<html><font size=\"4\"><b>Enable/disable editing</b></font><br>Click here to disable/re-enable editing.<br></html>", false, 17));
@@ -946,7 +954,7 @@ public class RefluxEdit extends JFrame implements Resources
 			menu6.add(new MyMenuItem("About RefluxEdit", "APPICON16", 16).setAccelerator(KeyEvent.VK_F1, ActionEvent.CTRL_MASK));
 			menu6.add(new MyMenuItem("Visit SourceForge page", "VISIT16", 48));
 			//next one: 54
-			//free: 47,20,29,36,37
+			//free: 47,29,36,37
 		}
 	}
 	
@@ -1177,13 +1185,14 @@ public class RefluxEdit extends JFrame implements Resources
 		textArea.getActionMap().put("none",null);
 		//
 		textArea.addMouseListener(new MyListener(0));
+		textArea.addMouseListener(taListener);
 		textArea.addKeyListener(taListener);
 		textArea.getDocument().addDocumentListener(taListener);
 		textArea.addCaretListener(taListener);
 		textArea.setDropTarget(taListener);
 	}
 	
-	class TextAreaListener extends DropTarget implements KeyListener, CaretListener, DocumentListener
+	class TextAreaListener extends DropTarget implements KeyListener, CaretListener, DocumentListener, MouseListener
 	{
 		TextAreaListener()
 		{
@@ -1357,6 +1366,31 @@ public class RefluxEdit extends JFrame implements Resources
 		public void caretUpdate(CaretEvent ev)
 		{
 			updateCount();
+		}
+		
+		@Override
+		public void mouseReleased(MouseEvent ev)
+		{
+		}
+		
+		@Override
+		public void mousePressed(MouseEvent ev)
+		{
+			textArea.setDropTarget(defaultDropTarget);
+		}
+		
+		@Override
+		public void mouseClicked(MouseEvent ev)
+		{
+		}
+		
+		@Override
+		public void mouseEntered(MouseEvent ev)
+		{
+		}
+		@Override
+		public void mouseExited(MouseEvent ev)
+		{
 		}
 	}
 	
@@ -5781,6 +5815,16 @@ public class RefluxEdit extends JFrame implements Resources
 		@Override
 		public void mousePressed(MouseEvent ev)
 		{
+		}
+		
+		@Override
+		public void popupMenuWillBecomeVisible(PopupMenuEvent ev)
+		{
+		}
+		
+		@Override
+		public void mouseReleased(MouseEvent ev)
+		{
 			if (!visible)
 			{
 				this.panel.setPreferredSize(new Dimension(165, textArea.getVisibleRect().height));
@@ -5792,16 +5836,6 @@ public class RefluxEdit extends JFrame implements Resources
 				menu.setVisible(false);
 			}
 			visible = !visible;
-		}
-		
-		@Override
-		public void popupMenuWillBecomeVisible(PopupMenuEvent ev)
-		{
-		}
-		
-		@Override
-		public void mouseReleased(MouseEvent ev)
-		{
 		}
 		
 		class MyItemButton extends MyPureButton

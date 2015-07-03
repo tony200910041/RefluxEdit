@@ -14,6 +14,14 @@ RefluxEdit is provided "AS IS" and WITHOUT warranties. RefluxEdit does not conta
 
 ----------
 Version History:
+RefluxEdit 4.0 2015-02-14
+-Changed: tooltip text of indentation adjustment
+-Changed: enhanced look in Nimbus LAF
+-Fixed bug: #00029: drag text
+
+RefluxEdit 4.0beta4
+-Internal testing version
+
 RefluxEdit 4.0beta3 2015-01-31
 -New function: check update automatically
 -New function: increase/decrease indentation

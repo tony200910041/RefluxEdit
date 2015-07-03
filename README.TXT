@@ -14,12 +14,42 @@ RefluxEdit is provided "AS IS" and WITHOUT warranties. RefluxEdit does not conta
 
 ----------
 Version History:
-RefluxEdit 3.1
+RefluxEdit 4.0alpha 2014-12-31
+-New function: more encoding option
+-New function: automatic encoding detection
+-New function: failed loading reminder
+-New function: open with specified charset
+-New function: undo record dialog
+-New function: close save dialog
+-New function: compile function
+-New function: auto indentation
+-Changed: faster when loading file
+-Changed: much faster when generating random words
+-Changed: enhanced undo and redo function
+-Changed: integrated option dialog
+-Changed: show progress bar when loading text file from arguments
+-Changed: new toolbar button (Undo, Redo, Select all and Select all and copy)
+-Changed: "Open file" menu structure in Ribbon UI
+-Changed: "View" menu
+-Changed: icon added
+-Fixed bug #00017: not calculating number of rows correctly
+-Fixed bug #00018: invert character in selection
+-Fixed bug #00019: word count in selection
+-Fixed bug #00020: copy to replace selection
+-Fixed bug #00021: not calculating number of words after cancelling selection
+
+RefluxEdit 3.2
+-Internal testing version
+
+RefluxEdit 3.1 2014-12-21
 -New function: bottom-left corner word count panel
+-New function: invert character
+-New function: insert spaces between characters
 -Changed: more stable startup
 -Changed: hexadecimal changed to uppercase
 -Changed: faster response speed of cancelling generating random words
 -Changed: automatic commit edit of spinner
+-Changed: added icons to menu items
 
 RefluxEdit 3.0 2014-10-31
 -New function: visit SourceForge page: http://refluxedit.sourceforge.net

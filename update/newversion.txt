@@ -1,7 +1,8 @@
-5.1
+5.0
 
 
 0
+2015-07-09
 RefluxEdit 5.0
 -New function: show asterisk (*) for unsaved files
 -New function: drag tab to swap

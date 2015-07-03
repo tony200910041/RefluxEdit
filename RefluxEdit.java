@@ -28,14 +28,14 @@ public class RefluxEdit extends JFrame implements Resources
 {
 	// constants
 	private static final String VERSION_NO = "4.0";
-	private static final String BETA_NO = "beta1";
+	private static final String BETA_NO = "beta2";
 	private static final File settingsFile = new File(getsettingsFilePath(), "REFLUXEDITPREF.PROPERTIES");
 	private static final Properties prop = new Properties();
 	private static final Color gray = new Color(238,238,238);
 	private static final Color vlgray = new Color(250,250,250);
 	private static final Color lightGreen = new Color(243,255,241);
 	private static final Color lightYellow = new Color(252,247,221);
-	private static final Color transYellow = new Color(251,231,51,60);
+	private static Color transYellow;
 	private static final DecimalFormat format3 = new DecimalFormat("##0.###");
 	private static final Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();
 	// boolean settings
@@ -122,7 +122,6 @@ public class RefluxEdit extends JFrame implements Resources
 			public void run()
 			{
 				RefluxEdit.initialize();
-				RefluxEdit.loadConfig();
 				RefluxEdit.setLAF();
 				w = new RefluxEdit("RefluxEdit " + VERSION_NO);
 				w.restoreFrame();
@@ -244,16 +243,32 @@ public class RefluxEdit extends JFrame implements Resources
 				setConfig("showCount", "false");
 				setConfig("autoIndent", "true");
 				setConfig("showUmbrella", "true");
+				setConfig("Umbrella.alpha", "60");
 				setConfig("Compile.command", "javac %f");
 				setConfig("Compile.runCommand", "java -classpath %p %s%nPAUSE");
 				setConfig("Compile.runCommandFileName","CMD.BAT");
 				setConfig("Compile.removeOriginal", "false");
 				setConfig("Compile.regex", ".*\\.class");
+				setConfig("Caret.save", "true");
 				saveConfig();
 			}
 			catch (Exception ex)
 			{
 			}
+		}
+		else
+		{
+			loadConfig();
+		}
+		//load static fields
+		//(static) transyellow
+		try
+		{
+			transYellow = new Color(251,231,51,Short.parseShort(getConfig0("Umbrella.alpha")));
+		}
+		catch (Exception ex)
+		{
+			transYellow = new Color(251,231,51,60);
 		}
 	}
 	
@@ -385,6 +400,8 @@ public class RefluxEdit extends JFrame implements Resources
 				setConfig("Location.x", l.x + "");
 				setConfig("Location.y", l.y + "");
 				setConfig("isMaxmized", String.valueOf(RefluxEdit.this.getExtendedState() == JFrame.MAXIMIZED_BOTH));
+				//save caret position
+				setCaret(file,textArea.getCaretPosition());
 				saveConfig();
 				System.exit(0);
 			}
@@ -665,9 +682,9 @@ public class RefluxEdit extends JFrame implements Resources
 			tab3.add(new MyRibbonButton("<html>Editing/<br>viewing</html>", "EDIT32", "<html><font size=\"4\"><b>Enable/disable editing</b></font><br>Click here to disable/re-enable editing.<br></html>", false, 17));
 			tab3.add(new MyRibbonButton("<html>On top</html>", "ONTOP", "<html><font size=\"4\"><b>Enable/disable always on top</b></font><br>Click here to enable/disable RefluxEdit always staying on top.</html>", false, 21));
 			tab3.add(new MyRibbonButton("<html><center><font color=\"green\">Undo</font><br>dialog</center></htnml>", "UNDODIALOG32", "<html><font size=\"4\"><b>Undo record dialog</b></font><br>Show the undo record dialog.</html>", false, 52));
-			MyPanel panel = new MyPanel(MyPanel.CENTER);
-			panel.setPreferredSize(new Dimension(1,85));
-			tab3.add(panel);
+			MyPanel panel1 = new MyPanel(MyPanel.CENTER);
+			panel1.setPreferredSize(new Dimension(1,85));
+			tab3.add(panel1);
 			// Tools
 			tab4.add(new MyRibbonButton("<html><center>Compile<br>code</center></html>", "COMPILE32", "<html><font size=\"4\"><b>Compile code</b></font><br>Compile the code.</html>", false, 53));
 			tab4.add(createSeparator());
@@ -709,6 +726,9 @@ public class RefluxEdit extends JFrame implements Resources
 			tab5.add(new MyRibbonButton("<html><center>Unicode<br>character</center></html>", "UNICODE32", "<html><font size=\"4\"><b>Insert unicode character</b></font><br>Insert unicode character by given code value.</html>", false, 45));
 			tab5.add(new MyRibbonButton("<html><center>Unicode<br>value</center></html>", "UNICODE32", "<html><font size=\"4\"><b>Insert unicode value</b></font><br>Insert unicode value by given character.</html>", false, 46));
 			// About
+			MyPanel panel2 = new MyPanel(MyPanel.CENTER);
+			panel2.setPreferredSize(new Dimension(5,85));
+			tab6.add(panel2);
 			JPanel tab6_1 = new JPanel(new GridLayout(2,1,10,10));
 			tab6_1.setOpaque(false);
 			tab6_1.add(new MyRibbonButton("<html>About RefluxEdit</html>", "APPICON16", "<html><font size=\"4\"><b>About RefluxEdit&nbsp;&nbsp;&nbsp;Ctrl+F1</b></font><br>RefluxEdit is a lightweight plain text editor written in Java by tony200910041.<br>SourceForge page: http://refluxedit.sourceforge.net</html>", true, 16));
@@ -1045,6 +1065,9 @@ public class RefluxEdit extends JFrame implements Resources
 			dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
 			try
 			{
+				loadConfig();
+				setCaret(file,textArea.getCaretPosition());
+				saveConfig();
 				File file = (File)(((java.util.List)(dtde.getTransferable().getTransferData(DataFlavor.javaFileListFlavor))).get(0));
 				i = JOptionPane.showConfirmDialog(w, "Open file " + file.getPath() + "?\nNote that the current file will not be saved.", "Confirm Dialog", JOptionPane.YES_NO_OPTION);
 				if (i == JOptionPane.YES_OPTION)
@@ -1062,7 +1085,7 @@ public class RefluxEdit extends JFrame implements Resources
 		{
 			isSaved = false;
 			if (!ev.isControlDown())
-			{				
+			{
 				undoManager.backup(textArea.getText());
 				undoManager.clearRedoList();
 			}
@@ -1071,62 +1094,20 @@ public class RefluxEdit extends JFrame implements Resources
 		@Override
 		public void keyTyped(KeyEvent ev)
 		{
-			//prepare undo action
 			synchronized(textArea)
 			{
-				if (textArea.isEditable())
-				{
-				//handle delete and backspace
-					if (i == KeyEvent.VK_BACK_SPACE)
-					{
-						if (textArea.getSelectedText() != null)
-						{
-							backup(ev);
-							textArea.replaceSelection(null);
-						}
-						else
-						{
-							j = textArea.getCaretPosition();
-							if (j >= 1)
-							{
-								backup(ev);
-								textArea.replaceRange(null,j-1,j);
-							}
-						}
-					}
-					else if (i == KeyEvent.VK_DELETE)
-					{
-						if (textArea.getSelectedText() != null)
-						{
-							backup(ev);
-							textArea.replaceSelection(null);
-						}
-						else
-						{
-							j = textArea.getCaretPosition();
-							if (j+1 <= textArea.getText().length())
-							{
-								backup(ev);
-								textArea.replaceRange(null,j,j+1);
-							}
-						}
-					}
-					else
-					{
-						this.backup(ev);
-					}
-				}
+				this.backup(ev);
 			}
 		}
 		//
 		@Override
 		public void keyPressed(KeyEvent ev)
 		{
-			//handle shortcut
-			i = ev.getKeyCode();
+			//handle shortcut			
 			if (ev.isControlDown())
 			{				
 				MyMenuItem menuItem = null;
+				i = ev.getKeyCode();
 				if (i == KeyEvent.VK_Z)
 				{
 					menuItem = new MyMenuItem(null, null, 7);
@@ -1171,6 +1152,45 @@ public class RefluxEdit extends JFrame implements Resources
 				{
 				}
 			}
+			else if (textArea.isEditable())
+			{
+				//handle delete and backspace
+				int code = ev.getKeyCode();
+				if (code == KeyEvent.VK_BACK_SPACE)
+				{
+					if (textArea.getSelectedText() != null)
+					{
+						backup(ev);
+						textArea.replaceSelection(null);
+					}
+					else
+					{
+						j = textArea.getCaretPosition();
+						if (j >= 1)
+						{
+							backup(ev);
+							textArea.replaceRange(null,j-1,j);
+						}
+					}
+				}
+				else if (code == KeyEvent.VK_DELETE)
+				{
+					if (textArea.getSelectedText() != null)
+					{
+						backup(ev);
+						textArea.replaceSelection(null);
+					}
+					else
+					{
+						j = textArea.getCaretPosition();
+						if (j+1 <= textArea.getText().length())
+						{
+							backup(ev);
+							textArea.replaceRange(null,j,j+1);
+						}
+					}
+				}
+			}
 		}
 		
 		@Override
@@ -1204,9 +1224,9 @@ public class RefluxEdit extends JFrame implements Resources
 	void updateCount()
 	{
 		//word count
-		synchronized(textArea)
+		if (countWords)
 		{		
-			if (countWords)
+			synchronized(textArea)
 			{
 				if (SwingUtilities.getAncestorOfClass(JPanel.class, bottomP1) != null)
 				{
@@ -1878,6 +1898,9 @@ public class RefluxEdit extends JFrame implements Resources
 				case 1: //new file
 				if (isOnNew)
 				{
+					loadConfig();
+					setCaret(file,textArea.getCaretPosition());
+					saveConfig();
 					currentFile.setText(" ");
 					file = null;
 					textArea.setText("");
@@ -1907,7 +1930,8 @@ public class RefluxEdit extends JFrame implements Resources
 				break;
 				
 				case 2: //open file
-				TMP1 = getConfig("ChooserStyle");
+				loadConfig();
+				TMP1 = getConfig0("ChooserStyle");
 				if (TMP1 == null)
 				{
 					TMP1 = "Java";
@@ -1921,6 +1945,8 @@ public class RefluxEdit extends JFrame implements Resources
 					i = JavaChooser.showOpenDialog(w);
 					if (i == JFileChooser.APPROVE_OPTION)
 					{
+						setCaret(file,textArea.getCaretPosition());
+						saveConfig();
 						openToTextArea(JavaChooser.getSelectedFile());
 					}
 					break;
@@ -1931,7 +1957,9 @@ public class RefluxEdit extends JFrame implements Resources
 					systemChooser.setVisible(true);
 					String child = systemChooser.getFile();					
 					if (child != null)
-					{						
+					{
+						setCaret(file,textArea.getCaretPosition());
+						saveConfig();
 						openToTextArea(new File(systemChooser.getDirectory(), child));
 					}
 					break;
@@ -1942,6 +1970,9 @@ public class RefluxEdit extends JFrame implements Resources
 				TMP1 = JOptionPane.showInputDialog(w, "Please enter the path:", "Input", JOptionPane.QUESTION_MESSAGE);
 				if ((TMP1 != null)&&(!TMP1.isEmpty()))
 				{
+					loadConfig();
+					setCaret(file,textArea.getCaretPosition());
+					saveConfig();
 					openToTextArea(new File(TMP1));
 				}
 				break;
@@ -2891,12 +2922,8 @@ public class RefluxEdit extends JFrame implements Resources
 					final MyTextField exportTF = new MyTextField(28,0);
 					exportP1.add(new MyLabel("Export to: "));
 					exportP1.add(exportTF);
-					JButton exportB1 = new JButton("?");
-					exportB1.setBackground(Color.WHITE);
-					exportB1.setBorder(bord1);
+					MyButton exportB1 = new MyButton("?");
 					exportB1.setPreferredSize(new Dimension(20,20));
-					exportB1.setFont(f13);
-					exportB1.setFocusPainted(false);
 					exportP1.add(exportB1);
 					MyPanel exportP2 = new MyPanel(MyPanel.CENTER);
 					exportP2.add(new MyLabel("Extra gap (in pixels):"));
@@ -3026,20 +3053,24 @@ public class RefluxEdit extends JFrame implements Resources
 								if (dest.isEmpty()) return;
 								// get each line
 								final ArrayList<String> lines = new ArrayList<String>();
-								i = 0;
-								TMP2 = textArea.getText();
+								int start = 0;
+								int end;
+								int length = textArea.getText().length();
 								do
 								{
 									try
 									{
-										j = Utilities.getRowEnd(textArea,i);
+										end = Utilities.getRowEnd(textArea,start);
+										lines.add(textArea.getText(start,end-start).replace("\n",""));
 									}
 									catch (BadLocationException ex)
 									{
+										exception(ex);
+										return;
 									}
-									lines.add(TMP2.substring(i, Math.min(j+1, TMP2.length())).replace("\n", ""));
-									i = j+1;
-								} while ((j>0)&&(i<TMP2.length()));
+									start=end+1;
+								}
+								while (start<length);								
 								final RandomProgress exportProg = new RandomProgress(0, lines.size());
 								final Thread exportThr = new Thread()
 								{
@@ -3668,7 +3699,7 @@ public class RefluxEdit extends JFrame implements Resources
 			loadConfig();
 			//
 			//tab1: general
-			JPanel tab1 = new JPanel(new GridLayout(7,1,0,0));
+			JPanel tab1 = new JPanel(new GridLayout(8,1,0,0));
 			TMP1 = getConfig0("isPanel");
 			final MyRadioButton isPanel = new MyRadioButton("Use panel", false, 1);
 			final MyRadioButton isToolBar = new MyRadioButton("Use toolbar", false, 2);
@@ -3779,7 +3810,169 @@ public class RefluxEdit extends JFrame implements Resources
 			MyPanel P7 = new MyPanel(MyPanel.LEFT);
 			MyCheckBox useUmbrella = new MyCheckBox("Show umbrella", paintTextArea);
 			P7.add(useUmbrella);
+			JSlider alphaYellow = new JSlider(0,255);
+			alphaYellow.setValue(transYellow.getAlpha());
+			alphaYellow.setBackground(Color.WHITE);
+			alphaYellow.setFont(f13);
+			alphaYellow.setPaintLabels(true);
+			Dictionary<Integer, JLabel> dict = new Hashtable<>();
+			dict.put(0,new MyLabel("0"));
+			dict.put(60,new MyLabel("60"));
+			dict.put(255,new MyLabel("255"));
+			alphaYellow.setLabelTable(dict);
+			P7.add(new MyLabel("alpha value:"));
+			P7.add(alphaYellow);
 			tab1.add(P7);
+			//
+			MyPanel P8 = new MyPanel(MyPanel.LEFT);
+			boolean saveCaret = getBoolean0("Caret.save");
+			final MyCheckBox saveCaretPosition = new MyCheckBox("Remember caret position", saveCaret);
+			P8.add(saveCaretPosition);
+			final MyButton manage = new MyButton("Manage")
+			{
+				@Override
+				public void mouseReleased(MouseEvent ev)
+				{
+					if (!this.isEnabled()) return;
+					final JDialog dialog = new JDialog(w,"Manage caret position data",true);
+					dialog.setLayout(new BorderLayout());
+					dialog.getContentPane().setBackground(Color.WHITE);
+					final DefaultTableModel tam = new DefaultTableModel()
+					{
+						@Override
+						public boolean isCellEditable(int row, int column)
+						{
+							return false;
+						}
+					};
+					final JTable table = new JTable(tam);
+					table.setFont(f13);					
+					table.setRowHeight(25);
+					table.getTableHeader().setFont(f13);
+					table.getTableHeader().setReorderingAllowed(false);
+					tam.addColumn("File name");
+					tam.addColumn("Caret position");
+					ArrayList names = Collections.list(prop.propertyNames());
+					for (Object n: names)
+					{
+						String name = n.toString();
+						if (name.startsWith("Caret.")&&(!name.equals("Caret.save")))
+						{
+							tam.addRow(new String[]{name.substring(6,name.length()),getConfig0(name.toString())});
+						}
+					}
+					dialog.add(new JScrollPane(table));
+					MyPanel bottom = new MyPanel(MyPanel.CENTER);
+					bottom.add(new MyButton("Remove")
+					{
+						@Override
+						public void mouseReleased(MouseEvent ev)
+						{
+							int[] rows = table.getSelectedRows();
+							ArrayList<String> paths = new ArrayList<>();
+							for (int row: rows)
+							{
+								paths.add(table.getValueAt(row,0).toString());
+							}
+							int option = JOptionPane.showConfirmDialog(w,"Really remove caret data of " + getString(paths) + "?", "Confirm", JOptionPane.YES_NO_OPTION);
+							if (option == JOptionPane.YES_OPTION)
+							{
+								for (String path: paths)
+								{
+									removeConfig0("Caret." + path);
+								}
+									for (int i=0; i<rows.length; i++)
+								{
+									tam.removeRow(rows[i]-i);
+								}
+							}							
+						}
+						
+						private String getString(ArrayList<String> list)
+						{
+							if (list.size() == 1)
+							{
+								return list.get(0);
+							}
+							else
+							{
+								StringBuilder builder = new StringBuilder();
+								int size = list.size();
+								for (int i=0; i<size; i++)
+								{
+									if (i==size-2)
+									{
+										builder.append(list.get(i) + " and ");
+									}
+									else if (i==size-1)
+									{
+										builder.append(list.get(i));
+									}
+									else
+									{
+										builder.append(list.get(i) + ", ");
+									}
+								}
+								return builder.toString();
+							}
+						}
+						
+						@Override
+						public Dimension getPreferredSize()
+						{
+							return new Dimension(65,28);
+						}
+					});
+					bottom.add(new MyButton("Clear")
+					{
+						@Override
+						public void mouseReleased(MouseEvent ev)
+						{
+							int option = JOptionPane.showConfirmDialog(w,"Remove all caret data?", "Confirm", JOptionPane.YES_NO_OPTION);
+							if (option == JOptionPane.YES_OPTION)
+							{
+								ArrayList names = Collections.list(prop.propertyNames());
+								for (Object n: names)
+								{
+									String name = n.toString();
+									if ((name.startsWith("Caret."))&&(!names.equals("Caret.save")))
+									{
+										removeConfig0(name);
+									}
+								}
+								tam.getDataVector().clear();
+								tam.fireTableDataChanged();
+							}							
+						}
+					});
+					bottom.add(new MyButton("Cancel")
+					{
+						@Override
+						public void mouseReleased(MouseEvent ev)
+						{
+							dialog.setVisible(false);
+							dialog.dispose();
+						}
+					});
+					dialog.add(bottom, BorderLayout.PAGE_END);
+					dialog.pack();
+					dialog.setLocationRelativeTo(w);
+					dialog.setVisible(true);
+					dialog.dispose();
+				}
+			};
+			manage.setEnabled(saveCaret);
+			saveCaretPosition.addActionListener(new ActionListener()
+			{
+				@Override
+				public void actionPerformed(ActionEvent ev)
+				{
+					manage.setEnabled(saveCaretPosition.isSelected());
+				}
+			});
+			manage.setPreferredSize(new Dimension(65,25));
+			P8.add(manage);
+			tab1.add(P8);
 			//
 			//tab2: line wrap
 			MyPanel wrap = new MyPanel(MyPanel.CENTER);
@@ -4240,6 +4433,12 @@ public class RefluxEdit extends JFrame implements Resources
 				//use umbrella
 				paintTextArea = useUmbrella.isSelected();
 				setConfig("showUmbrella", paintTextArea+"");
+				int alpha = alphaYellow.getValue();
+				transYellow = new Color(251,231,51,alpha);
+				setConfig("Umbrella.alpha", alpha+"");
+				//caret
+				saveCaret = saveCaretPosition.isSelected();
+				setConfig("Caret.save", saveCaret+"");
 			}
 			{
 				//line wrap
@@ -4348,7 +4547,7 @@ public class RefluxEdit extends JFrame implements Resources
 			this.addMouseListener(new MyListener(x));
 			try
 			{
-				this.setIcon(new ImageIcon(getClass().getResource("/myjava/SRC/" + icon + ".PNG")));
+				this.setIcon(icon(icon));
 			}
 			catch (Exception ex)
 			{
@@ -4501,16 +4700,17 @@ public class RefluxEdit extends JFrame implements Resources
 	
 	protected void save(File f, boolean useEncoding) throws IOException
 	{
+		loadConfig();
 		if (useEncoding)
 		{
-			TMP1 = getConfig("Encoding");
+			TMP1 = getConfig0("Encoding");
 			if (TMP1 == null) TMP1 = "default1";
 		}
 		else
 		{
 			TMP1 = "default1";
 		}
-		TMP2 = getConfig("lineSeparator");
+		TMP2 = getConfig0("lineSeparator");
 		if (TMP2 == null) TMP2 = "\n";
 		TMP2 = TMP2.replace("\\n", "\n").replace("\\r", "\r");
 		if (TMP1.equals("default1"))
@@ -4548,6 +4748,8 @@ public class RefluxEdit extends JFrame implements Resources
 		{
 			currentFile.setText("Current file: " + TMP1);
 		}
+		setCaret(file, textArea.getCaretPosition());
+		saveConfig();
 	}
 	
 	class MyWorker extends SwingWorker<String,String>
@@ -4692,7 +4894,22 @@ public class RefluxEdit extends JFrame implements Resources
 			if (complete)
 			{
 				setFileLabel(f);
-				textArea.setCaretPosition(0);
+				loadConfig();
+				if (getBoolean0("Caret.save"))
+				{
+					try
+					{
+						textArea.setCaretPosition(Integer.parseInt(getConfig0("Caret."+f.getPath())));
+					}
+					catch (Exception ex)
+					{
+						textArea.setCaretPosition(0);
+					}
+				}
+				else
+				{
+					textArea.setCaretPosition(0);
+				}
 				prog.dispose();
 				double rate = getShowRate();
 				if (rate < 0.95)
@@ -4749,7 +4966,21 @@ public class RefluxEdit extends JFrame implements Resources
 					exception(ex);
 					return;
 				}
-				textArea.setCaretPosition(0);
+				if (getBoolean0("Caret.save"))
+				{
+					try
+					{
+						textArea.setCaretPosition(Integer.parseInt(getConfig0("Caret."+file.getPath())));
+					}
+					catch (Exception ex)
+					{
+						textArea.setCaretPosition(0);
+					}
+				}
+				else
+				{
+					textArea.setCaretPosition(0);
+				}
 				setFileLabel(file);
 				prog.dispose();
 			}
@@ -4980,10 +5211,23 @@ public class RefluxEdit extends JFrame implements Resources
 		prop.setProperty(key, value);
 	}
 	
+	protected static void removeConfig0(String key)
+	{
+		prop.remove(key);
+	}
+	
 	protected static void writeConfig(String key, String value)
 	{
 		prop.setProperty(key, value);
 		saveConfig();
+	}
+	
+	protected static void setCaret(File f, int pos)
+	{
+		if (getBoolean0("Caret.save")&&(f != null))
+		{
+			setConfig("Caret."+f.getPath(), pos+"");
+		}
 	}
 	
 	protected static void error(String str)

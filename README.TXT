@@ -14,6 +14,12 @@ RefluxEdit is provided "AS IS" and WITHOUT warranties. RefluxEdit does not conta
 
 ----------
 Version History:
+RefluxEdit 4.0beta2 2015-01-06
+-New function: save caret position
+-Changed: added edge in HELP tab
+-Changed: styled button in "Export to image" dialog
+-Fixed bug #00026: delete wrong characters
+
 RefluxEdit 4.0beta1 2015-01-02
 -New function: display progress bar when replacing text
 -New function: display umbrella

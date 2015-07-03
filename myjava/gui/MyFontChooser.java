@@ -1,4 +1,8 @@
-package myjava.gui; //version: 1.0
+package myjava.gui;
+
+/**
+ * Requires myjava.gui.common.Resources to work
+ */
 
 import java.awt.*;
 import java.awt.event.*;
@@ -11,12 +15,11 @@ public class MyFontChooser extends JPanel implements ActionListener, ChangeListe
 {
 	private static final Font[] usableFonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
 	protected Font selectedFont;	
-	protected JComboBox comboBox = new JComboBox();
+	protected JComboBox<String> comboBox = new JComboBox<>();
 	protected JSpinner spinner = new JSpinner(new SpinnerNumberModel(12, 1, 200, 1));
 	protected MyRadioButton plain = new MyRadioButton("Plain", false, 1);
 	protected MyRadioButton bold = new MyRadioButton("Bold", false, 2);
-	protected MyRadioButton italic = new MyRadioButton("Italic", false, 3);
-	
+	protected MyRadioButton italic = new MyRadioButton("Italic", false, 3);	
 	public MyFontChooser(Font f)
 	{
 		super();

@@ -1,2 +1,2 @@
-Main-Class: RefluxEdit
-SplashScreen-Image: myjava/SRC/Splash.gif
+Main-Class: exec.RefluxEdit
+SplashScreen-Image: SRC/Splash.gif

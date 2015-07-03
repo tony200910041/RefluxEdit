@@ -1,26 +1,48 @@
-package myjava.gui; //version: 1.1
+package myjava.gui;
+
+/**
+ * Requires myjava.gui.common.Resources to work
+ */
 
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
-import myjava.gui.common.Resources;
+import javax.swing.border.*;
+import myjava.gui.common.*;
 
-public class MyButton extends JButton implements MouseListener, Resources
+public class MyButton extends JButton implements ActionListener, MouseListener, Resources
 {
+	private static final String LAF = UIManager.getLookAndFeel().getName().toLowerCase();
+	private static final boolean isWindows = LAF.contains("windows");
+	private static final boolean isNimbus = LAF.contains("nimbus");
 	private static Color background = Color.WHITE;
 	private static Color foreground = Color.BLACK;
-	private static Dimension dimension = new Dimension(50,28);
-	
+	private static Dimension dimension = new Dimension(50,28);	
 	public MyButton(String text)
 	{
 		super(text);
-		this.setFont(f13);
-		this.setBorder(bord1);
-		this.setBackground(background);
-		this.setForeground(foreground);
-		this.setPreferredSize(dimension);
-		this.setFocusPainted(false);
+		this.setFont(Resources.f13);
+		if ((!isWindows)&&(!isNimbus))
+		{
+			this.setBorder(bord1);
+		}
+		else if (isNimbus)
+		{
+			this.setBorder(null);
+		}
+		if (!isWindows)
+		{
+			this.setBackground(background);
+			this.setForeground(foreground);
+			this.setPreferredSize(dimension);
+			this.setFocusPainted(false);
+		}
+		else
+		{
+			this.setOpaque(false);
+		}
 		this.addMouseListener(this);
+		this.addActionListener(this);		
 	}
 	
 	public MyButton()
@@ -28,19 +50,9 @@ public class MyButton extends JButton implements MouseListener, Resources
 		this("");
 	}
 	
-	public static void setDefaultBackground(Color c)
+	@Override
+	public void actionPerformed(ActionEvent ev)
 	{
-		MyButton.background = c;
-	}
-	
-	public static void setDefaultForeground(Color c)
-	{
-		MyButton.foreground = c;
-	}
-	
-	public static void setDefaultDimension(Dimension d)
-	{
-		MyButton.dimension = d;
 	}
 	
 	@Override
@@ -61,12 +73,18 @@ public class MyButton extends JButton implements MouseListener, Resources
 	@Override
 	public void mouseEntered(MouseEvent ev)
 	{
-		if (this.isEnabled()) this.setBorder(bord2);
+		if (this.isEnabled()&&(!isWindows)&&(!isNimbus))
+		{
+			this.setBorder(bord2);
+		}
 	}
 	
 	@Override
 	public void mouseExited(MouseEvent ev)
 	{
-		if (this.isEnabled()) this.setBorder(bord1);
+		if (this.isEnabled()&&(!isWindows)&&(!isNimbus))
+		{
+			this.setBorder(bord1);
+		}
 	}
 }

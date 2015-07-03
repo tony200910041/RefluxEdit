@@ -1,12 +1,18 @@
-package myjava.gui; //version: 1.1
+package myjava.gui;
+
+/**
+ * Requires the following classes to work:
+ * myjava.gui.MyButton
+ * myjava.gui.MyLabel
+ * myjava.gui.common.Resources
+ */
 
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
-import myjava.gui.MyButton;
-import myjava.gui.MyLabel;
+import myjava.gui.*;
 import myjava.gui.common.Resources;
 
 public class MyColorChooser extends JPanel implements ChangeListener, Resources
@@ -81,7 +87,7 @@ public class MyColorChooser extends JPanel implements ChangeListener, Resources
 			select = new MyButton("\u2190\u2192")
 			{
 				@Override
-				public void mouseReleased(MouseEvent ev)
+				public void actionPerformed(ActionEvent ev)
 				{
 					option = showColorDialog(parent, "Color chooser", PREV.getBackground());
 					PREV.setBackground(option);

@@ -1,4 +1,9 @@
-package myjava.gui; //version: 1.1
+package myjava.gui;
+
+/**
+ * Requires the following classes to work:
+ * myjava.gui.common.Resources
+ */
 
 import java.awt.*;
 import javax.swing.*;

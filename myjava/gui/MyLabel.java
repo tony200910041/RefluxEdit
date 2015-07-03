@@ -1,4 +1,4 @@
-package myjava.gui; //version: 1.0
+package myjava.gui;
 
 import java.awt.*;
 import javax.swing.*;
@@ -6,23 +6,16 @@ import myjava.gui.common.Resources;
 
 public class MyLabel extends JLabel implements Resources
 {
-	private static Color defaultColor = Color.BLACK;
 	public MyLabel()
 	{
 		super();
 		this.setFont(f13);
-		this.setForeground(defaultColor);
+		this.setForeground(Color.BLACK);
 	}
 	
 	public MyLabel(String str)
 	{
-		super(str);
-		this.setFont(f13);
-		this.setForeground(defaultColor);
-	}
-	
-	public static void setDefaultForeground(Color c)
-	{
-		MyLabel.defaultColor = c;
+		this();
+		this.setText(str);
 	}
 }

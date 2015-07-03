@@ -22,7 +22,7 @@ import myjava.gui.common.*;
 public class RefluxEdit extends JFrame implements Resources
 {
 	private static final float VERSION_NO = (float)3.0;
-	private static final String BETA_NO = "alpha";
+	private static final String BETA_NO = "beta1";
 	private static final File SettingsFile = new File(getSettingsFilePath(), "REFLUXEDITPREF.PROPERTIES");
 	private static final Properties prop = new Properties();
 	// screen dimension
@@ -31,10 +31,10 @@ public class RefluxEdit extends JFrame implements Resources
 	// components
 	private static JTextArea TEXTAREA = new JTextArea();
 	private MyLabel currentFile = new MyLabel(" ");
-	private final MyLabel leftEdge = new MyLabel(" ");
-	private final MyLabel rightEdge = new MyLabel(" ");
-	private final JLabel leftEdgeOld = new JLabel("  ");
-	private final JLabel rightEdgeOld = new JLabel("  ");
+	private MyLabel leftEdge = new MyLabel(" ");
+	private MyLabel rightEdge = new MyLabel(" ");
+	private JLabel leftEdgeOld = new JLabel("  ");
+	private JLabel rightEdgeOld = new JLabel("  ");
 	private static JMenuBar menubar;
 	private MyRibbonPanel ribbon = new MyRibbonPanel();
 	private static boolean isOtherLAF = true;
@@ -63,8 +63,8 @@ public class RefluxEdit extends JFrame implements Resources
 	private static final JPopupMenu popup = new JPopupMenu();
 	private static final Clipboard clipbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
 	
-	UndoManager undoManager = new UndoManager();
-	static boolean isSaved = true;
+	private UndoManager undoManager = new UndoManager();
+	private static boolean isSaved = true;
 	// main window
 	private static RefluxEdit w;
 	private JComponent topPanel = null;
@@ -82,7 +82,7 @@ public class RefluxEdit extends JFrame implements Resources
 	MyToolBarButton toolBarSearch = new MyToolBarButton("SEARCH32", "Search", 23);
 	MyToolBarButton toolBarReplace = new MyToolBarButton("REPLACE32", "Replace", 24);
 	MyToolBarButton toolBarOptions = new MyToolBarButton("OPTIONS32", "Toolbar options", 0);
-	JPanel bottomPanel = new JPanel();
+	private JPanel bottomPanel = new JPanel();
 	
 	private static int i, j, k, l, m;
 	private static String TMP1, TMP2, TMP3, TMP4;	
@@ -98,7 +98,7 @@ public class RefluxEdit extends JFrame implements Resources
 			public void run()
 			{
 				RefluxEdit.initialize();
-				RefluxEdit.setLAF();				
+				RefluxEdit.setLAF();
 				w = new RefluxEdit("RefluxEdit " + VERSION_NO);
 				w.restoreFrame();
 				w.buildWindowsChooser();
@@ -210,28 +210,6 @@ public class RefluxEdit extends JFrame implements Resources
 		JScrollPane scrollPane = new JScrollPane(TEXTAREA);
 		this.add(scrollPane, BorderLayout.CENTER);
 		this.addTopPanel();
-		// Swing defaults
-		UIManager.put("OptionPane.messageFont", f13);
-		UIManager.put("OptionPane.buttonFont", f13);
-		UIManager.put("OptionPane.okButtonText", "OK");
-		UIManager.put("OptionPane.yesButtonText", "YES");
-		UIManager.put("OptionPane.noButtonText", "NO");
-		UIManager.put("Button.background", Color.WHITE);
-		UIManager.put("MenuItem.acceleratorForeground", new Color(34,131,132));
-		UIManager.put("MenuItem.selectionBackground", new Color(220,220,220));
-		UIManager.put("PopupMenu.border", new LineBorder(Color.BLACK, 1));
-		UIManager.put("Separator.foreground", Color.BLACK);
-		UIManager.put("ComboBox.font", f13);
-		UIManager.put("TextField.font", f13);
-		UIManager.put("Label.font", f13);
-		UIManager.put("TabbedPane.font", f13);
-		UIManager.put("RadioButton.font", f13);
-		UIManager.put("CheckBox.font", f13);
-		UIManager.put("Button.font", f13);
-		UIManager.put("TitledBorder.font", f13);
-		UIManager.put("PopupMenu.background", Color.WHITE);
-		ToolTipManager.sharedInstance().setInitialDelay(100);
-		ToolTipManager.sharedInstance().setDismissDelay(6500);
 		this.addWindowListener(new WindowAdapter()
 		{
 			@Override
@@ -339,6 +317,29 @@ public class RefluxEdit extends JFrame implements Resources
 	
 	protected static void initialize()
 	{
+		// Swing defaults
+		UIManager.put("ToolTip.font", f13);
+		UIManager.put("OptionPane.messageFont", f13);
+		UIManager.put("OptionPane.buttonFont", f13);
+		UIManager.put("OptionPane.okButtonText", "OK");
+		UIManager.put("OptionPane.yesButtonText", "YES");
+		UIManager.put("OptionPane.noButtonText", "NO");
+		UIManager.put("Button.background", Color.WHITE);
+		UIManager.put("MenuItem.acceleratorForeground", new Color(34,131,132));
+		UIManager.put("MenuItem.selectionBackground", new Color(220,220,220));
+		UIManager.put("PopupMenu.border", new LineBorder(Color.BLACK, 1));
+		UIManager.put("Separator.foreground", Color.BLACK);
+		UIManager.put("ComboBox.font", f13);
+		UIManager.put("TextField.font", f13);
+		UIManager.put("Label.font", f13);
+		UIManager.put("TabbedPane.font", f13);
+		UIManager.put("RadioButton.font", f13);
+		UIManager.put("CheckBox.font", f13);
+		UIManager.put("Button.font", f13);
+		UIManager.put("TitledBorder.font", f13);
+		UIManager.put("PopupMenu.background", Color.WHITE);
+		ToolTipManager.sharedInstance().setInitialDelay(100);
+		ToolTipManager.sharedInstance().setDismissDelay(6500);
 		//size
 		if (!SettingsFile.exists())
 		{
@@ -353,7 +354,7 @@ public class RefluxEdit extends JFrame implements Resources
 				writeConfig("isEditable", "true");
 				writeConfig("LineWrap", "true");
 				writeConfig("WrapStyleWord", "true");
-				writeConfig("Encoding", "default");
+				writeConfig("Encoding", "default1");
 				writeConfig("ChooserStyle", "Java");
 				writeConfig("OnTop", "false");
 				writeConfig("TabSize", "4");
@@ -374,7 +375,7 @@ public class RefluxEdit extends JFrame implements Resources
 				writeConfig("ToolBar.replace", "true");
 				writeConfig("TextAreaFont.fontName", "Microsoft Jhenghei");
 				writeConfig("TextAreaFont.fontStyle", "0");
-				writeConfig("TextAreaFont.fontSize", "13");
+				writeConfig("TextAreaFont.fontSize", "15");
 				writeConfig("isUseNewMenuBar", "true");
 				writeConfig("isUseNarrowEdge", "true");
 				writeConfig("lineSeparator", "\\n");
@@ -587,11 +588,14 @@ public class RefluxEdit extends JFrame implements Resources
 			button.add("New File", 1);
 			button.add("Open File", 2);
 			button.add("Open File (quick)", 3);
+			button.add("", -1);
 			button.add("Save As", 4);
 			button.add("Save", 5);
+			button.add("", -1);
 			button.add("Export to Image", 43);
 			button.add("Print", 38);
 			button.add("Close", 6);
+			button.add("", -1);
 			button.add("\u2190", 0);
 			ribbon.addAsFirstComponent(button);
 			
@@ -600,30 +604,30 @@ public class RefluxEdit extends JFrame implements Resources
 			MyRibbonTab tab4 = new MyRibbonTab("INSERT");
 			MyRibbonTab tab5 = new MyRibbonTab("HELP");
 			
-			tab2.add(new MyRibbonButton("Undo", "UNDO32", "<html><font size=\"4\"><b>Undo previous change(s)</b></font><br>You can also press Ctrl+Z to perform undo action.</font></html>", false, 7));
-			tab2.add(new MyRibbonButton("Redo", "REDO32", "<html><font size=\"4\"><b>Redo previous change(s)</b></font><br>You can also press Ctrl+Y to perform redo action.</html>", false, 8));
+			tab2.add(new MyRibbonButton("Undo", "UNDO32", "<html><font size=\"4\"><b>Undo&nbsp;&nbsp;&nbsp;Ctrl+Z</b></font><br>Undo the last amendment.</font></html>", false, 7));
+			tab2.add(new MyRibbonButton("Redo", "REDO32", "<html><font size=\"4\"><b>Redo&nbsp;&nbsp;&nbsp;Ctrl+Y</b></font><br>Redo the undo amendment.</html>", false, 8));
 			JPanel tab2_1 = new JPanel(new GridLayout(2,1,10,10));
 			tab2_1.setOpaque(false);
-			tab2_1.add(new MyRibbonButton("Select all", "SELECT", "<html><font size=\"4\"><b>Select all</b></font><br>Select all text in the text area.</html>", true, 9));
+			tab2_1.add(new MyRibbonButton("Select all", "SELECT", "<html><font size=\"4\"><b>Select all&nbsp;&nbsp;&nbsp;Ctrl+A</b></font><br>Select all text in the text area.</html>", true, 9));
 			tab2_1.add(new MyRibbonButton("Select all and copy", "SELECT", "<html><font size=\"4\"><b>Select all and copy</b></font><br>Select all text in the text area and<br>copy to the system clipboard.</html>", true, 10));
 			tab2.add(tab2_1);
 			tab2.add(separator());
-			tab2.add(new MyRibbonButton("Cut", "CUT32", "<html><font size=\"4\"><b>Cut selected text</b></font><br>The selected text will be moved<br>to the system clipboard.</html>", false, 11));
-			tab2.add(new MyRibbonButton("Copy", "COPY32", "<html><font size=\"4\"><b>Copy selected text</b></font><br>The selected text will be copied<br>to the system clipboard.</html>", false, 12));
+			tab2.add(new MyRibbonButton("Cut", "CUT32", "<html><font size=\"4\"><b>Cut selected text&nbsp;&nbsp;&nbsp;Ctrl+X</b></font><br>The selected text will be moved<br>to the system clipboard.</html>", false, 11));
+			tab2.add(new MyRibbonButton("Copy", "COPY32", "<html><font size=\"4\"><b>Copy selected text&nbsp;&nbsp;&nbsp;Ctrl+C</b></font><br>The selected text will be copied<br>to the system clipboard.</html>", false, 12));
 			JPanel tab2_2 = new JPanel(new GridLayout(2,1,10,10));
 			tab2_2.setOpaque(false);
-			tab2_2.add(new MyRibbonButton("Paste", "PASTE", "<html><font size=\"4\"><b>Paste text</b></font><br>Paste the text in the system clipboard<br>to the text area.</html>", true, 13));
+			tab2_2.add(new MyRibbonButton("Paste", "PASTE", "<html><font size=\"4\"><b>Paste text&nbsp;&nbsp;&nbsp;Ctrl+V</b></font><br>Paste the text in the system clipboard<br>to the text area.</html>", true, 13));
 			tab2_2.add(new MyRibbonButton("Paste on next line", "PASTE", "<html><font size=\"4\"><b>Paste text on next line</b></font><br>Insert the text in the system clipboard<br>on the next line.</html>", true, 14));
 			tab2.add(tab2_2);
 			tab2.add(separator());
-			tab2.add(new MyRibbonButton("Delete", "DELETE32", "<html><font size=\"4\"><b>Delete selected text</b></font><br>The selected text will be deleted.</html>", false, 15));
+			tab2.add(new MyRibbonButton("Delete", "DELETE32", "<html><font size=\"4\"><b>Delete selected text&nbsp;&nbsp;&nbsp;Delete</b></font><br>The selected text will be deleted.</html>", false, 15));
 			
 			tab3.add(new MyRibbonButton("<html>Editing/<br>viewing</html>", "EDIT32", "<html><font size=\"4\"><b>Enable/disable editing</b></font><br>Click here to disable/re-enable editing.<br></html>", false, 17));
 			tab3.add(new MyRibbonButton("<html>On top</html>", "ONTOP", "<html><font size=\"4\"><b>Enable/disable always on top</b></font><br>Click here to enable/disable RefluxEdit always staying on top.</html>", false, 21));
 			tab3.add(separator());
 			JPanel tab3_1 = new JPanel(new GridLayout(2,1,10,10));
 			tab3_1.setOpaque(false);
-			tab3_1.add(new MyRibbonButton("Word count", "WORDCOUNT", "<html><font size=\"4\"><b>Word count</b></font><br>Count how many words are in the selected text,<br>or all words if no text is selected.</html>", true, 22));
+			tab3_1.add(new MyRibbonButton("Word count", "WORDCOUNT", "<html><font size=\"4\"><b>Word count&nbsp;&nbsp;&nbsp;Ctrl+F2</b></font><br>Count how many words are in the selected text,<br>or all words if no text is selected.</html>", true, 22));
 			tab3_1.add(new MyRibbonButton("Character count", "CHARACTERCOUNT", "<html><font size=\"4\"><b>Character count</b></font><br>Count how many characters are in the selected text,<br>or all characters if no text is selected.</html>", true, 44));
 			tab3.add(tab3_1);
 			tab3.add(separator());
@@ -638,7 +642,7 @@ public class RefluxEdit extends JFrame implements Resources
 			tab3.add(separator());
 			JPanel tab3_3 = new JPanel(new GridLayout(3,1,0,0));
 			tab3_3.setOpaque(false);
-			tab3_3.add(new MyRibbonButton("Search", "SEARCH", "<html><font size=\"4\"><b>Search words</b></font><br>Search words in the whole text.</html>", true, 23));
+			tab3_3.add(new MyRibbonButton("Search", "SEARCH", "<html><font size=\"4\"><b>Search words&nbsp;&nbsp;&nbsp;Ctrl+F</b></font><br>Search words in the whole text.</html>", true, 23));
 			tab3_3.add(new MyRibbonButton("Replace", "REPLACE", "<html><font size=\"4\"><b>Replace words</b></font><br>Replace words in the whole text.</html>", true, 24));
 			tab3_3.add(new MyRibbonButton("Replace (selected)", "REPLACE", "<html><font size=\"4\"><b>Replace words in selected text</b></font><br>Replace words in the SELECTED text.</html>", true, 25));
 			tab3.add(tab3_3);
@@ -659,7 +663,7 @@ public class RefluxEdit extends JFrame implements Resources
 			tab4.add(new MyRibbonButton("<html>&nbsp;Unicode<br>character</html>", "UNICODE32", "<html><font size=\"4\"><b>Insert unicode character</b></font><br>Insert unicode character by given code value.</html>", false, 45));
 			tab4.add(new MyRibbonButton("<html>Unicode<br>&nbsp;&nbsp;value</html>", "UNICODE32", "<html><font size=\"4\"><b>Insert unicode value</b></font><br>Insert unicode value by given character.</html>", false, 46));
 			
-			tab5.add(new MyRibbonButton("<html>&nbsp;&nbsp;About<br>RefluxEdit</html>", "APPICON32", "<html><font size=\"4\"><b>About RefluxEdit</b></font><br>RefluxEdit is a lightweight plain text editor written in Java by tony200910041.<br>SourceForge page: http://refluxedit.sourceforge.net</html>", false, 16));
+			tab5.add(new MyRibbonButton("<html>&nbsp;&nbsp;About<br>RefluxEdit</html>", "APPICON32", "<html><font size=\"4\"><b>About RefluxEdit&nbsp;&nbsp;&nbsp;Ctrl+F1</b></font><br>RefluxEdit is a lightweight plain text editor written in Java by tony200910041.<br>SourceForge page: http://refluxedit.sourceforge.net</html>", false, 16));
 			tab5.add(separator());
 			tab5.add(new MyRibbonButton("<html>Line Wrap</html>", "LINEWRAP32", "<html><font size=\"4\"><b>Line wrap options</b></font><br>Choose to enable/disable line wrap (automatically breaking lines)<br>and its style.</html>", false, 18));
 			tab5.add(new MyRibbonButton("<html>Encoding</html>", "ENCODING48", "<html><font size=\"4\"><b>Encoding options</b></font><br>Four encoding options: default, ISO-8859-1, UTF-8 and UTF-16BE.<br>Note that this is still a beta function and may contain some unknown bugs.<br>Please see if the text file is saved correctly if default encoding is not used.</html>", false, 19));
@@ -771,7 +775,7 @@ public class RefluxEdit extends JFrame implements Resources
 				}
 				if (!ev.isControlDown())
 				{
-					undoManager.setPosition(0);
+					undoManager.clearRedoList();
 				}
 			}
 			
@@ -1593,10 +1597,6 @@ public class RefluxEdit extends JFrame implements Resources
 				case 7: //undo
 				if (TEXTAREA.isEditable())
 				{
-					if (undoManager.getPosition() == 0)
-					{
-						undoManager.backup(TEXTAREA.getText());
-					}
 					TMP1 = undoManager.undo();
 					try
 					{
@@ -1767,10 +1767,11 @@ public class RefluxEdit extends JFrame implements Resources
 				JDialog encoding = new JDialog(w);
 				encoding.setModal(true);
 				encoding.setTitle("Encoding option");
-				encoding.setSize(300,150);
+				encoding.setSize(270,200);
 				encoding.setLocationRelativeTo(w);
 				encoding.getContentPane().setBackground(Color.WHITE);
-				boolean _default = false;
+				boolean _default1 = false;
+				boolean _default2 = false;
 				boolean ISO88591 = false;
 				boolean UTF8 = false;
 				boolean UTF16 = false;
@@ -1781,14 +1782,18 @@ public class RefluxEdit extends JFrame implements Resources
 				}
 				catch (Exception ex)
 				{
-					TMP1 = "default";
+					TMP1 = "default1";
 				}
 				finally
 				{
 					switch (TMP1)
 					{
-						case "default":
-						_default = true;
+						case "default1":
+						_default1 = true;
+						break;
+						
+						case "default2":
+						_default2 = true;
 						break;
 						
 						case "ISO-8859-1":
@@ -1804,10 +1809,11 @@ public class RefluxEdit extends JFrame implements Resources
 						break;
 					}
 				}
-				final MyRadioButton isDefault = new MyRadioButton("Use default Java encoding", _default, 1);
-				final MyRadioButton isISO88591 = new MyRadioButton("Use ISO-8859-1 (beta)", ISO88591, 2);
-				final MyRadioButton isUTF8 = new MyRadioButton("Use UTF-8 (beta)", UTF8, 3);
-				final MyRadioButton isUTF16 = new MyRadioButton("Use UTF-16BE (beta)", UTF16, 4);
+				final MyRadioButton isDefault1 = new MyRadioButton("Use Java default 1 (PrintWriter)", _default1, 1);
+				final MyRadioButton isDefault2 = new MyRadioButton("Use Java default 2 (FileOutputStream)", _default2, 2);
+				final MyRadioButton isISO88591 = new MyRadioButton("Use ISO-8859-1 (beta)", ISO88591, 3);
+				final MyRadioButton isUTF8 = new MyRadioButton("Use UTF-8 (beta)", UTF8, 4);
+				final MyRadioButton isUTF16 = new MyRadioButton("Use UTF-16BE (beta)", UTF16, 5);
 				
 				ActionListener listener1 = new ActionListener()
 				{
@@ -1816,31 +1822,44 @@ public class RefluxEdit extends JFrame implements Resources
 						switch (((MyRadioButton)(ev.getSource())).getIndex())
 						{
 							case 1:
-							isDefault.setSelected(true);
+							isDefault1.setSelected(true);
+							isDefault2.setSelected(false);
 							isISO88591.setSelected(false);
 							isUTF8.setSelected(false);
 							isUTF16.setSelected(false);
-							TMP1 = "default";
+							TMP1 = "default1";
 							break;
 							
 							case 2:
-							isDefault.setSelected(false);
+							isDefault1.setSelected(false);
+							isDefault2.setSelected(true);
+							isISO88591.setSelected(false);
+							isUTF8.setSelected(false);
+							isUTF16.setSelected(false);
+							TMP1 = "default2";
+							break;
+							
+							case 3:
+							isDefault1.setSelected(false);
+							isDefault2.setSelected(false);
 							isISO88591.setSelected(true);
 							isUTF8.setSelected(false);
 							isUTF16.setSelected(false);
 							TMP1 = "ISO-8859-1";
 							break;
 							
-							case 3:
-							isDefault.setSelected(false);
+							case 4:
+							isDefault1.setSelected(false);
+							isDefault2.setSelected(false);
 							isISO88591.setSelected(false);
 							isUTF8.setSelected(true);
 							isUTF16.setSelected(false);
 							TMP1 = "UTF-8";
 							break;
 							
-							case 4:
-							isDefault.setSelected(false);
+							case 5:
+							isDefault1.setSelected(false);
+							isDefault2.setSelected(false);
 							isISO88591.setSelected(false);
 							isUTF8.setSelected(false);
 							isUTF16.setSelected(true);
@@ -1849,12 +1868,14 @@ public class RefluxEdit extends JFrame implements Resources
 						}
 					}
 				};
-				isDefault.addActionListener(listener1);
+				isDefault1.addActionListener(listener1);
+				isDefault2.addActionListener(listener1);
 				isISO88591.addActionListener(listener1);
 				isUTF8.addActionListener(listener1);
 				isUTF16.addActionListener(listener1);		
-				encoding.setLayout(new GridLayout(4,1,0,0));
-				encoding.add(isDefault);
+				encoding.setLayout(new GridLayout(5,1,0,0));
+				encoding.add(isDefault1);
+				encoding.add(isDefault2);
 				encoding.add(isISO88591);
 				encoding.add(isUTF8);
 				encoding.add(isUTF16);				
@@ -1990,6 +2011,8 @@ public class RefluxEdit extends JFrame implements Resources
 							UIManager.put("OptionPane.noButtonText", "Cancel");
 							RandomProgress searchProg = new RandomProgress(0, TEXTAREA.getText().length());
 							TMP2 = TEXTAREA.getText();
+							TEXTAREA.requestFocusInWindow();
+							TEXTAREA.setCaretPosition(0);
 							outFor:			
 							for (i=0; i<=j-TMP1.length(); i++)
 							{
@@ -2319,7 +2342,7 @@ public class RefluxEdit extends JFrame implements Resources
 				case 34: //keyword, html
 				if (TEXTAREA.isEditable())
 				{
-					Object[] keywordHTML = new Object[]{"<a target=\"_blank\" href=\"\">", "<img alt=\"\" src=\"\">", "<br>"};
+					Object[] keywordHTML = new Object[]{"<a target=\"_blank\" href=\"\"></a>", "<img alt=\"\" src=\"\"></img>", "<font face=\"\"></font>", "<br>"};
 					TMP1 = (String)JOptionPane.showInputDialog(w, "Please choose one:", "Keyword (html)", JOptionPane.QUESTION_MESSAGE, null, keywordHTML, keywordHTML[0]);
 					if (TMP1 != null)
 					{
@@ -2337,19 +2360,27 @@ public class RefluxEdit extends JFrame implements Resources
 				case 35: //delete blank lines
 				if (TEXTAREA.isEditable())
 				{
-					TMP1 = TEXTAREA.getText();
-					undoManager.backup(TMP1);
-					i = TEXTAREA.getLineCount();					
-					for (j=i; j>=2; j--)
+					i = TEXTAREA.getLineCount();
+					j = JOptionPane.YES_OPTION;
+					if (i>=1000)
 					{
-						TMP2 = "\n";
-						for (k=1; k<j; k++)
-						{
-							TMP2 = TMP2 + "\n";
-						}
-						TMP1 = TMP1.replace(TMP2, "\n");
+						j = JOptionPane.showConfirmDialog(w, "This may spend very long time if you have more than 1000 lines.\nContinue?", "Warning", JOptionPane.YES_NO_OPTION);
 					}
-					TEXTAREA.setText(TMP1);
+					if (j == JOptionPane.YES_OPTION)
+					{
+						TMP1 = TEXTAREA.getText();
+						undoManager.backup(TMP1);					
+						for (j=i; j>=2; j--)
+						{
+							TMP2 = "";
+							for (k=1; k<=j; k++)
+							{
+								TMP2 = TMP2 + "\n";
+							}
+							TMP1 = TMP1.replace(TMP2, "\n");
+						}
+						TEXTAREA.setText(TMP1);
+					}
 				}
 				else
 				{
@@ -2360,13 +2391,13 @@ public class RefluxEdit extends JFrame implements Resources
 				case 36: //selection color
 				JDialog selectionColorDialog = new JDialog(w);
 				selectionColorDialog.setTitle("Selection Color");
-				selectionColorDialog.setLayout(new FlowLayout());
+				selectionColorDialog.setLayout(new FlowLayout(FlowLayout.CENTER));
 				selectionColorDialog.setModal(true);
 				MyColorChooser colorChooser = new MyColorChooser();
 				colorChooser.setColor(TEXTAREA.getSelectionColor());
 				selectionColorDialog.add(colorChooser);
 				selectionColorDialog.add(new MyLabel("Default: (244, 223, 255)"));
-				selectionColorDialog.setSize(370,210);
+				selectionColorDialog.setSize(390,210);
 				selectionColorDialog.setLocationRelativeTo(w);
 				selectionColorDialog.getContentPane().setBackground(Color.WHITE);
 				selectionColorDialog.setVisible(true);
@@ -2655,22 +2686,8 @@ public class RefluxEdit extends JFrame implements Resources
 				}
 				narrowEdge = useNarrowEdge.isSelected();
 				writeConfig("isUseNarrowEdge", narrowEdge+"");
-				try
-				{
-					w.remove(leftEdge);
-					w.remove(rightEdge);
-				}
-				catch (Exception ex)
-				{
-				}
-				try
-				{
-					w.remove(leftEdgeOld);
-					w.remove(rightEdgeOld);
-				}
-				catch (Exception ex)
-				{
-				}
+				w.remove(((BorderLayout)(w.getContentPane().getLayout())).getLayoutComponent(BorderLayout.LINE_START));
+				w.remove(((BorderLayout)(w.getContentPane().getLayout())).getLayoutComponent(BorderLayout.LINE_END));
 				if (narrowEdge)
 				{
 					w.add(leftEdge, BorderLayout.LINE_START);
@@ -2685,7 +2702,7 @@ public class RefluxEdit extends JFrame implements Resources
 				w.repaint();
 				break;
 				
-				case 40:
+				case 40: // color chooser
 				final JColorChooser cc = new JColorChooser(Color.WHITE);
 				cc.setFont(f13);
 				ActionListener colorDialogListener = new ActionListener()
@@ -2725,7 +2742,7 @@ public class RefluxEdit extends JFrame implements Resources
 							@Override
 							public void mouseReleased(MouseEvent ev)
 							{
-								if (TEXTAREA.isEnabled())
+								if (TEXTAREA.isEditable())
 								{
 									TMP4 = "";
 									if (rgb.isSelected()) TMP4 = " " + TMP1;
@@ -2736,9 +2753,9 @@ public class RefluxEdit extends JFrame implements Resources
 										undoManager.backup(TEXTAREA.getText());
 									}
 									TEXTAREA.insert(TMP4, TEXTAREA.getCaretPosition());
-									colorCode.setVisible(false);
-									colorCode.dispose();
 								}
+								colorCode.setVisible(false);
+								colorCode.dispose();
 							}
 						};
 						P4.add(colorCodeClose);
@@ -2885,7 +2902,7 @@ public class RefluxEdit extends JFrame implements Resources
 				baseConvert.pack();
 				baseConvert.setLocationRelativeTo(null);
 				baseConvert.setVisible(true);
-				if (TEXTAREA.isEnabled())
+				if (TEXTAREA.isEditable())
 				{
 					TMP1 = "";
 					if (cb2.isSelected()) TMP1 = tf2.getText() + " ";
@@ -2897,8 +2914,9 @@ public class RefluxEdit extends JFrame implements Resources
 						undoManager.backup(TEXTAREA.getText());
 					}
 					TEXTAREA.insert(TMP1, TEXTAREA.getCaretPosition());
-					baseConvert.dispose();
+					isSaved = false;
 				}
+				baseConvert.dispose();
 				break;
 				
 				case 42: //reduce memory usage
@@ -3059,7 +3077,7 @@ public class RefluxEdit extends JFrame implements Resources
 							break;
 							
 							case "Export":
-							TMP1 = exportTF.getText();
+							final String dest = exportTF.getText();
 							try
 							{
 								exportSpin.commitEdit();
@@ -3069,8 +3087,8 @@ public class RefluxEdit extends JFrame implements Resources
 							}
 							m = Short.parseShort(exportSpin.getValue().toString());
 							exportImage.dispose();
-							if (TMP1 == null) return;
-							if (TMP1.isEmpty()) return;
+							if (dest == null) return;
+							if (dest.isEmpty()) return;
 							// get each line
 							final ArrayList<String> lines = new ArrayList<String>();
 							i = 0;
@@ -3130,7 +3148,7 @@ public class RefluxEdit extends JFrame implements Resources
 									try
 									{
 										exportProg.setString("Writing image...");
-										ImageIO.write(image, TMP3, new File(TMP1));
+										ImageIO.write(image, TMP3, new File(dest));
 									}
 									catch (IOException ex)
 									{
@@ -3139,7 +3157,6 @@ public class RefluxEdit extends JFrame implements Resources
 									{
 										font = null;
 										f = null;
-										TMP1 = null;
 										TMP2 = null;
 										TMP3 = null;
 										exportProg.dispose();
@@ -3243,7 +3260,11 @@ public class RefluxEdit extends JFrame implements Resources
 						unicodeDialog.setVisible(false);
 						try
 						{
-							TEXTAREA.insert(toChar(unicodeField.getText())+"", TEXTAREA.getCaretPosition());
+							if (TEXTAREA.isEditable())
+							{
+								TEXTAREA.insert(toChar(unicodeField.getText())+"", TEXTAREA.getCaretPosition());
+								isSaved = false;
+							}
 						}
 						catch (Exception ex)
 						{
@@ -3288,6 +3309,7 @@ public class RefluxEdit extends JFrame implements Resources
 				unicodeDialog.setLocationRelativeTo(w);
 				unicodeDialog.setMinimumSize(new Dimension(315,205));
 				unicodeDialog.setVisible(true);
+				isSaved = false;
 				break;
 				
 				case 46: //char to unicode value
@@ -3317,7 +3339,11 @@ public class RefluxEdit extends JFrame implements Resources
 						charDialog.setVisible(false);
 						try
 						{
-							TEXTAREA.insert(toUnicodeValue(charField.getText().charAt(0)), TEXTAREA.getCaretPosition());
+							if (TEXTAREA.isEditable())
+							{
+								TEXTAREA.insert(toUnicodeValue(charField.getText().charAt(0)), TEXTAREA.getCaretPosition());
+								isSaved = false;
+							}
 						}
 						catch (Exception ex)
 						{
@@ -3385,9 +3411,9 @@ public class RefluxEdit extends JFrame implements Resources
 				
 				case 47: //line separator
 				JDialog sepDialog = new JDialog(w, "Line separator options", true);
-				final MyRadioButton sep_n = new MyRadioButton("\\n (Java default)", false, 1);
+				final MyRadioButton sep_n = new MyRadioButton("\\n (Java default, Linux, Mac OS X)", false, 1);
 				final MyRadioButton sep_r = new MyRadioButton("\\r (Mac OS 9)", false, 2);
-				final MyRadioButton sep_nr = new MyRadioButton("\\r\\n (Windows)", false, 3);
+				final MyRadioButton sep_nr = new MyRadioButton("\\r\\n (Windows, Symbian OS)", false, 3);
 				TMP1 = getConfig("lineSeparator");
 				if (TMP1 == null) TMP1 = "\\n";
 				switch (TMP1)
@@ -3439,7 +3465,7 @@ public class RefluxEdit extends JFrame implements Resources
 				sepDialog.add(sep_r);
 				sepDialog.add(sep_nr);
 				sepDialog.getContentPane().setBackground(Color.WHITE);
-				sepDialog.pack();
+				sepDialog.setSize(250,130);
 				sepDialog.setLocationRelativeTo(w);
 				sepDialog.setVisible(true);
 				TMP1 = "\\n";
@@ -3552,11 +3578,11 @@ public class RefluxEdit extends JFrame implements Resources
 	protected void save(File f) throws IOException
 	{
 		TMP1 = getConfig("Encoding");
-		if (TMP1 == null) TMP1 = "default";
+		if (TMP1 == null) TMP1 = "default1";
 		TMP2 = getConfig("lineSeparator");
 		if (TMP2 == null) TMP2 = "\n";
 		TMP2 = TMP2.replace("\\n", "\n").replace("\\r", "\r");
-		if (TMP1.equals("default"))
+		if (TMP1.equals("default1"))
 		{
 			PrintWriter out = new PrintWriter(f);
 			String[] strs = TEXTAREA.getText().split("\n");
@@ -3564,6 +3590,13 @@ public class RefluxEdit extends JFrame implements Resources
 			{
 				out.print(str + TMP2);
 			}
+			out.close();
+		}
+		else if (TMP1.equals("default2"))
+		{
+			byte[] bytes = TEXTAREA.getText().replace("\n", TMP2).getBytes();
+			FileOutputStream out = new FileOutputStream(f);
+			out.write(bytes);
 			out.close();
 		}
 		else
@@ -3591,7 +3624,7 @@ public class RefluxEdit extends JFrame implements Resources
 		TEXTAREA.setText("");
 		try
 		{
-			BufferedReader br1 = new BufferedReader(new FileReader(f));
+			BufferedReader br1 = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
 			while ((TMP1 = br1.readLine()) != null)
 			{
 				TEXTAREA.append(TMP1 + "\n");
@@ -3618,7 +3651,7 @@ public class RefluxEdit extends JFrame implements Resources
 				TEXTAREA.setText("");
 				try
 				{
-					BufferedReader br1 = new BufferedReader(new FileReader(f));
+					BufferedReader br1 = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
 					while (((TMP1 = br1.readLine()) != null)&&(!this.isCancelled()))
 					{
 						TEXTAREA.append(TMP1 + "\n");
@@ -3973,7 +4006,7 @@ public class RefluxEdit extends JFrame implements Resources
 			this.setFocusPainted(false);
 			this.addMouseListener(this);
 			panel.setBackground(new Color(111,107,100));
-			panel.setLayout(new FlowLayout());
+			panel.setLayout(new FlowLayout(FlowLayout.LEFT,0,3));
 			panel.setPreferredSize(new Dimension(165,0));
 		}
 		
@@ -3984,59 +4017,79 @@ public class RefluxEdit extends JFrame implements Resources
 		
 		class MyItemButton extends MyPureButton
 		{
+			private int x;
 			public MyItemButton(String item, int x)
 			{
 				super("  " + item);
 				this.setBackground(new Color(111,107,100));
-				this.setLabelForeground(Color.WHITE);
-				this.setPreferredSize(new Dimension(165,33));
+				this.setLabelForeground(Color.WHITE);				
 				this.setBorder(new LineBorder(Color.BLACK,0));
 				this.setLabelFont(new Font("Microsoft Jhenghei", Font.PLAIN, 14));
 				this.setAlignLeft();
-				if (x != 0)
+				this.x = x;
+				if (x != -1)
 				{
-					this.addMouseListener(new MyListener(x));
+					this.setPreferredSize(new Dimension(165,33));
+					if (x != 0)
+					{
+						this.addMouseListener(new MyListener(x));
+					}
+					this.addMouseListener(new MouseAdapter()
+					{
+						@Override
+						public void mouseReleased(MouseEvent ev)
+						{
+							((Component)(ev.getSource())).setBackground(new Color(111,107,100));
+							w.remove(panel);
+							try
+							{
+								TMP1 = getConfig("isUseNarrowEdge");
+								if (TMP1 == null) throw new Exception();
+							}
+							catch (Exception ex)
+							{
+								TMP1 = "false";
+							}
+							if (TMP1.equals("true"))
+							{
+								w.add(leftEdge, BorderLayout.LINE_START);
+							}
+							else
+							{
+								w.add(leftEdgeOld, BorderLayout.LINE_START);
+							}
+							w.revalidate();
+							w.repaint();
+						}
+						
+						@Override
+						public void mouseEntered(MouseEvent ev)
+						{
+							((MyItemButton)(ev.getSource())).setBackground(new Color(50,50,50));
+						}
+						
+						@Override
+						public void mouseExited(MouseEvent ev)
+						{
+							((MyItemButton)(ev.getSource())).setBackground(new Color(111,107,100));
+						}
+					});
 				}
-				this.addMouseListener(new MouseAdapter()
+				else
 				{
-					@Override
-					public void mouseReleased(MouseEvent ev)
-					{
-						((Component)(ev.getSource())).setBackground(new Color(111,107,100));
-						w.remove(panel);
-						try
-						{
-							TMP1 = getConfig("isUseNarrowEdge");
-							if (TMP1 == null) throw new Exception();
-						}
-						catch (Exception ex)
-						{
-							TMP1 = "false";
-						}
-						if (TMP1.equals("true"))
-						{
-							w.add(leftEdge, BorderLayout.LINE_START);
-						}
-						else
-						{
-							w.add(leftEdgeOld, BorderLayout.LINE_START);
-						}
-						w.revalidate();
-						w.repaint();
-					}
-					
-					@Override
-					public void mouseEntered(MouseEvent ev)
-					{
-						((MyItemButton)(ev.getSource())).setBackground(new Color(50,50,50));
-					}
-					
-					@Override
-					public void mouseExited(MouseEvent ev)
-					{
-						((MyItemButton)(ev.getSource())).setBackground(new Color(111,107,100));
-					}
-				});
+					this.setPreferredSize(new Dimension(165,1));
+				}
+			}
+			
+			@Override
+			protected void paintComponent(Graphics g)
+			{
+				super.paintComponent(g);
+				if (x == -1)
+				{
+					g.setColor(Color.WHITE);
+					g.drawLine(5,0,160,0);
+				}
 			}
 		}
 		
@@ -4106,55 +4159,53 @@ public class RefluxEdit extends JFrame implements Resources
 	
 	class UndoManager
 	{
-		private ArrayList<String> backup = new ArrayList<String>();
-		private int position = 0;
+		private ArrayList<String> undoList = new ArrayList<String>();
+		private ArrayList<String> redoList = new ArrayList<String>();
 		public UndoManager()
 		{
 		}
 		
-		public void backup(String str) 
-		//larger index: older
-		//smaller index: newer
+		public void backup(String str)
 		{
-			backup.add(0, str);
+			undoList.add(0, str); //newer: smaller index
 		}
 		
 		public String undo()
 		{
-			if (position<backup.size()-1)
-			{
-				position++;
-				return backup.get(position);
-			}
-			else
+			if (undoList.isEmpty())
 			{
 				JOptionPane.showMessageDialog(w, "Reached undo limit!", "Error", JOptionPane.ERROR_MESSAGE);
 				return null;
 			}
+			String text = TEXTAREA.getText();
+			if (!undoList.get(0).equals(text))
+			{
+				redoList.add(0, text);
+			}
+			else
+			{
+				redoList.add(0, undoList.remove(0));
+			}
+			return undoList.remove(0);
 		}
 		
 		public String redo()
 		{
-			if (position>0)
-			{
-				position--;
-				return backup.get(position);
-			}
-			else
+			if (redoList.isEmpty())
 			{
 				JOptionPane.showMessageDialog(w, "Reached redo limit!", "Error", JOptionPane.ERROR_MESSAGE);
 				return null;
 			}
+			else
+			{
+				undoList.add(0,TEXTAREA.getText());
+				return redoList.remove(0);
+			}
 		}
 		
-		public int getPosition()
+		public void clearRedoList()
 		{
-			return this.position;
-		}
-		
-		public void setPosition(int position)
-		{
-			this.position = position;
+			redoList.clear();
 		}
 	}
 }

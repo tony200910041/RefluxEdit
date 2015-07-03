@@ -1,0 +1,2 @@
+Main-Class: RefluxEdit
+SplashScreen-Image: myjava/SRC/Splash.gif

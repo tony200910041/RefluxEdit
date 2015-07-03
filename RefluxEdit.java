@@ -16,13 +16,14 @@ import javax.imageio.ImageIO;
 import java.io.*;
 import java.util.*;
 import java.text.*;
+import java.net.*;
 import myjava.gui.*;
 import myjava.gui.common.*;
 
 public class RefluxEdit extends JFrame implements Resources
 {
 	private static final float VERSION_NO = (float)3.0;
-	private static final String BETA_NO = "beta1";
+	private static final String BETA_NO = "";
 	private static final File SettingsFile = new File(getSettingsFilePath(), "REFLUXEDITPREF.PROPERTIES");
 	private static final Properties prop = new Properties();
 	// screen dimension
@@ -663,16 +664,29 @@ public class RefluxEdit extends JFrame implements Resources
 			tab4.add(new MyRibbonButton("<html>&nbsp;Unicode<br>character</html>", "UNICODE32", "<html><font size=\"4\"><b>Insert unicode character</b></font><br>Insert unicode character by given code value.</html>", false, 45));
 			tab4.add(new MyRibbonButton("<html>Unicode<br>&nbsp;&nbsp;value</html>", "UNICODE32", "<html><font size=\"4\"><b>Insert unicode value</b></font><br>Insert unicode value by given character.</html>", false, 46));
 			
-			tab5.add(new MyRibbonButton("<html>&nbsp;&nbsp;About<br>RefluxEdit</html>", "APPICON32", "<html><font size=\"4\"><b>About RefluxEdit&nbsp;&nbsp;&nbsp;Ctrl+F1</b></font><br>RefluxEdit is a lightweight plain text editor written in Java by tony200910041.<br>SourceForge page: http://refluxedit.sourceforge.net</html>", false, 16));
+			JPanel tab5_1 = new JPanel(new GridLayout(2,1,10,10));
+			tab5_1.setOpaque(false);
+			tab5_1.add(new MyRibbonButton("<html>About RefluxEdit</html>", "APPICON16", "<html><font size=\"4\"><b>About RefluxEdit&nbsp;&nbsp;&nbsp;Ctrl+F1</b></font><br>RefluxEdit is a lightweight plain text editor written in Java by tony200910041.<br>SourceForge page: http://refluxedit.sourceforge.net</html>", true, 16));
+			tab5_1.add(new MyRibbonButton("<html>Visit SourceForge Page</html>", null, "<html><font size=\"4\"><b>Visit SourceForge homepage</b></font><br>http://refluxedit.sourceforge.net/</html>", true, 48));
+			tab5.add(tab5_1);
 			tab5.add(separator());
-			tab5.add(new MyRibbonButton("<html>Line Wrap</html>", "LINEWRAP32", "<html><font size=\"4\"><b>Line wrap options</b></font><br>Choose to enable/disable line wrap (automatically breaking lines)<br>and its style.</html>", false, 18));
-			tab5.add(new MyRibbonButton("<html>Encoding</html>", "ENCODING48", "<html><font size=\"4\"><b>Encoding options</b></font><br>Four encoding options: default, ISO-8859-1, UTF-8 and UTF-16BE.<br>Note that this is still a beta function and may contain some unknown bugs.<br>Please see if the text file is saved correctly if default encoding is not used.</html>", false, 19));
+			JPanel tab5_2 = new JPanel(new GridLayout(3,1,0,0));
+			tab5_2.setOpaque(false);
+			tab5_2.add(new MyRibbonButton("<html>Line Wrap</html>", "LINEWRAP16", "<html><font size=\"4\"><b>Line wrap options</b></font><br>Choose to enable/disable line wrap (automatically breaking lines)<br>and its style.</html>", true, 18));
+			tab5_2.add(new MyRibbonButton("<html>Encoding</html>", "ENCODING16", "<html><font size=\"4\"><b>Encoding options</b></font><br>Four encoding options: default, ISO-8859-1, UTF-8 and UTF-16BE.<br>Note that this is still a beta function and may contain some unknown bugs.<br>Please see if the text file is saved correctly if default encoding is not used.</html>", true, 19));
+			tab5_2.add(new MyRibbonButton("<html>Tab size</html>", "TABSIZE16", "<html><font size=\"4\"><b>Tab size options</b></font><br>Change the tab size.</html>", true, 29));
+			tab5.add(tab5_2);
+			tab5.add(separator());
 			tab5.add(new MyRibbonButton("<html>&nbsp;&nbsp;&nbsp;&nbsp;Line<br>separator</html>", "LINESEPARATOR32", "<html><font size=\"4\"><b>Line separator options</b></font><br>Three line separators: \\n, \\r and \\r\\n</html>", false, 47));
 			tab5.add(new MyRibbonButton("<html>&nbsp;&nbsp;&nbsp;&nbsp;File<br>chooser</html>", "FILECHOOSER32", "<html><font size=\"4\"><b>File chooser options</b></font><br>Three file choosers: Java, Windows and Beta</html>", false, 20));
-			tab5.add(new MyRibbonButton("<html>Tab size</html>", "TABSIZE32", "<html><font size=\"4\"><b>Tab size options</b></font><br>Change the tab size.</html>", false, 29));
 			tab5.add(new MyRibbonButton("<html>Selection<br>&nbsp;&nbsp;&nbsp;color</html>", "SELECTIONCOLOR32", "<html><font size=\"4\"><b>Selection color options</b></font><br>Change the selection color of the text.</html>", false, 36));
-			tab5.add(new MyRibbonButton("<html>LAF</html>", "LAF48", "<html><font size=\"4\"><b>Look and Feel options</b></font><br>Change the look of RefluxEdit!</html>", false, 37));
-			tab5.add(new MyRibbonButton("<html>&nbsp;Other<br>options</html>", "OPTIONS32", "<html><font size=\"4\"><b>Other options</b></font><br>Miscellaneous options</html>", false, 39));
+			tab5.add(separator());
+			JPanel tab5_3 = new JPanel(new GridLayout(2,1,10,10));
+			tab5_3.setOpaque(false);
+			tab5_3.add(new MyRibbonButton("<html>LAF</html>", "LAF", "<html><font size=\"4\"><b>Look and Feel options</b></font><br>Change the look of RefluxEdit!</html>", true, 37));
+			tab5_3.add(new MyRibbonButton("<html>Other options</html>", "OPTIONS16", "<html><font size=\"4\"><b>Other options</b></font><br>Miscellaneous options</html>", true, 39));
+			tab5.add(tab5_3);
+			tab5.add(separator());
 			tab5.add(new MyRibbonButton("<html>&nbsp;Reduce<br>memory<br>&nbsp;&nbsp;usage</html>", null, "<html><font size=\"4\"><b>Reduce memory usage</b></font><br>System.gc() will be executed.</html>", false, 42));
 		}   //"<html><font size=\"4\"><b></b></font><br></html>"
 		else
@@ -752,7 +766,8 @@ public class RefluxEdit extends JFrame implements Resources
 			menu4.add(new MyMenuItem("Insert unicode value", null, 46));
 			
 			menu5.add(new MyMenuItem("About RefluxEdit", "APPICON16", 16).setAccelerator(KeyEvent.VK_F1, ActionEvent.CTRL_MASK));
-			//next one: 48
+			menu5.add(new MyMenuItem("Visit SourceForge page", null, 48));
+			//next one: 49
 		}
 	}
 	
@@ -3473,6 +3488,16 @@ public class RefluxEdit extends JFrame implements Resources
 				if (sep_nr.isSelected()) TMP1 = "\\r\\n";
 				writeConfig("lineSeparator", TMP1);
 				break;
+				
+				case 48:
+				try
+				{
+					Desktop.getDesktop().browse(new URI("http://refluxedit.sourceforge.net/"));
+				}
+				catch (Exception ex)
+				{
+				}
+				break;
 			}
 		}
 	}
@@ -4088,7 +4113,7 @@ public class RefluxEdit extends JFrame implements Resources
 				if (x == -1)
 				{
 					g.setColor(Color.WHITE);
-					g.drawLine(5,0,160,0);
+					g.drawLine(3,0,162,0);
 				}
 			}
 		}

@@ -8,6 +8,7 @@ import javax.swing.filechooser.*;
 import javax.swing.plaf.ColorUIResource;
 
 import java.io.*;
+import java.util.Properties;
 import java.util.Locale;
 
 public class RefluxEdit extends JFrame
@@ -19,30 +20,6 @@ public class RefluxEdit extends JFrame
 	byte currentstring = 0;
 	
 	boolean ready = false;
-	
-	public static void main(String[] args)
-	{
-		RefluxEdit w = new RefluxEdit();
-		w.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		w.setSize(460,395);
-		w.setMinimumSize(new Dimension(275,250));
-		w.setVisible(true);
-		w.setTitle("RefluxEdit 1.1");
-		w.setLocationRelativeTo(null);
-		w.addWindowListener(new WindowAdapter()
-		{
-            public void windowClosing(WindowEvent ev)
-            {
-				Object[] options = {"YES", "NO"};
-				int close = JOptionPane.showOptionDialog(null, "Do you really want to close RefluxEdit?", "Confirm exit", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);
-				if (close == JOptionPane.YES_OPTION)
-				{
-					System.exit(0);
-				}
-			}
-		});	
-		w.setResizable(true);
-	}
 	
 	//Conponents:
 	JButton saveas = new JButton("Save As");
@@ -59,6 +36,7 @@ public class RefluxEdit extends JFrame
 	FileNameExtensionFilter[] filter1 = {new FileNameExtensionFilter("Text files", "txt", "ini", "log", "java", "py", "bat", "cmd", "htm", "html", "xml", "php"), new FileNameExtensionFilter("Text (*.txt, *.ini, *.log)", "txt", "ini", "log"), new FileNameExtensionFilter("Command (*.bat, *.cmd)", "bat", "cmd"), new FileNameExtensionFilter("Website and programming (*.htm, *.html, *.xml, *.php, *.java, *.py)", "htm", "html", "xml", "php", "java", "py")};
 	
 	//GUI:
+	static RefluxEdit w;
 	Font J1 = new Font("Microsoft Jhenghei", Font.PLAIN, 12);
 	Font J2 = new Font("Microsoft Jhenghei", Font.PLAIN, 15);
 	
@@ -70,6 +48,8 @@ public class RefluxEdit extends JFrame
 	//others:
 	File file = null;
 	File chooserdefault = new File("./");
+	File SettingsFile = new File(getJARPath() + "\\REFLUXEDITPREF.PROPERTIES\\");
+	Properties prop = new Properties();
 
 	String str = "";
 	String tmp;
@@ -77,14 +57,147 @@ public class RefluxEdit extends JFrame
 	String tmp3;
 	
 	String[] backup = {"", "", "", "", "", "", "", "", "", ""};
+	String[] arg;
 	
 	Transferable tmp2;		
 	Clipboard systemclipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 	
 	UIManager uim = new UIManager();
 	
-	public RefluxEdit()
+	public static void main(String[] args)
 	{
+		w = new RefluxEdit(args);
+		w.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		w.setMinimumSize(new Dimension(275,250));
+		w.setTitle("RefluxEdit 1.2");
+		w.setResizable(true);
+		w.setVisible(true);
+		w.addWindowListener(new WindowAdapter()
+		{
+			public void windowClosing(WindowEvent ev)
+			{
+				WriteSize();
+				Object[] options = {"YES", "NO"};
+				int close = JOptionPane.showOptionDialog(null, "Do you really want to close RefluxEdit?", "Confirm exit", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);
+				if (close == JOptionPane.YES_OPTION)
+				{
+					System.exit(0);
+				}
+			}
+		});
+	}
+	
+	public RefluxEdit(String[] s)
+	{
+		//create setting file if not exists
+		if (!SettingsFile.exists())
+		{
+			try
+			{
+				PrintWriter writer = new PrintWriter(SettingsFile, "UTF-8");
+				writer.close();
+				WriteConfig("LineWrap", "true");
+				WriteConfig("WrapByWord", "true");
+				WriteConfig("Editing", "true");
+				WriteConfig("Location.x", "0");
+				WriteConfig("Location.y", "0");
+				WriteConfig("Size.x", "460");
+				WriteConfig("Size.y", "395");
+				WriteConfig("AutoAddTxt", "true");
+			}
+			catch (Exception ex)
+			{
+			}
+		}
+		//restore settings
+		try
+		{
+			TEXTAREA.setLineWrap(Boolean.parseBoolean(getConfig("LineWrap")));
+		}
+		catch (Exception ex)
+		{
+		}
+		try
+		{	
+			TEXTAREA.setWrapStyleWord(Boolean.parseBoolean(getConfig("WrapByWord")));
+		}
+		catch (Exception ex)
+		{
+		}
+		try
+		{
+			if (Boolean.parseBoolean(getConfig("Editing")))
+			{
+				TEXTAREA.setBackground(Color.WHITE);
+				TEXTAREA.setEditable(true);
+			}
+			else
+			{
+				TEXTAREA.setBackground(new Color(245,245,245));
+				TEXTAREA.setEditable(false);
+			}
+		}
+		catch (Exception ex)
+		{
+		}
+		/*System.out.println(getConfig("Location.x"));
+		System.out.println(getConfig("Location.y"));
+		System.out.println(getConfig("Size.x"));
+		System.out.println(getConfig("Size.y"));*/
+		try
+		{
+			i = (int)Double.parseDouble(getConfig("Size.x"));
+			j = (int)Double.parseDouble(getConfig("Size.y"));
+			if (i > (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth())
+			{
+				i = (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth();
+			}		
+			if (j > (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight())
+			{
+				j = (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight();
+			}
+		}
+		catch (Exception ex)
+		{
+			i = 0;
+			j = 0;
+		}
+		if ((i>=275)&&(j>=250))
+		{
+			this.setSize(i, j);
+		}
+		else
+		{
+			this.setSize(275, 250);
+		}
+		
+		try
+		{
+			k = (int)Double.parseDouble(getConfig("Location.x"));
+			l = (int)Double.parseDouble(getConfig("Location.y"));
+			if ((k+i) > (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth())
+			{
+				k = (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth()-i;
+			}
+			if ((l+j) > (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight())
+			{
+				l = (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight()-j;
+			}
+		}
+		catch (Exception ex)
+		{
+			k = 0;
+			l = 0;
+		}	
+		if ((k>=0)&&(l>=0))
+		{
+			this.setLocation(k, l);
+		}
+		else
+		{
+			this.setLocation(0, 0);
+		}
+		
 		//set language: English
 		JComponent.setDefaultLocale(Locale.ENGLISH);
 		chooser = new JFileChooser();
@@ -169,6 +282,7 @@ public class RefluxEdit extends JFrame
 		JMenuItem item27 = new JMenuItem("Insert key words (Java)");
 		JMenuItem item28 = new JMenuItem("Generate random words");
 		JMenuItem item30 = new JMenuItem("Convert to invert case");
+		JMenuItem item31 = new JMenuItem("Disable/Enable automatically add .txt when saving");
 		
 		item6.setFont(J1);
 		item7.setFont(J1);
@@ -186,6 +300,7 @@ public class RefluxEdit extends JFrame
 		item27.setFont(J1);
 		item28.setFont(J1);
 		item30.setFont(J1);
+		item31.setFont(J1);
 				
 		item6.setBackground(Color.WHITE);
 		item7.setBackground(Color.WHITE);
@@ -203,6 +318,7 @@ public class RefluxEdit extends JFrame
 		item27.setBackground(Color.WHITE);
 		item28.setBackground(Color.WHITE);
 		item30.setBackground(Color.WHITE);
+		item31.setBackground(Color.WHITE);
 		
 		menu1.add(item1);
 		menu1.add(item2);
@@ -228,6 +344,7 @@ public class RefluxEdit extends JFrame
 		menu4.add(item6);
 		menu4.add(item7);
 		menu4.add(item20);
+		menu4.add(item31);
 		menu4.add(new JSeparator());
 		menu4.add(item18);
 		menu4.add(item19);
@@ -285,6 +402,7 @@ public class RefluxEdit extends JFrame
 		item28.addMouseListener(new MouseLis(29));
 		item29.addMouseListener(new MouseLis(30));
 		item30.addMouseListener(new MouseLis(31));
+		item31.addMouseListener(new MouseLis(32));
 		
 		getContentPane().setLayout(new BorderLayout());
 		
@@ -314,14 +432,12 @@ public class RefluxEdit extends JFrame
 		newfile.setBorder(bord1);
 		
 		TEXTAREA.setFont(J2);
-		TEXTAREA.setLineWrap(true);		
-		TEXTAREA.setWrapStyleWord(true);
-		TEXTAREA.setDragEnabled(true);
 		TEXTAREA.setTabSize(3);
 		
 		current.setFont(J1);	
 		
 		setFileChooserStyle(chooser.getComponents());
+		chooser.setPreferredSize(new Dimension(520, 450));
 		
 		uim.put("OptionPane.buttonFont", J1);
 		uim.put("OptionPane.messageFont", J1);		
@@ -343,6 +459,14 @@ public class RefluxEdit extends JFrame
 		uim.put("Menu.font", J1);
 		uim.put("RadioButtonMenuItem.font", J1);
 		uim.put("TextField.font", J1);
+		
+		jsp.getHorizontalScrollBar().setBackground(new Color(245,245,245));
+		jsp.getHorizontalScrollBar().getComponent(0).setBackground(new Color(245,245,245));
+		jsp.getHorizontalScrollBar().getComponent(1).setBackground(new Color(245,245,245));
+		
+		jsp.getVerticalScrollBar().setBackground(new Color(245,245,245));
+		jsp.getVerticalScrollBar().getComponent(0).setBackground(new Color(245,245,245));
+		jsp.getVerticalScrollBar().getComponent(1).setBackground(new Color(245,245,245));
 		
 		jsp.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		jsp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -390,62 +514,31 @@ public class RefluxEdit extends JFrame
 			}
 		});
 		
+		this.addWindowListener(new WindowAdapter()
+		{
+            public void windowClosing(WindowEvent ev)
+            {
+				WriteConfig("LineWrap", TEXTAREA.getLineWrap() + "");
+				WriteConfig("WrapByWord", TEXTAREA.getWrapStyleWord() + "");
+				WriteConfig("Editing", TEXTAREA.isEditable() + "");
+			}
+		});	
+		
 		try
 		{
-			ImageIcon ico = new ImageIcon(getClass().getResource("/SRC/APPICON.PNG"));
-			this.setIconImage(ico.getImage());
-			ico = null;
+			this.setIconImage((new ImageIcon(getClass().getResource("/SRC/APPICON.PNG"))).getImage());
 		}
 		catch (Exception ex)
 		{
 		}
-	}
-	
-	public void setFileChooserStyle(Component[] comp)  
-	{		
-		for (int x = 0; x < comp.length; x++)  
+		
+		//open file by command line/file association
+		if (s.length == 1)
 		{
-			if (comp[x] instanceof Container) setFileChooserStyle(((Container)comp[x]).getComponents());  
-			try
+			if ((new File(s[0])).exists())
 			{
-				comp[x].setFont(J1);
-				comp[x].setForeground(darkblue);
-				if (comp[x] instanceof JButton)
-				{
-					//set button
-					comp[x].setBackground(Color.WHITE);
-				}
-				if (comp[x] instanceof JList)
-				{
-					//set file field
-					comp[x].setBackground(Color.WHITE);
-				}
-				if (comp[x] instanceof JComboBox)
-				{
-					//set the choosing list
-					comp[x].setBackground(Color.WHITE);
-				}
-				if (comp[x] instanceof JTextField)
-				{
-					//set the text field
-					comp[x].setBackground(Color.WHITE);
-				}				
-				if (comp[x] instanceof JToggleButton)
-				{
-					comp[x].setBackground(Color.WHITE);
-				}
-				if (comp[x] instanceof JScrollBar)
-				{
-					comp[x].setBackground(Color.WHITE);
-					comp[x].setForeground(Color.WHITE);
-				}
-				if (comp[x] instanceof JLabel)
-				{
-					comp[x].setBackground(Color.WHITE);
-				}		
-			}  
-			catch (Exception ex)
-			{
+				file = new File(s[0]);
+				Openfile();
 			}
 		}
 	}
@@ -457,6 +550,7 @@ public class RefluxEdit extends JFrame
 			FileWriter fw1 = new FileWriter(file);
 			TEXTAREA.write(fw1);
 			fw1.close();
+			System.out.println(file);
 			tmp = file + "";
 			if (tmp.length() > 50)
 			{
@@ -551,7 +645,11 @@ public class RefluxEdit extends JFrame
 			{
 				try
 				{
-					PrintWriter pw1 = new PrintWriter(file + "", "UTF-8");
+					if ((!(file + "").contains("."))&&(Boolean.parseBoolean(getConfig("AutoAddTxt"))))
+					{
+						file = new File(file + ".txt");
+					}
+					PrintWriter pw1 = new PrintWriter(file, "UTF-8");
 					pw1.close();
 				}
 				catch (Exception ex)
@@ -968,6 +1066,14 @@ public class RefluxEdit extends JFrame
 				break;
 				
 				case 5:
+				WriteConfig("LineWrap", TEXTAREA.getLineWrap() + "");
+				WriteConfig("WrapByWord", TEXTAREA.getWrapStyleWord() + "");
+				WriteConfig("Editing", TEXTAREA.isEditable() + "");
+				/*WriteConfig("Size.x", w.getSize().getWidth() + "");
+				WriteConfig("Size.y", w.getSize().getHeight() + "");
+				WriteConfig("Location.x", w.getLocation().getX() + "");
+				WriteConfig("Location.y", w.getLocation().getY() + "");*/
+				WriteSize();
 				System.exit(0);
 				break;
 				
@@ -1000,7 +1106,7 @@ public class RefluxEdit extends JFrame
 				break;
 				
 				case 9:
-				JOptionPane.showConfirmDialog(null, "RefluxEdit 1.1 is a very small text editor written in Java.\nBy tony200910041\nhttp://tony200910041.wordpress.com\nDistributed under MPL2.0.", "About RefluxEdit", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showConfirmDialog(null, "RefluxEdit 1.2 is a very small text editor written in Java.\nBy tony200910041\nhttp://tony200910041.wordpress.com\nDistributed under MPL2.0.", "About RefluxEdit", JOptionPane.PLAIN_MESSAGE);
 				break;
 				
 				//Select all
@@ -1208,6 +1314,7 @@ public class RefluxEdit extends JFrame
 				}
 				break;
 				
+				//delete blank lines
 				case 26:
 				if (TEXTAREA.isEditable())
 				{
@@ -1232,6 +1339,7 @@ public class RefluxEdit extends JFrame
 				}
 				break;
 				
+				//Insert keywords (html):
 				case 27:
 				if (TEXTAREA.isEditable())
 				{
@@ -1244,6 +1352,7 @@ public class RefluxEdit extends JFrame
 				}
 				break;
 				
+				//Insert keywords (Java):
 				case 28:
 				if (TEXTAREA.isEditable())
 				{
@@ -1256,6 +1365,7 @@ public class RefluxEdit extends JFrame
 				}
 				break;
 				
+				//Generate random words
 				case 29:
 				if (TEXTAREA.isEditable())
 				{
@@ -1308,6 +1418,7 @@ public class RefluxEdit extends JFrame
 				}
 				break;
 				
+				//open file (quick):
 				case 30:
 				uim.put("OptionPane.cancelButtonText", "Cancel");
 				str = JOptionPane.showInputDialog(null, "Please enter the path:", "Open file (quick)", JOptionPane.QUESTION_MESSAGE);
@@ -1319,6 +1430,7 @@ public class RefluxEdit extends JFrame
 				str = null;
 				break;
 				
+				//Invert case:
 				case 31:
 				if (TEXTAREA.isEditable())
 				{
@@ -1330,7 +1442,111 @@ public class RefluxEdit extends JFrame
 					ShowNotEditable("case conversion!");
 				}
 				break;
+				
+				case 32:
+				{
+					WriteConfig("AutoAddTxt", !Boolean.parseBoolean(getConfig("AutoAddTxt")) + "");
+				}
+				break;
 			}
 		}
+	}
+	
+	public String getConfig(String name)
+	{
+		try
+		{
+			prop.load(new FileInputStream(SettingsFile));
+		}
+		catch (Exception ex)
+		{
+			return null;
+		}
+		String configstr = prop.getProperty(name);
+		return configstr;
+	}
+	
+	public void WriteConfig(String key, String value)
+	{
+		prop.setProperty(key, value);
+		try
+		{
+			prop.store(new FileOutputStream(SettingsFile), null);
+		}
+		catch (Exception ex)
+		{
+		}
+	}
+	
+	public File getJARPath()
+	{
+		try
+		{			
+			return new File((new File(RefluxEdit.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath())).getParentFile().getPath());
+		}
+		catch (Exception ex)
+		{
+			return null;
+		}
+	}
+	
+	public void setFileChooserStyle(Component[] comp)  
+	{		
+		for (int x = 0; x < comp.length; x++)  
+		{
+			if (comp[x] instanceof Container)
+			{
+				setFileChooserStyle(((Container)comp[x]).getComponents());
+			}
+			try
+			{
+				comp[x].setFont(J1);
+				comp[x].setForeground(darkblue);
+				if (comp[x] instanceof JButton)
+				{
+					//set button
+					comp[x].setBackground(Color.WHITE);
+				}
+				if (comp[x] instanceof JList)
+				{
+					//set file field
+					comp[x].setBackground(Color.WHITE);
+				}
+				if (comp[x] instanceof JComboBox)
+				{
+					//set the choosing list
+					comp[x].setBackground(Color.WHITE);
+				}
+				if (comp[x] instanceof JTextField)
+				{
+					//set the text field
+					comp[x].setBackground(Color.WHITE);
+				}				
+				if (comp[x] instanceof JToggleButton)
+				{
+					comp[x].setBackground(Color.WHITE);
+				}
+				if (comp[x] instanceof JScrollBar)
+				{
+					comp[x].setBackground(Color.WHITE);
+					comp[x].setForeground(Color.WHITE);
+				}
+				if (comp[x] instanceof JLabel)
+				{
+					comp[x].setBackground(Color.WHITE);
+				}		
+			}  
+			catch (Exception ex)
+			{
+			}
+		}
+	}
+	
+	public static void WriteSize()
+	{
+		w.WriteConfig("Size.x", w.getSize().getWidth() + "");
+		w.WriteConfig("Size.y", w.getSize().getHeight() + "");
+		w.WriteConfig("Location.x", w.getLocation().getX() + "");
+		w.WriteConfig("Location.y", w.getLocation().getY() + "");
 	}
 }

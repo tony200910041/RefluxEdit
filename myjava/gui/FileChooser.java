@@ -1,4 +1,4 @@
-package MyJava;
+package myjava.gui;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -7,10 +7,10 @@ import javax.swing.border.*;
 import javax.swing.filechooser.FileSystemView;
 import java.io.*;
 import java.util.*;
+import myjava.gui.common.Resources;
 
-public class FileChooser extends JDialog
-{	
-	private static final Font f13 = new Font("Microsoft Jhenghei", Font.PLAIN, 13);
+public class FileChooser extends JDialog implements Resources
+{
 	private static Color background = Color.WHITE;
 	private static Font font = f13;
 	
@@ -36,15 +36,45 @@ public class FileChooser extends JDialog
 	private static java.util.List<MyFileFilter> filterList = new java.util.ArrayList<MyFileFilter>();
 	private File[] selection = null;
 	
-	private FileChooser(File f)
+	MyFileFilter allFilter = new MyFileFilter()
+	{
+		@Override
+		public boolean accept(File f)
+		{
+			return true;
+		}
+		
+		@Override
+		public String getDescription()
+		{
+			return new String("All Files (*.*)                 ");
+		}
+	};		
+	MyFileFilter dirFilter = new MyFileFilter()
+	{
+		@Override
+		public boolean accept(File f)
+		{
+			return f.isDirectory();
+		}
+		
+		@Override
+		public String getDescription()
+		{
+			return new String("Directories only");
+		}
+	};
+	
+	private FileChooser(File f, JFrame w)
 	{
 		//560,390
-		super();
+		super(w, "Java === " + f.getPath(), true);
 		history.add(f);
-		this.setModal(true);
-		this.setTitle("Java === " + f.getPath());
 		this.setSize(560,400);
+		this.setMinimumSize(new Dimension(460,380));
+		this.setLocationRelativeTo(w);
 		this.setLayout(new BorderLayout());
+		this.setAlwaysOnTop(true);
 		MyPanel top = new MyPanel();
 		top.add(new MyLabel("Jump to:"));
 		
@@ -88,34 +118,8 @@ public class FileChooser extends JDialog
 		button3.addMouseListener(new MyMouseListener(-3));
 		button4.addMouseListener(new MyMouseListener(-4));
 		
-		box_type.addItem(new MyFileFilter()
-		{
-			@Override
-			public boolean accept(File f)
-			{
-				return true;
-			}
-			
-			@Override
-			public String getDescription()
-			{
-				return new String("All Files (*.*)                 ");
-			}
-		});
-		box_type.addItem(new MyFileFilter()
-		{
-			@Override
-			public boolean accept(File f)
-			{
-				return f.isDirectory();
-			}
-			
-			@Override
-			public String getDescription()
-			{
-				return new String("Directories only");
-			}
-		});
+		box_type.addItem(allFilter);
+		box_type.addItem(dirFilter);
 		box_type.setRenderer(new DefaultListCellRenderer()
 		{
 			@Override
@@ -126,6 +130,7 @@ public class FileChooser extends JDialog
 				return label;
 			}
 		});
+		box_type.setBackground(Color.WHITE);
 		box_type.setPreferredSize(new Dimension(214,25));
 		for (MyFileFilter filt: filterList)
 		{
@@ -197,14 +202,19 @@ public class FileChooser extends JDialog
 		filterList.add(filter);
 	}
 	
+	public static void resetFileFilter()
+	{
+		filterList = new ArrayList<MyFileFilter>();
+	}
+	
 	public static void setMainBackground(Color c)
 	{
 		background = c;
 	}
 	
-	public static File[] showFileChooser(File f)
+	public static File[] showFileChooser(File f, JFrame w)
 	{
-		FileChooser chooser = new FileChooser(f);		
+		FileChooser chooser = new FileChooser(f, w);		
 		chooser.setVisible(true);
 		File[] files = chooser.selection;
 		chooser.dispose();
@@ -217,6 +227,24 @@ public class FileChooser extends JDialog
 		public MyMouseListener(int x)
 		{
 			this.x = x;
+		}
+		
+		@Override
+		public void mouseEntered(MouseEvent ev)
+		{
+			if (ev.getSource() instanceof JButton)
+			{
+				((JButton)(ev.getSource())).setBorder(bord2);
+			}
+		}
+		
+		@Override
+		public void mouseExited(MouseEvent ev)
+		{
+			if (ev.getSource() instanceof JButton)
+			{
+				((JButton)(ev.getSource())).setBorder(bord1);
+			}
 		}
 		
 		@Override
@@ -282,8 +310,7 @@ public class FileChooser extends JDialog
 			switch (this.x)
 			{
 				//case 1: ok
-				//case 2: cancel
-				
+				//case 2: cancel				
 				case 1:
 				if (selection != null)
 				{
@@ -494,7 +521,7 @@ public class FileChooser extends JDialog
 			super(str);
 			this.setFont(font);
 			this.setFocusable(false);
-			this.setBorder(new LineBorder(Color.BLACK, 1));
+			this.setBorder(bord1);
 			this.setBackground(Color.WHITE);
 			this.setForeground(Color.BLACK);
 			this.setPreferredSize(new Dimension(50,30));
@@ -506,7 +533,7 @@ public class FileChooser extends JDialog
 		private MySmallButton(String str)
 		{
 			super(str);
-			this.setPreferredSize(new Dimension(25,25));
+			this.setPreferredSize(new Dimension(30,30));
 		}
 	}
 	

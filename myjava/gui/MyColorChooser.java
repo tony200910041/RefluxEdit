@@ -1,21 +1,20 @@
-package MyJava;
+package myjava.gui;
 
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
+import myjava.gui.MyLabel;
+import myjava.gui.common.Resources;
 
-public class MyColorChooser extends JPanel implements ChangeListener
+public class MyColorChooser extends JPanel implements ChangeListener, Resources
 {
 	private Color option = Color.BLACK;
 	MySpinner R = new MySpinner();
 	MySpinner G = new MySpinner();
 	MySpinner B = new MySpinner();		
 	JPanel PREV = new JPanel();
-	
-	private static final Font f13 = new Font("Microsoft Jhenghei", Font.PLAIN, 13);
-	private static final Border bord = new LineBorder(Color.BLACK, 1);
 	
 	public MyColorChooser()
 	{
@@ -43,7 +42,7 @@ public class MyColorChooser extends JPanel implements ChangeListener
 		PREVTEXT.setBackground(Color.WHITE);
 		PREVTEXT.setForeground(Color.WHITE);
 		PREV.setPreferredSize(new Dimension(300,40));
-		PREV.setBorder(bord);
+		PREV.setBorder(bord1);
 		PREV.setBackground(Color.BLACK);
 		PREV.add(PREVTEXT);
 		
@@ -86,7 +85,7 @@ public class MyColorChooser extends JPanel implements ChangeListener
 			this.setBackground(c1);
 			this.setPreferredSize(new Dimension(30,30));
 			this.setFocusable(false);
-			this.setBorder(bord);
+			this.setBorder(bord1);
 			this.addMouseListener(new MouseAdapter()
 			{
 				@Override
@@ -108,17 +107,6 @@ public class MyColorChooser extends JPanel implements ChangeListener
 		{			
 			this.setModel(new SpinnerNumberModel(0, 0, 255, 1));
 			this.setFont(f13);
-		}
-	}
-	
-	private class MyLabel extends JLabel
-	{
-		public MyLabel(String str)
-		{
-			super(str);
-			this.setFont(f13);
-			this.setBackground(Color.BLACK);
-			this.setForeground(Color.BLACK);
 		}
 	}
 }

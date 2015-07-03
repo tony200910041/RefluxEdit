@@ -11,38 +11,34 @@ import javax.swing.border.LineBorder;
 import javax.swing.plaf.basic.*;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.event.*;
 import javax.imageio.ImageIO;
 import java.io.*;
-import java.util.Properties;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Locale;
+import java.util.*;
 import java.text.*;
-import myjava.*;
+import myjava.gui.*;
+import myjava.gui.common.*;
 
-public class RefluxEdit extends JFrame
+public class RefluxEdit extends JFrame implements Resources
 {
-	private static final float VERSION_NO = (float)2.1;
-	private static final String BETA_NO = "";
-	private static final Font f13 = new Font("Microsoft Jhenghei", Font.PLAIN, 13);
-	private static final LineBorder bord1 = new LineBorder(Color.BLACK, 1);
-	private static final LineBorder bord2 = new LineBorder(Color.GRAY, 1);	
+	private static final float VERSION_NO = (float)3.0;
+	private static final String BETA_NO = "alpha";
 	private static final File SettingsFile = new File(getSettingsFilePath(), "REFLUXEDITPREF.PROPERTIES");
 	private static final Properties prop = new Properties();
-	
 	// screen dimension
 	private static final int WIDTH = (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth();
 	private static final int HEIGHT = (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight();
-	
+	// components
 	private static JTextArea TEXTAREA = new JTextArea();
 	private MyLabel currentFile = new MyLabel(" ");
-	private static final MyLabel leftEdge = new MyLabel(" ");
-	private static final MyLabel rightEdge = new MyLabel(" ");
-	private static final JLabel leftEdgeOld = new JLabel("  ");
-	private static final JLabel rightEdgeOld = new JLabel("  ");
+	private final MyLabel leftEdge = new MyLabel(" ");
+	private final MyLabel rightEdge = new MyLabel(" ");
+	private final JLabel leftEdgeOld = new JLabel("  ");
+	private final JLabel rightEdgeOld = new JLabel("  ");
 	private static JMenuBar menubar;
+	private MyRibbonPanel ribbon = new MyRibbonPanel();
 	private static boolean isOtherLAF = true;
+	private static boolean isRibbon = true;
 	// file choosers
 	private static JFileChooser WindowsChooser;
 	private static MyFileChooser JavaChooser;
@@ -67,7 +63,7 @@ public class RefluxEdit extends JFrame
 	private static final JPopupMenu popup = new JPopupMenu();
 	private static final Clipboard clipbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
 	
-	UndoManager undoManager = new UndoManager(20);
+	UndoManager undoManager = new UndoManager();
 	static boolean isSaved = true;
 	// main window
 	private static RefluxEdit w;
@@ -89,8 +85,7 @@ public class RefluxEdit extends JFrame
 	JPanel bottomPanel = new JPanel();
 	
 	private static int i, j, k, l, m;
-	private static String TMP1, TMP2, TMP3, TMP4;
-	
+	private static String TMP1, TMP2, TMP3, TMP4;	
 	public static void main(final String[] args)
 	{
 		final double initialTime = System.currentTimeMillis();
@@ -108,16 +103,6 @@ public class RefluxEdit extends JFrame
 				w.restoreFrame();
 				w.buildWindowsChooser();
 				w.restoreTextArea();
-				if (args.length == 1)
-				{
-					try
-					{
-						w.openToTextAreaNoProgress(new File(args[0]));
-					}
-					catch (Exception ex)
-					{
-					}
-				}
 				chooserWorker = new SwingWorker<Void, Void>()
 				{
 					@Override
@@ -170,8 +155,18 @@ public class RefluxEdit extends JFrame
 				popupWorker.execute();
 			}
 			
-			public void showJFrame()
+			void showJFrame()
 			{
+				if (args.length == 1)
+				{
+					try
+					{
+						w.openToTextAreaNoProgress(new File(args[0]));
+					}
+					catch (Exception ex)
+					{
+					}
+				}
 				if ((chooserWorker.isDone())&&(menuWorker.isDone())&&(popupWorker.isDone()))
 				{
 					splash.close();
@@ -185,7 +180,6 @@ public class RefluxEdit extends JFrame
 	public RefluxEdit(String title)
 	{
 		super(title);
-		this.setJMenuBar(menubar);		
 		final RefluxEdit frame = this;
 		this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		this.setMinimumSize(new Dimension(275,250));
@@ -236,6 +230,8 @@ public class RefluxEdit extends JFrame
 		UIManager.put("Button.font", f13);
 		UIManager.put("TitledBorder.font", f13);
 		UIManager.put("PopupMenu.background", Color.WHITE);
+		ToolTipManager.sharedInstance().setInitialDelay(100);
+		ToolTipManager.sharedInstance().setDismissDelay(6500);
 		this.addWindowListener(new WindowAdapter()
 		{
 			@Override
@@ -256,13 +252,14 @@ public class RefluxEdit extends JFrame
 					writeConfig("Size.y", getSize().getHeight() + "");
 					writeConfig("Location.x", getLocation().getX() + "");
 					writeConfig("Location.y", getLocation().getY() + "");
+					writeConfig("isMaxmized", (getExtendedState() == JFrame.MAXIMIZED_BOTH)+"");
 					System.exit(0);
 				}
 			}
 		});
 	}
 	
-	public static void setLAF()
+	protected static void setLAF()
 	{
 		try
 		{
@@ -340,7 +337,7 @@ public class RefluxEdit extends JFrame
 		}
 	}
 	
-	public static void initialize()
+	protected static void initialize()
 	{
 		//size
 		if (!SettingsFile.exists())
@@ -349,8 +346,8 @@ public class RefluxEdit extends JFrame
 			{
 				PrintWriter writer = new PrintWriter(SettingsFile, "UTF-8");
 				writer.close();
-				writeConfig("Size.x", "460");
-				writeConfig("Size.y", "395");
+				writeConfig("Size.x", "690"); //460,395
+				writeConfig("Size.y", "550");
 				writeConfig("Location.x", "0");
 				writeConfig("Location.y", "0");
 				writeConfig("isEditable", "true");
@@ -380,6 +377,8 @@ public class RefluxEdit extends JFrame
 				writeConfig("TextAreaFont.fontSize", "13");
 				writeConfig("isUseNewMenuBar", "true");
 				writeConfig("isUseNarrowEdge", "true");
+				writeConfig("lineSeparator", "\\n");
+				writeConfig("isRibbon", "true");
 			}
 			catch (Exception ex)
 			{
@@ -387,7 +386,7 @@ public class RefluxEdit extends JFrame
 		}
 	}
 	
-	public void addTopPanel()
+	protected void addTopPanel()
 	{
 		try
 		{
@@ -401,10 +400,10 @@ public class RefluxEdit extends JFrame
 		finally
 		{
 			// setup "four button panel"
-			fourButtonPanel.add(new MyButton("New", -1));
-			fourButtonPanel.add(new MyButton("Open", 2));
-			fourButtonPanel.add(new MyButton("Save as", 4));
-			fourButtonPanel.add(new MyButton("Save", 5));
+			fourButtonPanel.add(new MyShortcutButton("New", -1));
+			fourButtonPanel.add(new MyShortcutButton("Open", 2));
+			fourButtonPanel.add(new MyShortcutButton("Save as", 4));
+			fourButtonPanel.add(new MyShortcutButton("Save", 5));
 			// setup toolbar
 			// section 1
 			boolean b1 = getBoolean("ToolBar.new");
@@ -507,6 +506,23 @@ public class RefluxEdit extends JFrame
 		{
 			this.setLocation(0, 0);
 		}
+		//maximized
+		try
+		{
+			TMP1 = getConfig("isMaxmized");
+			if (TMP1 == null) throw new Exception();
+		}
+		catch (Exception ex)
+		{
+			TMP1 = "false";
+		}
+		finally
+		{
+			if (TMP1.equals("true"))
+			{
+				this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+			}
+		}
 		//ontop
 		try
 		{
@@ -526,7 +542,7 @@ public class RefluxEdit extends JFrame
 		}
 	}
 	
-	public void buildWindowsChooser()
+	protected void buildWindowsChooser()
 	{
 		LookAndFeel LAF = UIManager.getLookAndFeel();
 		try
@@ -542,7 +558,7 @@ public class RefluxEdit extends JFrame
 		}
 	}
 	
-	public void restoreChoosers()
+	protected void restoreChoosers()
 	{
 		JComponent.setDefaultLocale(Locale.ENGLISH);
 		JavaChooser = new MyFileChooser("Choose:");
@@ -551,83 +567,192 @@ public class RefluxEdit extends JFrame
 		WindowsChooser.setCurrentDirectory(new File("./"));
 	}
 	
-	public void restoreMenus()
+	protected void restoreMenus()
 	{
-		MyMenu menu1 = new MyMenu("File");
-		MyMenu menu2 = new MyMenu("Edit");
-		MyMenu menu3 = new MyMenu("Tools");
-		JMenu menu3_1 = new JMenu("Options");
-		menu3_1.setFont(f13);
-		JMenu menu3_2 = new JMenu("Case conversion");
-		menu3_2.setFont(f13);
-		MyMenu menu4 = new MyMenu("Insert");
-		MyMenu menu5 = new MyMenu("Help");
-		
-		menu1.add(new MyMenuItem("New file", "NEW", 1));
-		menu1.add(new MyMenuItem("Open file", "OPEN", 2).setAccelerator(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
-		menu1.add(new MyMenuItem("Open file (quick)", null, 3));
-		menu1.add(new JSeparator());
-		menu1.add(new MyMenuItem("Save as", "SAVE", 4).setAccelerator(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
-		menu1.add(new MyMenuItem("Save", null, 5));
-		menu1.add(new MyMenuItem("Export to image", null, 43));
-		menu1.add(new JSeparator());
-		menu1.add(new MyMenuItem("Print", null, 38).setAccelerator(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
-		menu1.add(new MyMenuItem("Close", "CLOSE", 6));
-		
-		menu2.add(new MyMenuItem("Undo", "UNDO", 7).setAccelerator(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
-		menu2.add(new MyMenuItem("Redo", "REDO", 8).setAccelerator(KeyEvent.VK_Y, ActionEvent.CTRL_MASK));
-		menu2.add(new JSeparator());
-		menu2.add(new MyMenuItem("Select all", null, 9).setAccelerator(KeyEvent.VK_A, ActionEvent.CTRL_MASK));
-		menu2.add(new MyMenuItem("Select all and copy", null, 10));
-		menu2.add(new JSeparator());
-		menu2.add(new MyMenuItem("Cut", "CUT", 11).setAccelerator(KeyEvent.VK_X, ActionEvent.CTRL_MASK));
-		menu2.add(new MyMenuItem("Copy", "COPY", 12).setAccelerator(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
-		menu2.add(new MyMenuItem("Paste", "PASTE", 13).setAccelerator(KeyEvent.VK_V, ActionEvent.CTRL_MASK));
-		menu2.add(new MyMenuItem("Paste on next line", null, 14));
-		menu2.add(new MyMenuItem("Delete", null, 15));
-		
-		menu3.add(new MyMenuItem("Enable/disable editing", null, 17));
-		menu3.add(new MyMenuItem("Enable/disable always on top", null, 21));
-		menu3.add(menu3_1);
-		menu3.add(new JSeparator());		
-		menu3.add(new MyMenuItem("Word count", null, 22).setAccelerator(KeyEvent.VK_F2, ActionEvent.CTRL_MASK));
-		menu3.add(new MyMenuItem("Character count", null, 44));
-		menu3.add(new MyMenuItem("Delete blank lines", null, 35));
-		menu3.add(menu3_2);
-		menu3.add(new JSeparator());
-		menu3.add(new MyMenuItem("Search", "SEARCH", 23).setAccelerator(KeyEvent.VK_F, ActionEvent.CTRL_MASK));
-		menu3.add(new MyMenuItem("Replace", null, 24));
-		menu3.add(new MyMenuItem("Replace in selection", null, 25));
-		menu3.add(new JSeparator());
-		menu3.add(new MyMenuItem("Show JColorChooser", null, 40));
-		menu3.add(new MyMenuItem("Base converter (2/8/10/16)", null, 41));
-		
-		menu3_1.add(new MyMenuItem("Line Wrap options", null, 18));
-		menu3_1.add(new MyMenuItem("Encoding options", null, 19));
-		menu3_1.add(new MyMenuItem("FileChooser options", null, 20));
-		menu3_1.add(new MyMenuItem("Tab size options", null, 29));
-		menu3_1.add(new MyMenuItem("Selection color options", null, 36));
-		menu3_1.add(new MyMenuItem("Look and Feel options", "LAF", 37));
-		menu3_1.add(new JSeparator());
-		menu3_1.add(new MyMenuItem("Other options", null, 39));
-		menu3_1.add(new MyMenuItem("Reduce memory usage", null, 42));
-		
-		menu3_2.add(new MyMenuItem("Convert to upper case", "UPPERCASE", 26));
-		menu3_2.add(new MyMenuItem("Convert to lower case", "LOWERCASE", 27));
-		menu3_2.add(new MyMenuItem("Convert to invert case", "INVERTCASE", 28));
-		
-		menu4.add(new MyMenuItem("Insert ten equal signs", null, 30));
-		menu4.add(new MyMenuItem("Insert four spaces", null, 31));
-		menu4.add(new MyMenuItem("Generate random words", null, 32));
-		menu4.add(new JSeparator());
-		menu4.add(new MyMenuItem("Insert key words (Java)", "KEYWORDJAVA", 33));
-		menu4.add(new MyMenuItem("Insert key words (html)", "KEYWORDHTML", 34));		
-		
-		menu5.add(new MyMenuItem("About RefluxEdit", "APPICON16", 16).setAccelerator(KeyEvent.VK_F1, ActionEvent.CTRL_MASK));
-		//next one: 45
+		String menuOption;
+		try
+		{
+			menuOption = getConfig("isRibbon");
+		}
+		catch (Exception ex)
+		{
+			menuOption = "true";
+		}
+		if (menuOption == null) menuOption = "true";
+		isRibbon = menuOption.equals("true");
+		if (isRibbon)
+		{
+			this.add(ribbon, BorderLayout.PAGE_START);
+			MyRibbonFirst button = new MyRibbonFirst();
+			button.add("New File", 1);
+			button.add("Open File", 2);
+			button.add("Open File (quick)", 3);
+			button.add("Save As", 4);
+			button.add("Save", 5);
+			button.add("Export to Image", 43);
+			button.add("Print", 38);
+			button.add("Close", 6);
+			button.add("\u2190", 0);
+			ribbon.addAsFirstComponent(button);
+			
+			MyRibbonTab tab2 = new MyRibbonTab("EDIT");
+			MyRibbonTab tab3 = new MyRibbonTab("TOOLS");
+			MyRibbonTab tab4 = new MyRibbonTab("INSERT");
+			MyRibbonTab tab5 = new MyRibbonTab("HELP");
+			
+			tab2.add(new MyRibbonButton("Undo", "UNDO32", "<html><font size=\"4\"><b>Undo previous change(s)</b></font><br>You can also press Ctrl+Z to perform undo action.</font></html>", false, 7));
+			tab2.add(new MyRibbonButton("Redo", "REDO32", "<html><font size=\"4\"><b>Redo previous change(s)</b></font><br>You can also press Ctrl+Y to perform redo action.</html>", false, 8));
+			JPanel tab2_1 = new JPanel(new GridLayout(2,1,10,10));
+			tab2_1.setOpaque(false);
+			tab2_1.add(new MyRibbonButton("Select all", "SELECT", "<html><font size=\"4\"><b>Select all</b></font><br>Select all text in the text area.</html>", true, 9));
+			tab2_1.add(new MyRibbonButton("Select all and copy", "SELECT", "<html><font size=\"4\"><b>Select all and copy</b></font><br>Select all text in the text area and<br>copy to the system clipboard.</html>", true, 10));
+			tab2.add(tab2_1);
+			tab2.add(separator());
+			tab2.add(new MyRibbonButton("Cut", "CUT32", "<html><font size=\"4\"><b>Cut selected text</b></font><br>The selected text will be moved<br>to the system clipboard.</html>", false, 11));
+			tab2.add(new MyRibbonButton("Copy", "COPY32", "<html><font size=\"4\"><b>Copy selected text</b></font><br>The selected text will be copied<br>to the system clipboard.</html>", false, 12));
+			JPanel tab2_2 = new JPanel(new GridLayout(2,1,10,10));
+			tab2_2.setOpaque(false);
+			tab2_2.add(new MyRibbonButton("Paste", "PASTE", "<html><font size=\"4\"><b>Paste text</b></font><br>Paste the text in the system clipboard<br>to the text area.</html>", true, 13));
+			tab2_2.add(new MyRibbonButton("Paste on next line", "PASTE", "<html><font size=\"4\"><b>Paste text on next line</b></font><br>Insert the text in the system clipboard<br>on the next line.</html>", true, 14));
+			tab2.add(tab2_2);
+			tab2.add(separator());
+			tab2.add(new MyRibbonButton("Delete", "DELETE32", "<html><font size=\"4\"><b>Delete selected text</b></font><br>The selected text will be deleted.</html>", false, 15));
+			
+			tab3.add(new MyRibbonButton("<html>Editing/<br>viewing</html>", "EDIT32", "<html><font size=\"4\"><b>Enable/disable editing</b></font><br>Click here to disable/re-enable editing.<br></html>", false, 17));
+			tab3.add(new MyRibbonButton("<html>On top</html>", "ONTOP", "<html><font size=\"4\"><b>Enable/disable always on top</b></font><br>Click here to enable/disable RefluxEdit always staying on top.</html>", false, 21));
+			tab3.add(separator());
+			JPanel tab3_1 = new JPanel(new GridLayout(2,1,10,10));
+			tab3_1.setOpaque(false);
+			tab3_1.add(new MyRibbonButton("Word count", "WORDCOUNT", "<html><font size=\"4\"><b>Word count</b></font><br>Count how many words are in the selected text,<br>or all words if no text is selected.</html>", true, 22));
+			tab3_1.add(new MyRibbonButton("Character count", "CHARACTERCOUNT", "<html><font size=\"4\"><b>Character count</b></font><br>Count how many characters are in the selected text,<br>or all characters if no text is selected.</html>", true, 44));
+			tab3.add(tab3_1);
+			tab3.add(separator());
+			tab3.add(new MyRibbonButton("<html><font color=\"red\">Delete</font><br>&nbsp;blank<br>&nbsp;&nbsp;lines</html>", null, "<html><font size=\"4\"><b>Delete blank lines</b></font><br>ALL blank lines will be deleted.</html>", false, 35));
+			tab3.add(separator());
+			JPanel tab3_2 = new JPanel(new GridLayout(3,1,0,0));
+			tab3_2.setOpaque(false);
+			tab3_2.add(new MyRibbonButton("Uppercase", "UPPERCASE", "<html><font size=\"4\"><b>Convert to uppercase</b></font><br>Convert the selected text to uppercase,<br>or all characters if no text is selected.</html>", true, 26));
+			tab3_2.add(new MyRibbonButton("Lowercase", "LOWERCASE", "<html><font size=\"4\"><b>Convert to lowercase</b></font><br>Convert the selected text to lowercase,<br>or all characters if no text is selected.</html>", true, 27));
+			tab3_2.add(new MyRibbonButton("Invert case", "INVERTCASE", "<html><font size=\"4\"><b>Convert to invert case</b></font><br>Convert the selected text to invert case<br>(uppercase to lowercase, and lowercase to uppercase),<br>or all characters if no text is selected.</html>", true, 28));
+			tab3.add(tab3_2);
+			tab3.add(separator());
+			JPanel tab3_3 = new JPanel(new GridLayout(3,1,0,0));
+			tab3_3.setOpaque(false);
+			tab3_3.add(new MyRibbonButton("Search", "SEARCH", "<html><font size=\"4\"><b>Search words</b></font><br>Search words in the whole text.</html>", true, 23));
+			tab3_3.add(new MyRibbonButton("Replace", "REPLACE", "<html><font size=\"4\"><b>Replace words</b></font><br>Replace words in the whole text.</html>", true, 24));
+			tab3_3.add(new MyRibbonButton("Replace (selected)", "REPLACE", "<html><font size=\"4\"><b>Replace words in selected text</b></font><br>Replace words in the SELECTED text.</html>", true, 25));
+			tab3.add(tab3_3);
+			tab3.add(separator());
+			tab3.add(new MyRibbonButton("<html>&nbsp;&nbsp;Color<br>chooser</html>", "COLORCHOOSER32", "<html><font size=\"4\"><b>Show color chooser</b></font><br>A color chooser will be shown which allows you to choose<br>a color and insert REB, HSV or HEX code.</html>", false, 40));
+			tab3.add(new MyRibbonButton("<html>&nbsp;&nbsp;&nbsp;Base<br>converter</html>", "BASE32", "<html><font size=\"4\"><b>Base converter</b></font><br>Convert numbers between base 2, 8, 10 and 16.</html>", false, 41));
+			
+			JPanel tab4_1 = new JPanel(new GridLayout(2,1,10,10));
+			tab4_1.setOpaque(false);
+			tab4_1.add(new MyRibbonButton("10 \"=\"", null, "<html><font size=\"4\"><b>Insert 10 \"=\"</b></font><br>Insert ten equal signs</html>", true, 30));
+			tab4_1.add(new MyRibbonButton("Four \" \"", null, "<html><font size=\"4\"><b>Insert four spaces</b></font><br>Insert four spaces. Useful for programmers.</html>", true, 31));
+			tab4.add(tab4_1);
+			tab4.add(separator());
+			tab4.add(new MyRibbonButton("<html>Random<br>&nbsp;&nbsp;words</html>", "RANDOM", "<html><font size=\"4\"><b>Generate random words</b></font><br>Generate specified number of \"words\" randomly.<br>The words will be between 1 and 10 character(s) long.<br>Note that performing this action may take a long time.</html>", false, 32));
+			tab4.add(new MyRibbonButton("<html>&nbsp;&nbsp;&nbsp;Java<br>keywords</html>", "JAVA32", "<html><font size=\"4\"><b>Insert Java keywords</b></font><br>Insert Java keywords. Useful for Java developers.<br>More will be introduced in later versions.</html>", false, 33));
+			tab4.add(new MyRibbonButton("<html>&nbsp;&nbsp;&nbsp;HTML<br>keywords</html>", "HTML32", "<html><font size=\"4\"><b>Insert HTML keywords</b></font><br>Insert HTML keywords. Useful for web developers.<br>More will be introduced in later versions.</html>", false, 34));
+			tab4.add(separator());
+			tab4.add(new MyRibbonButton("<html>&nbsp;Unicode<br>character</html>", "UNICODE32", "<html><font size=\"4\"><b>Insert unicode character</b></font><br>Insert unicode character by given code value.</html>", false, 45));
+			tab4.add(new MyRibbonButton("<html>Unicode<br>&nbsp;&nbsp;value</html>", "UNICODE32", "<html><font size=\"4\"><b>Insert unicode value</b></font><br>Insert unicode value by given character.</html>", false, 46));
+			
+			tab5.add(new MyRibbonButton("<html>&nbsp;&nbsp;About<br>RefluxEdit</html>", "APPICON32", "<html><font size=\"4\"><b>About RefluxEdit</b></font><br>RefluxEdit is a lightweight plain text editor written in Java by tony200910041.<br>SourceForge page: http://refluxedit.sourceforge.net</html>", false, 16));
+			tab5.add(separator());
+			tab5.add(new MyRibbonButton("<html>Line Wrap</html>", "LINEWRAP32", "<html><font size=\"4\"><b>Line wrap options</b></font><br>Choose to enable/disable line wrap (automatically breaking lines)<br>and its style.</html>", false, 18));
+			tab5.add(new MyRibbonButton("<html>Encoding</html>", "ENCODING48", "<html><font size=\"4\"><b>Encoding options</b></font><br>Four encoding options: default, ISO-8859-1, UTF-8 and UTF-16BE.<br>Note that this is still a beta function and may contain some unknown bugs.<br>Please see if the text file is saved correctly if default encoding is not used.</html>", false, 19));
+			tab5.add(new MyRibbonButton("<html>&nbsp;&nbsp;&nbsp;&nbsp;Line<br>separator</html>", "LINESEPARATOR32", "<html><font size=\"4\"><b>Line separator options</b></font><br>Three line separators: \\n, \\r and \\r\\n</html>", false, 47));
+			tab5.add(new MyRibbonButton("<html>&nbsp;&nbsp;&nbsp;&nbsp;File<br>chooser</html>", "FILECHOOSER32", "<html><font size=\"4\"><b>File chooser options</b></font><br>Three file choosers: Java, Windows and Beta</html>", false, 20));
+			tab5.add(new MyRibbonButton("<html>Tab size</html>", "TABSIZE32", "<html><font size=\"4\"><b>Tab size options</b></font><br>Change the tab size.</html>", false, 29));
+			tab5.add(new MyRibbonButton("<html>Selection<br>&nbsp;&nbsp;&nbsp;color</html>", "SELECTIONCOLOR32", "<html><font size=\"4\"><b>Selection color options</b></font><br>Change the selection color of the text.</html>", false, 36));
+			tab5.add(new MyRibbonButton("<html>LAF</html>", "LAF48", "<html><font size=\"4\"><b>Look and Feel options</b></font><br>Change the look of RefluxEdit!</html>", false, 37));
+			tab5.add(new MyRibbonButton("<html>&nbsp;Other<br>options</html>", "OPTIONS32", "<html><font size=\"4\"><b>Other options</b></font><br>Miscellaneous options</html>", false, 39));
+			tab5.add(new MyRibbonButton("<html>&nbsp;Reduce<br>memory<br>&nbsp;&nbsp;usage</html>", null, "<html><font size=\"4\"><b>Reduce memory usage</b></font><br>System.gc() will be executed.</html>", false, 42));
+		}   //"<html><font size=\"4\"><b></b></font><br></html>"
+		else
+		{		
+			this.setJMenuBar(menubar);
+			MyMenu menu1 = new MyMenu("File");
+			MyMenu menu2 = new MyMenu("Edit");
+			MyMenu menu3 = new MyMenu("Tools");
+			JMenu menu3_1 = new JMenu("Options");
+			menu3_1.setFont(f13);
+			JMenu menu3_2 = new JMenu("Case conversion");
+			menu3_2.setFont(f13);
+			MyMenu menu4 = new MyMenu("Insert");
+			MyMenu menu5 = new MyMenu("Help");
+			
+			menu1.add(new MyMenuItem("New file", "NEW", 1));
+			menu1.add(new MyMenuItem("Open file", "OPEN", 2).setAccelerator(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
+			menu1.add(new MyMenuItem("Open file (quick)", null, 3));
+			menu1.add(new JSeparator());
+			menu1.add(new MyMenuItem("Save as", "SAVE", 4).setAccelerator(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
+			menu1.add(new MyMenuItem("Save", null, 5));
+			menu1.add(new MyMenuItem("Export to image", null, 43));
+			menu1.add(new JSeparator());
+			menu1.add(new MyMenuItem("Print", null, 38).setAccelerator(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
+			menu1.add(new MyMenuItem("Close", "CLOSE", 6));
+			
+			menu2.add(new MyMenuItem("Undo", "UNDO", 7).setAccelerator(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
+			menu2.add(new MyMenuItem("Redo", "REDO", 8).setAccelerator(KeyEvent.VK_Y, ActionEvent.CTRL_MASK));
+			menu2.add(new JSeparator());
+			menu2.add(new MyMenuItem("Select all", null, 9).setAccelerator(KeyEvent.VK_A, ActionEvent.CTRL_MASK));
+			menu2.add(new MyMenuItem("Select all and copy", null, 10));
+			menu2.add(new JSeparator());
+			menu2.add(new MyMenuItem("Cut", "CUT", 11).setAccelerator(KeyEvent.VK_X, ActionEvent.CTRL_MASK));
+			menu2.add(new MyMenuItem("Copy", "COPY", 12).setAccelerator(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
+			menu2.add(new MyMenuItem("Paste", "PASTE", 13).setAccelerator(KeyEvent.VK_V, ActionEvent.CTRL_MASK));
+			menu2.add(new MyMenuItem("Paste on next line", null, 14));
+			menu2.add(new MyMenuItem("Delete", null, 15));
+			
+			menu3.add(new MyMenuItem("Enable/disable editing", null, 17));
+			menu3.add(new MyMenuItem("Enable/disable always on top", null, 21));
+			menu3.add(menu3_1);
+			menu3.add(new JSeparator());		
+			menu3.add(new MyMenuItem("Word count", null, 22).setAccelerator(KeyEvent.VK_F2, ActionEvent.CTRL_MASK));
+			menu3.add(new MyMenuItem("Character count", null, 44));
+			menu3.add(new MyMenuItem("Delete blank lines", null, 35));
+			menu3.add(menu3_2);
+			menu3.add(new JSeparator());
+			menu3.add(new MyMenuItem("Search", "SEARCH", 23).setAccelerator(KeyEvent.VK_F, ActionEvent.CTRL_MASK));
+			menu3.add(new MyMenuItem("Replace", null, 24));
+			menu3.add(new MyMenuItem("Replace in selection", null, 25));
+			menu3.add(new JSeparator());
+			menu3.add(new MyMenuItem("Show JColorChooser", null, 40));
+			menu3.add(new MyMenuItem("Base converter (2/8/10/16)", null, 41));
+			
+			menu3_1.add(new MyMenuItem("Line Wrap options", null, 18));
+			menu3_1.add(new MyMenuItem("Encoding options", null, 19));
+			menu3_1.add(new MyMenuItem("Line separator options", null, 47));
+			menu3_1.add(new MyMenuItem("FileChooser options", null, 20));
+			menu3_1.add(new MyMenuItem("Tab size options", null, 29));
+			menu3_1.add(new MyMenuItem("Selection color options", null, 36));
+			menu3_1.add(new MyMenuItem("Look and Feel options", "LAF", 37));
+			menu3_1.add(new JSeparator());
+			menu3_1.add(new MyMenuItem("Other options", null, 39));
+			menu3_1.add(new MyMenuItem("Reduce memory usage", null, 42));
+			
+			menu3_2.add(new MyMenuItem("Convert to upper case", "UPPERCASE", 26));
+			menu3_2.add(new MyMenuItem("Convert to lower case", "LOWERCASE", 27));
+			menu3_2.add(new MyMenuItem("Convert to invert case", "INVERTCASE", 28));
+			
+			menu4.add(new MyMenuItem("Insert ten equal signs", null, 30));
+			menu4.add(new MyMenuItem("Insert four spaces", null, 31));
+			menu4.add(new MyMenuItem("Generate random words", null, 32));
+			menu4.add(new JSeparator());
+			menu4.add(new MyMenuItem("Insert key words (Java)", "KEYWORDJAVA", 33));
+			menu4.add(new MyMenuItem("Insert key words (html)", "KEYWORDHTML", 34));
+			menu4.add(new MyMenuItem("Insert unicode character", null, 45));
+			menu4.add(new MyMenuItem("Insert unicode value", null, 46));
+			
+			menu5.add(new MyMenuItem("About RefluxEdit", "APPICON16", 16).setAccelerator(KeyEvent.VK_F1, ActionEvent.CTRL_MASK));
+			//next one: 48
+		}
 	}
 	
-	public void restoreTextArea()
+	protected void restoreTextArea()
 	{
 		TEXTAREA.setDragEnabled(true);
 		TEXTAREA.setText("");
@@ -639,7 +764,7 @@ public class RefluxEdit extends JFrame
 			{
 				isSaved = false;
 				time++;
-				if (time == 10)
+				if (time == 3)
 				{
 					undoManager.backup(TEXTAREA.getText());
 					time = 0;
@@ -818,7 +943,7 @@ public class RefluxEdit extends JFrame
 		TEXTAREA.setFont(new Font(TMP1, i, j));
 	}
 	
-	public void restorePopup()
+	protected void restorePopup()
 	{
 		popup.add(new MyMenuItem("Cut", "CUT", 11));
 		popup.add(new MyMenuItem("Copy", "COPY", 12));
@@ -973,9 +1098,9 @@ public class RefluxEdit extends JFrame
 		}
 	}
 	
-	class MyButton extends JButton
+	class MyShortcutButton extends JButton
 	{
-		public MyButton(String str, int x)
+		public MyShortcutButton(String str, int x)
 		{
 			super(str);
 			this.setBackground(Color.WHITE);
@@ -1172,12 +1297,28 @@ public class RefluxEdit extends JFrame
 			}
 		}
 		
+		public char toChar(String unicode)
+		{
+			return (char)Integer.parseInt(unicode, 16);
+		}
+		
+		public String toUnicodeValue(char c)
+		{
+			TMP1 = Integer.toHexString(c);
+			j = TMP1.length();
+			for (i=1; i<5-j; i++)
+			{
+				TMP1 = "0" + TMP1;
+			}
+			return "\\u" + TMP1.toUpperCase();
+		}
+		
 		@Override
 		public void mouseEntered(MouseEvent ev)
 		{
-			if (ev.getSource() instanceof MyButton)
+			if (ev.getSource() instanceof MyShortcutButton)
 			{
-				((MyButton)(ev.getSource())).setBorder(bord2);
+				((MyShortcutButton)(ev.getSource())).setBorder(bord2);
 			}
 		}
 		
@@ -1187,11 +1328,11 @@ public class RefluxEdit extends JFrame
 			if (x == -1)
 			{
 				isOnNew = false;
-				((MyButton)(ev.getSource())).setText("New");
+				((MyShortcutButton)(ev.getSource())).setText("New");
 			}
-			if (ev.getSource() instanceof MyButton)
+			if (ev.getSource() instanceof MyShortcutButton)
 			{
-				((MyButton)(ev.getSource())).setBorder(bord1);
+				((MyShortcutButton)(ev.getSource())).setBorder(bord1);
 			}
 		}
 		
@@ -1217,13 +1358,13 @@ public class RefluxEdit extends JFrame
 					TEXTAREA.setText("");
 					isOnNew = false;
 					isSaved = true;
-					((MyButton)(ev.getSource())).setText("New");
+					((MyShortcutButton)(ev.getSource())).setText("New");
 				}
 				else
 				{
-					if (ev.getSource() instanceof MyButton)
+					if (ev.getSource() instanceof MyShortcutButton)
 					{
-						((MyButton)(ev.getSource())).setText("Really?");
+						((MyShortcutButton)(ev.getSource())).setText("Really?");
 						isOnNew = true;
 					}
 					else
@@ -1270,7 +1411,7 @@ public class RefluxEdit extends JFrame
 					case "Beta":
 					FileChooser.resetFileFilter();
 					FileChooser.addFileFilter(myTextFilter);
-					File[] f_a = FileChooser.showFileChooser(new File(getSettingsFilePath()));
+					File[] f_a = FileChooser.showFileChooser(new File(getSettingsFilePath()), w);
 					if (f_a == null) break outswitch;
 					openToTextArea(f_a[0]);
 					break;
@@ -1304,7 +1445,7 @@ public class RefluxEdit extends JFrame
 					outdo1:
 					do
 					{
-						File[] f_a = FileChooser.showFileChooser(new File(getSettingsFilePath()));
+						File[] f_a = FileChooser.showFileChooser(new File(getSettingsFilePath()), w);
 						if (f_a == null) break outswitch;
 						f1 = f_a[0];
 						if (f1 != null)
@@ -1383,7 +1524,7 @@ public class RefluxEdit extends JFrame
 						outdo3:
 						do
 						{
-							File[] f_a = FileChooser.showFileChooser(new File(getSettingsFilePath()));
+							File[] f_a = FileChooser.showFileChooser(new File(getSettingsFilePath()), w);
 							if (f_a == null) break outswitch;
 							f2 = f_a[0];
 							if (f2 != null)
@@ -1454,14 +1595,20 @@ public class RefluxEdit extends JFrame
 				{
 					if (undoManager.getPosition() == 0)
 					{
-						undoManager.setInitial(TEXTAREA.getText());
+						undoManager.backup(TEXTAREA.getText());
 					}
 					TMP1 = undoManager.undo();
-					if (TMP1 != null)
+					try
 					{
-						i = TEXTAREA.getCaretPosition();
-						TEXTAREA.setText(TMP1);
-						TEXTAREA.setCaretPosition(i);
+						if (TMP1 != null)
+						{
+							i = TEXTAREA.getCaretPosition();
+							TEXTAREA.setText(TMP1);
+							TEXTAREA.setCaretPosition(i);
+						}
+					}
+					catch (Exception ex)
+					{
 					}
 				}
 				else
@@ -1823,11 +1970,14 @@ public class RefluxEdit extends JFrame
 				}
 				break;
 				
-				case 23: //search
-				TMP1 = null;
+				case 23: //search				
+				TMP1 = TEXTAREA.getText();
+				if (TMP1 == null) return;
+				if (TMP1.isEmpty()) return;
 				i = 0;
-				j = TEXTAREA.getText().length();
+				j = TMP1.length();
 				k = 0;
+				TMP1 = null;
 				TMP1 = JOptionPane.showInputDialog(w, "Please enter the word you want to search:", "Search", JOptionPane.QUESTION_MESSAGE);
 				if ((TMP1 != null)&&(!TMP1.isEmpty())&&(TMP1.length() <= j))
 				{
@@ -1872,6 +2022,9 @@ public class RefluxEdit extends JFrame
 				
 				case 24: //replace
 				case 25: //replace, selection
+				TMP1 = TEXTAREA.getText();
+				if (TMP1 == null) return;
+				if (TMP1.isEmpty()) return;
 				if (TEXTAREA.isEditable())
 				{
 					final JDialog replace = new JDialog(w, "Replace", true);
@@ -1888,27 +2041,8 @@ public class RefluxEdit extends JFrame
 					replaced.add(wd2);
 					replace.add(replaced);
 					MyPanel panel_button = new MyPanel(MyPanel.CENTER);
-					final JButton button = new JButton("Start");
-					panel_button.add(button);
-					replace.add(panel_button);
-					button.setFont(f13);
-					button.setPreferredSize(new Dimension(60,30));
-					button.setBorder(new LineBorder(Color.BLACK, 1));
-					button.setFocusable(false);
-					button.addMouseListener(new MouseAdapter()
+					final MyButton button = new MyButton("Start")
 					{
-						@Override
-						public void mouseEntered(MouseEvent ev)
-						{
-							button.setBackground(new Color(250,250,250));
-						}
-						
-						@Override
-						public void mouseExited(MouseEvent ev)
-						{
-							button.setBackground(Color.WHITE);
-						}
-						
 						@Override
 						public void mouseReleased(MouseEvent ev)
 						{
@@ -1955,7 +2089,9 @@ public class RefluxEdit extends JFrame
 							}
 							JOptionPane.showMessageDialog(w, k + " time(s) replaced.", "Replace", JOptionPane.INFORMATION_MESSAGE);
 						}
-					});
+					};
+					panel_button.add(button);
+					replace.add(panel_button);
 					replace.pack();
 					replace.setLocationRelativeTo(w);
 					replace.setVisible(true);
@@ -2312,15 +2448,18 @@ public class RefluxEdit extends JFrame
 				};
 				isDefaultL.addActionListener(listener3);
 				isWindowsL.addActionListener(listener3);
-				isNimbus.addActionListener(listener3);	
-				LAFOption.setLayout(new GridLayout(3,1,0,0));
+				isNimbus.addActionListener(listener3);
+				MyCheckBox isRibbonBox = new MyCheckBox("Use Ribbon UI", isRibbon);				
+				LAFOption.setLayout(new GridLayout(4,1,0,0));
 				LAFOption.add(isDefaultL);
 				LAFOption.add(isWindowsL);
 				LAFOption.add(isNimbus);
-				LAFOption.setSize(250,140);
+				LAFOption.add(isRibbonBox);
+				LAFOption.setSize(250,180);
 				LAFOption.setLocationRelativeTo(w);
 				LAFOption.setVisible(true);				
 				writeConfig("LAF", TMP1);
+				writeConfig("isRibbon", isRibbonBox.isSelected()+"");
 				JOptionPane.showMessageDialog(w, "The Look and Feel will be changed after restart.", "Done", JOptionPane.INFORMATION_MESSAGE);
 				break;
 				
@@ -2470,25 +2609,31 @@ public class RefluxEdit extends JFrame
 				});
 				toolBar.updateUI();
 				option.setVisible(true);
-				if (topPanel != null)
+				if ((!isRibbon)&&(topPanel != null))
 				{
 					w.remove(topPanel);
 				}
 				if (isPanel.isSelected())
 				{
 					writeConfig("isPanel", "true");
-					w.add(fourButtonPanel, BorderLayout.PAGE_START);
-					fourButtonPanel.revalidate();
-					fourButtonPanel.repaint();
-					topPanel = fourButtonPanel;
+					if (!isRibbon)
+					{
+						w.add(fourButtonPanel, BorderLayout.PAGE_START);
+						fourButtonPanel.revalidate();
+						fourButtonPanel.repaint();
+						topPanel = fourButtonPanel;
+					}
 				}
 				else if (isToolBar.isSelected())
 				{
 					writeConfig("isPanel", "false");
-					w.add(toolBar, BorderLayout.PAGE_START);
-					toolBar.revalidate();
-					toolBar.repaint();
-					topPanel = toolBar;
+					if (!isRibbon)
+					{
+						w.add(toolBar, BorderLayout.PAGE_START);
+						toolBar.revalidate();
+						toolBar.repaint();
+						topPanel = toolBar;
+					}
 				}
 				else if (NoContainer.isSelected())
 				{
@@ -2502,7 +2647,7 @@ public class RefluxEdit extends JFrame
 				TEXTAREA.setFont(selectedFont);
 				isUseNewMenuBar = useNewMenuBar.isSelected();
 				writeConfig("isUseNewMenuBar", isUseNewMenuBar + "");
-				if (menubar instanceof ColoredMenuBar)
+				if ((menubar instanceof ColoredMenuBar)&&(!isRibbon))
 				{
 					ColoredMenuBar coloredBar = (ColoredMenuBar)menubar;
 					coloredBar.setColored(isUseNewMenuBar);
@@ -2575,13 +2720,7 @@ public class RefluxEdit extends JFrame
 						P3.add(hexLabel);
 						
 						MyPanel P4 = new MyPanel(MyPanel.CENTER);
-						final JButton colorCodeClose = new JButton("OK");
-						colorCodeClose.setBackground(Color.WHITE);
-						colorCodeClose.setBorder(bord1);
-						colorCodeClose.setFont(f13);
-						colorCodeClose.setPreferredSize(new Dimension(50,30));
-						colorCodeClose.setFocusPainted(false);						
-						colorCodeClose.addMouseListener(new MouseAdapter()
+						final MyButton colorCodeClose = new MyButton("OK")
 						{
 							@Override
 							public void mouseReleased(MouseEvent ev)
@@ -2601,19 +2740,7 @@ public class RefluxEdit extends JFrame
 									colorCode.dispose();
 								}
 							}
-							
-							@Override
-							public void mouseEntered(MouseEvent ev)
-							{
-								colorCodeClose.setBackground(new Color(250,250,250));
-							}
-							
-							@Override
-							public void mouseExited(MouseEvent ev)
-							{
-								colorCodeClose.setBackground(Color.WHITE);
-							}
-						});
+						};
 						P4.add(colorCodeClose);
 						colorCode.add(P1);
 						colorCode.add(P2);
@@ -2786,7 +2913,7 @@ public class RefluxEdit extends JFrame
 				}
 				break;
 				
-				case 43: //export as png
+				case 43: //export as image
 				final JDialog exportImage = new JDialog(w, "Export to image", true);
 				exportImage.setLayout(new GridLayout(2,1,0,0));
 				MyPanel exportP1 = new MyPanel(MyPanel.LEFT);
@@ -2833,38 +2960,16 @@ public class RefluxEdit extends JFrame
 					}
 				});
 				exportP2.add(exportFormat);
-				JButton exportB2 = new JButton("Export");
-				exportB2.setBackground(Color.WHITE);
-				exportB2.setBorder(bord1);
-				exportB2.setPreferredSize(new Dimension(48,30));
-				exportB2.setFont(f13);
-				exportB2.setFocusPainted(false);
+				MyButton exportB2 = new MyButton("Export");
 				exportP2.add(exportB2);
-				JButton exportB3 = new JButton("Cancel");
-				exportB3.setBackground(Color.WHITE);
-				exportB3.setBorder(bord1);
-				exportB3.setPreferredSize(new Dimension(48,30));
-				exportB3.setFont(f13);
-				exportB3.setFocusPainted(false);
+				MyButton exportB3 = new MyButton("Cancel");
 				exportP2.add(exportB3);
 				exportImage.add(exportP1);
 				exportImage.add(exportP2);
 				exportImage.pack();
 				exportImage.setLocationRelativeTo(w);
 				MouseListener exportListener = new MouseAdapter()
-				{
-					@Override
-					public void mouseEntered(MouseEvent ev)
-					{
-						((JButton)(ev.getSource())).setBorder(bord2);
-					}
-					
-					@Override
-					public void mouseExited(MouseEvent ev)
-					{
-						((JButton)(ev.getSource())).setBorder(bord1);
-					}
-					
+				{					
 					@Override
 					public void mouseReleased(MouseEvent ev)
 					{
@@ -2903,7 +3008,7 @@ public class RefluxEdit extends JFrame
 								outdo1:
 								do
 								{
-									File[] f_a = FileChooser.showFileChooser(new File(getSettingsFilePath()));
+									File[] f_a = FileChooser.showFileChooser(new File(getSettingsFilePath()), w);
 									if (f_a == null) return;
 									f1 = f_a[0];
 									if (f1 != null)
@@ -3110,16 +3215,239 @@ public class RefluxEdit extends JFrame
 				rowList = null;					
 				charFreqTable = null;
 				break;
+				
+				case 45: //unicode character
+				final JDialog unicodeDialog = new JDialog(w, "Insert unicode character", true);
+				unicodeDialog.setLayout(new BorderLayout());
+				MyPanel unicodeP0 = new MyPanel(MyPanel.LEFT);
+				unicodeP0.setLayout(new GridLayout(2,1,0,0));
+				MyPanel unicodeP1 = new MyPanel(MyPanel.LEFT);
+				unicodeP1.add(new MyLabel("Please enter the unicode e.g. 2190, 00F7 etc."));
+				unicodeP0.add(unicodeP1);
+				MyPanel unicodeP2 = new MyPanel(MyPanel.CENTER);
+				final MyTextField unicodeField = new MyTextField(25, 0);
+				unicodeP2.add(unicodeField);
+				unicodeP0.add(unicodeP2);
+				unicodeDialog.add(unicodeP0, BorderLayout.PAGE_START);
+				MyPanel unicodeP3 = new MyPanel(MyPanel.CENTER);
+				final JLabel unicodeLbl = new JLabel("N/A");
+				unicodeLbl.setFont(new Font(TEXTAREA.getFont().getName(), Font.PLAIN, 50));
+				unicodeP3.add(unicodeLbl);
+				unicodeDialog.add(unicodeP3, BorderLayout.CENTER);
+				MyPanel unicodeP4 = new MyPanel(MyPanel.CENTER);
+				MyButton unicodeB1 = new MyButton("Add")
+				{
+					@Override
+					public void mouseReleased(MouseEvent ev)
+					{
+						unicodeDialog.setVisible(false);
+						try
+						{
+							TEXTAREA.insert(toChar(unicodeField.getText())+"", TEXTAREA.getCaretPosition());
+						}
+						catch (Exception ex)
+						{
+						}
+					}
+				};
+				unicodeP4.add(unicodeB1);
+				unicodeDialog.add(unicodeP4, BorderLayout.PAGE_END);
+				unicodeField.getDocument().addDocumentListener(new DocumentListener()
+				{
+					@Override
+					public void changedUpdate(DocumentEvent ev)
+					{
+						update();
+					}
+					
+					@Override
+					public void removeUpdate(DocumentEvent ev)
+					{
+						update();
+					}
+					
+					@Override
+					public void insertUpdate(DocumentEvent ev)
+					{
+						update();
+					}
+					
+					private void update()
+					{
+						try
+						{
+							unicodeLbl.setText(toChar(unicodeField.getText())+"");
+						}
+						catch (Exception ex)
+						{
+							unicodeLbl.setText("N/A");
+						}
+					}
+				});
+				unicodeDialog.pack();
+				unicodeDialog.setLocationRelativeTo(w);
+				unicodeDialog.setMinimumSize(new Dimension(315,205));
+				unicodeDialog.setVisible(true);
+				break;
+				
+				case 46: //char to unicode value
+				final JDialog charDialog = new JDialog(w, "Insert unicode value", true);
+				charDialog.setLayout(new BorderLayout());
+				MyPanel charP0 = new MyPanel(MyPanel.LEFT);
+				charP0.setLayout(new GridLayout(2,1,0,0));
+				MyPanel charP1 = new MyPanel(MyPanel.LEFT);
+				charP1.add(new MyLabel("Please paste the character here: e.g. \u2190, \u00F7"));
+				charP0.add(charP1);
+				MyPanel charP2 = new MyPanel(MyPanel.CENTER);
+				final MyTextField charField = new MyTextField(25, 0);
+				charP2.add(charField);
+				charP0.add(charP2);
+				charDialog.add(charP0, BorderLayout.PAGE_START);
+				MyPanel charP3 = new MyPanel(MyPanel.CENTER);
+				final JLabel charLbl = new JLabel("N/A");
+				charLbl.setFont(new Font("Microsoft Jhenghei", Font.PLAIN, 50));
+				charP3.add(charLbl);
+				charDialog.add(charP3, BorderLayout.CENTER);
+				MyPanel charP4 = new MyPanel(MyPanel.CENTER);
+				MyButton charB1 = new MyButton("Add")
+				{
+					@Override
+					public void mouseReleased(MouseEvent ev)
+					{
+						charDialog.setVisible(false);
+						try
+						{
+							TEXTAREA.insert(toUnicodeValue(charField.getText().charAt(0)), TEXTAREA.getCaretPosition());
+						}
+						catch (Exception ex)
+						{
+						}
+					}
+				};
+				charP4.add(charB1);
+				charDialog.add(charP4, BorderLayout.PAGE_END);
+				charField.getDocument().addDocumentListener(new DocumentListener()
+				{
+					@Override
+					public void changedUpdate(DocumentEvent ev)
+					{
+						update();
+					}
+					
+					@Override
+					public void removeUpdate(DocumentEvent ev)
+					{
+						update();
+					}
+					
+					@Override
+					public void insertUpdate(DocumentEvent ev)
+					{
+						update();
+					}
+					
+					private void update()
+					{
+						TMP1 = charField.getText();
+						if (TMP1 != null)
+						{
+							if ((TMP1.length()!=1)&&(TMP1.length()!=0))
+							{
+								charField.setBackground(new Color(255,133,133));
+								charLbl.setText("N/A");
+								return;
+							}
+							else if (TMP1.length()==1)
+							{
+								charLbl.setText(toUnicodeValue(charField.getText().charAt(0)));
+							}
+							else if (TMP1.length()==0)
+							{
+								charLbl.setText("N/A");
+							}
+						}
+						charField.setBackground(Color.WHITE);
+					}
+				});
+				TMP1 = TEXTAREA.getSelectedText();
+				if (TMP1 != null)
+				{
+					if (TMP1.length() == 1)
+					{
+						charField.setText(TMP1);
+					}
+				}
+				charDialog.pack();
+				charDialog.setLocationRelativeTo(w);
+				charDialog.setMinimumSize(new Dimension(315,205));
+				charDialog.setVisible(true);
+				break;
+				
+				case 47: //line separator
+				JDialog sepDialog = new JDialog(w, "Line separator options", true);
+				final MyRadioButton sep_n = new MyRadioButton("\\n (Java default)", false, 1);
+				final MyRadioButton sep_r = new MyRadioButton("\\r (Mac OS 9)", false, 2);
+				final MyRadioButton sep_nr = new MyRadioButton("\\r\\n (Windows)", false, 3);
+				TMP1 = getConfig("lineSeparator");
+				if (TMP1 == null) TMP1 = "\\n";
+				switch (TMP1)
+				{
+					case "\\r":
+					sep_r.setSelected(true);
+					break;
+					
+					case "\\r\\n":
+					sep_nr.setSelected(true);
+					break;
+					
+					default:
+					sep_n.setSelected(true);
+					break;
+				}
+				ActionListener sepLis = new ActionListener()
+				{
+					@Override
+					public void actionPerformed(ActionEvent ev)
+					{
+						switch (((MyRadioButton)(ev.getSource())).getIndex())
+						{
+							case 1:
+							sep_n.setSelected(true);
+							sep_r.setSelected(false);
+							sep_nr.setSelected(false);
+							break;
+							
+							case 2:
+							sep_n.setSelected(false);
+							sep_r.setSelected(true);
+							sep_nr.setSelected(false);
+							break;
+							
+							case 3:
+							sep_n.setSelected(false);
+							sep_r.setSelected(false);
+							sep_nr.setSelected(true);
+							break;
+						}
+					}
+				};
+				sep_n.addActionListener(sepLis);
+				sep_r.addActionListener(sepLis);
+				sep_nr.addActionListener(sepLis);
+				sepDialog.setLayout(new FlowLayout(FlowLayout.LEFT));
+				sepDialog.add(sep_n);
+				sepDialog.add(sep_r);
+				sepDialog.add(sep_nr);
+				sepDialog.getContentPane().setBackground(Color.WHITE);
+				sepDialog.pack();
+				sepDialog.setLocationRelativeTo(w);
+				sepDialog.setVisible(true);
+				TMP1 = "\\n";
+				if (sep_r.isSelected()) TMP1 = "\\r";
+				if (sep_nr.isSelected()) TMP1 = "\\r\\n";
+				writeConfig("lineSeparator", TMP1);
+				break;
 			}
-		}
-	}
-	
-	static class MyLabel extends JLabel
-	{
-		public MyLabel(String str)
-		{
-			super(str);
-			this.setFont(f13);
 		}
 	}
 	
@@ -3221,18 +3549,26 @@ public class RefluxEdit extends JFrame
 		}
 	}
 	
-	public void save(File f) throws IOException
+	protected void save(File f) throws IOException
 	{
 		TMP1 = getConfig("Encoding");
+		if (TMP1 == null) TMP1 = "default";
+		TMP2 = getConfig("lineSeparator");
+		if (TMP2 == null) TMP2 = "\n";
+		TMP2 = TMP2.replace("\\n", "\n").replace("\\r", "\r");
 		if (TMP1.equals("default"))
 		{
-			FileWriter writer = new FileWriter(f);
-			TEXTAREA.write(writer);
-			writer.close();
+			PrintWriter out = new PrintWriter(f);
+			String[] strs = TEXTAREA.getText().split("\n");
+			for (String str: strs)
+			{
+				out.print(str + TMP2);
+			}
+			out.close();
 		}
 		else
 		{
-			byte[] bytes = TEXTAREA.getText().getBytes(TMP1);
+			byte[] bytes = TEXTAREA.getText().replace("\n", TMP2).getBytes(TMP1);
 			FileOutputStream output = new FileOutputStream(f);
 			output.write(bytes);
 			output.close();
@@ -3292,6 +3628,7 @@ public class RefluxEdit extends JFrame
 				catch (Throwable ex)
 				{
 					JOptionPane.showMessageDialog(w, "Cannot open file!\nError message: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+					prog.dispose();
 					return null;
 				}
 				setFileLabel(f);
@@ -3316,7 +3653,7 @@ public class RefluxEdit extends JFrame
 		});
 	}
 	
-	public void setFileLabel(File f)
+	protected void setFileLabel(File f)
 	{
 		TMP1 = f.getPath();
 		file = f;
@@ -3328,6 +3665,13 @@ public class RefluxEdit extends JFrame
 		{
 			currentFile.setText("Current file: " + TMP1);
 		}
+	}
+	
+	protected JSeparator separator()
+	{
+		JSeparator sep = new JSeparator(SwingConstants.VERTICAL);
+		sep.setPreferredSize(new Dimension(2,85));
+		return sep;
 	}
 	
 	public static String getSettingsFilePath()
@@ -3342,7 +3686,7 @@ public class RefluxEdit extends JFrame
 		}
 	}
 	
-	public static String getConfig(String name)
+	protected static String getConfig(String name)
 	{
 		try
 		{
@@ -3355,7 +3699,7 @@ public class RefluxEdit extends JFrame
 		return prop.getProperty(name);
 	}
 	
-	public static void writeConfig(String key, String value)
+	protected static void writeConfig(String key, String value)
 	{
 		prop.setProperty(key, value);
 		try
@@ -3444,6 +3788,48 @@ public class RefluxEdit extends JFrame
 		}
 	}
 	
+	class MyButton extends JButton implements MouseListener
+	{
+		public MyButton(String str)
+		{
+			super(str);
+			this.setFont(f13);
+			this.setPreferredSize(new Dimension(50,28));
+			this.setBorder(bord1);
+			this.setFocusable(false);
+			this.addMouseListener(this);
+		}
+		
+		@Override
+		public void mouseEntered(MouseEvent ev)
+		{
+			this.setBackground(new Color(254,254,254));
+			this.setBorder(bord2);
+		}
+		
+		@Override
+		public void mouseExited(MouseEvent ev)
+		{
+			this.setBackground(Color.WHITE);
+			this.setBorder(bord1);
+		}
+		
+		@Override
+		public void mouseReleased(MouseEvent ev)
+		{
+		}
+		
+		@Override
+		public void mousePressed(MouseEvent ev)
+		{
+		}
+		
+		@Override
+		public void mouseClicked(MouseEvent ev)
+		{
+		}
+	}
+	
 	class MyPanel extends JPanel
 	{
 		public static final int LEFT = 1;
@@ -3463,59 +3849,302 @@ public class RefluxEdit extends JFrame
 		}
 	}
 	
+	class MyRibbonTab extends JPanel
+	{
+		public MyRibbonTab(String name)
+		{
+			super();
+			this.setLayout(new FlowLayout(FlowLayout.LEFT,0,0));
+			this.setBackground(Color.WHITE);
+			this.setPreferredSize(new Dimension(0,85));
+			ribbon.addTab(name, this);
+		}
+	}
+	
+	class MyRibbonButton extends JPanel implements MouseListener
+	{
+		private JLabel label;
+		private String icon;
+		private boolean isHorizontal;
+		private int x;
+		MyRibbonButton(String text, String icon, String tooltip, boolean isHorizontal, int x)
+		{
+			this(text,icon,isHorizontal,x);
+			this.setToolTipText(tooltip);
+		}
+		
+		MyRibbonButton(String text, String icon, boolean isHorizontal, int x)
+		{
+			super();
+			label = new MyLabel(text);
+			if (isHorizontal)
+			{
+				this.setLayout(new FlowLayout(FlowLayout.LEFT));
+				this.add(new MyLabel("    "));
+				this.add(label);
+				this.label.setFont(new Font("Microsoft Jhenghei", Font.PLAIN, 12));
+				this.setSize(this.getPreferredSize()); // pack()
+				this.setPreferredSize(new Dimension(this.getWidth(),25));
+			}
+			else
+			{
+				this.setLayout(new BorderLayout());
+				MyPanel panel = new MyPanel(MyPanel.CENTER);
+				panel.add(label);
+				panel.setOpaque(false);
+				this.add(panel, BorderLayout.SOUTH);
+				this.setSize(this.getPreferredSize());
+				this.setPreferredSize(new Dimension(this.getWidth()+8,75));
+			}
+			this.isHorizontal = isHorizontal;
+			this.icon = icon;
+			this.setBorder(new LineBorder(Color.BLACK,0));
+			this.setBackground(Color.WHITE);
+			this.addMouseListener(this);
+			this.addMouseListener(new MyListener(x));
+		}
+		
+		@Override
+		protected void paintComponent(Graphics g)
+		{
+			super.paintComponent(g);
+			if (this.icon != null)
+			{
+				ImageIcon image = null;
+				try
+				{
+					image = new ImageIcon(getClass().getResource("/myjava/SRC/" + this.icon + ".PNG"));
+					if (this.isHorizontal)
+					{
+						g.drawImage(image.getImage(),2,(this.getHeight()-image.getIconHeight())/2,null);
+					}
+					else
+					{
+						g.drawImage(image.getImage(),(this.getWidth()-image.getIconWidth())/2,1,null);
+					}
+				}
+				catch (Exception ex)
+				{
+				}
+			}
+		}
+		
+		@Override
+		public void mousePressed(MouseEvent ev)
+		{
+			this.setBackground(new Color(230,230,230));
+		}
+		
+		@Override
+		public void mouseEntered(MouseEvent ev)
+		{
+			this.setBackground(new Color(240,240,240));
+		}
+		
+		@Override
+		public void mouseExited(MouseEvent ev)
+		{
+			this.setBackground(Color.WHITE);
+		}
+		
+		@Override
+		public void mouseReleased(MouseEvent ev)
+		{
+			this.setBackground(Color.WHITE);
+		}
+		
+		@Override
+		public void mouseClicked(MouseEvent ev)
+		{
+		}
+	}
+	
+	class MyRibbonFirst extends JButton implements MouseListener
+	{
+		private JPanel panel = new JPanel();
+		public MyRibbonFirst()
+		{
+			super("FILE");
+			this.setPreferredSize(new Dimension(65,25));
+			this.setBackground(new Color(154,192,229));
+			this.setForeground(Color.WHITE);
+			this.setFont(f13);
+			this.setBorder(bord1);
+			this.setFocusPainted(false);
+			this.addMouseListener(this);
+			panel.setBackground(new Color(111,107,100));
+			panel.setLayout(new FlowLayout());
+			panel.setPreferredSize(new Dimension(165,0));
+		}
+		
+		public JPanel getPanel()
+		{
+			return this.panel;
+		}
+		
+		class MyItemButton extends MyPureButton
+		{
+			public MyItemButton(String item, int x)
+			{
+				super("  " + item);
+				this.setBackground(new Color(111,107,100));
+				this.setLabelForeground(Color.WHITE);
+				this.setPreferredSize(new Dimension(165,33));
+				this.setBorder(new LineBorder(Color.BLACK,0));
+				this.setLabelFont(new Font("Microsoft Jhenghei", Font.PLAIN, 14));
+				this.setAlignLeft();
+				if (x != 0)
+				{
+					this.addMouseListener(new MyListener(x));
+				}
+				this.addMouseListener(new MouseAdapter()
+				{
+					@Override
+					public void mouseReleased(MouseEvent ev)
+					{
+						((Component)(ev.getSource())).setBackground(new Color(111,107,100));
+						w.remove(panel);
+						try
+						{
+							TMP1 = getConfig("isUseNarrowEdge");
+							if (TMP1 == null) throw new Exception();
+						}
+						catch (Exception ex)
+						{
+							TMP1 = "false";
+						}
+						if (TMP1.equals("true"))
+						{
+							w.add(leftEdge, BorderLayout.LINE_START);
+						}
+						else
+						{
+							w.add(leftEdgeOld, BorderLayout.LINE_START);
+						}
+						w.revalidate();
+						w.repaint();
+					}
+					
+					@Override
+					public void mouseEntered(MouseEvent ev)
+					{
+						((MyItemButton)(ev.getSource())).setBackground(new Color(50,50,50));
+					}
+					
+					@Override
+					public void mouseExited(MouseEvent ev)
+					{
+						((MyItemButton)(ev.getSource())).setBackground(new Color(111,107,100));
+					}
+				});
+			}
+		}
+		
+		public void add(String item, int x)
+		{
+			this.panel.add(new MyItemButton(item, x));
+		}
+		
+		@Override
+		public void mouseReleased(MouseEvent ev)
+		{
+			if (ev.getSource() instanceof MyRibbonFirst)
+			{
+				boolean contain = false;
+				if (Arrays.asList(w.getContentPane().getComponents()).contains(this.panel))
+				{
+					w.remove(this.panel);
+					try
+					{
+						TMP1 = getConfig("isUseNarrowEdge");
+						if (TMP1 == null) throw new Exception();
+					}
+					catch (Exception ex)
+					{
+						TMP1 = "false";
+					}
+					if (TMP1.equals("true"))
+					{
+						w.add(leftEdge, BorderLayout.LINE_START);
+					}
+					else
+					{
+						w.add(leftEdgeOld, BorderLayout.LINE_START);
+					}
+				}
+				else
+				{
+					w.add(this.panel, BorderLayout.LINE_START);
+				}
+				w.revalidate();
+				w.repaint();
+			}
+		}
+		
+		@Override
+		public void mousePressed(MouseEvent ev)
+		{
+		}
+		
+		@Override
+		public void mouseClicked(MouseEvent ev)
+		{
+		}
+		
+		@Override
+		public void mouseExited(MouseEvent ev)
+		{
+			this.setBackground(new Color(154,192,229));
+		}
+		
+		@Override
+		public void mouseEntered(MouseEvent ev)
+		{
+			this.setBackground(new Color(183,206,228));
+		}
+	}
+	
 	class UndoManager
 	{
-		private String[] backup;
+		private ArrayList<String> backup = new ArrayList<String>();
 		private int position = 0;
-		private int no;
-		public UndoManager(int x)
+		public UndoManager()
 		{
-			backup = new String[x+1];
-			this.no = x;
 		}
 		
-		public void backup(String str)
+		public void backup(String str) 
+		//larger index: older
+		//smaller index: newer
 		{
-			for (i=no; i>1; i--)
-			{
-				backup[i] = backup[i-1];
-			}
-			backup[1] = str;
-		}
-		
-		public void setInitial(String str)
-		{
-			backup[0] = str;
+			backup.add(0, str);
 		}
 		
 		public String undo()
 		{
-			if (position < no)
+			if (position<backup.size()-1)
 			{
-				if (backup[position+1] == null)
-				{
-					JOptionPane.showMessageDialog(w, "Reached undo limit!", "Error", JOptionPane.ERROR_MESSAGE);
-					return null;
-				}
 				position++;
-				return backup[position];
+				return backup.get(position);
 			}
-			else return null;
+			else
+			{
+				JOptionPane.showMessageDialog(w, "Reached undo limit!", "Error", JOptionPane.ERROR_MESSAGE);
+				return null;
+			}
 		}
 		
 		public String redo()
 		{
-			if (position >= 1)
+			if (position>0)
 			{
 				position--;
-				return backup[position];
+				return backup.get(position);
 			}
-			else if (position == 0)
+			else
 			{
 				JOptionPane.showMessageDialog(w, "Reached redo limit!", "Error", JOptionPane.ERROR_MESSAGE);
 				return null;
 			}
-			else return null;
 		}
 		
 		public int getPosition()

@@ -1,4 +1,4 @@
-package MyJava;
+package myjava.gui;
 
 public class MyFileFilter implements java.io.FileFilter
 {

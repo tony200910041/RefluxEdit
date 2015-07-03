@@ -14,6 +14,14 @@ RefluxEdit is provided "AS IS" and WITHOUT warranties. RefluxEdit does not conta
 
 ----------
 Version History:
+RefluxEdit 4.0beta1 2015-01-02
+-New function: display progress bar when replacing text
+-New function: display umbrella
+-Fixed bug #00022: not stoping searcing after closing progress
+-Fixed bug #00023: pasting text twice
+-Fixed bug #00024: not saving auto indentation option
+-Fixed bug #00025: default compilation command
+
 RefluxEdit 4.0alpha 2014-12-31
 -New function: more encoding option
 -New function: automatic encoding detection

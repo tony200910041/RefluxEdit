@@ -14,6 +14,15 @@ RefluxEdit is provided "AS IS" and WITHOUT warranties. RefluxEdit does not conta
 
 ----------
 Version History:
+RefluxEdit 4.0beta3 2015-01-31
+-New function: check update automatically
+-New function: increase/decrease indentation
+-New function: use different compile commands for each file
+-Changed: new right-click menu item ("Select all", "Select all and copy")
+-Changed: enhanced FILE menu design
+-Fixed bug #00027: freeze GUI when calculating words and characters through corner counter
+-Fixed bug #00028: filter properties for caret save function
+
 RefluxEdit 4.0beta2 2015-01-06
 -New function: save caret position
 -Changed: added edge in HELP tab

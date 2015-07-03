@@ -28,13 +28,17 @@ public class RefluxEdit extends JFrame implements Resources
 {
 	// constants
 	private static final String VERSION_NO = "4.0";
-	private static final String BETA_NO = "beta2";
+	private static final String BETA_STRING = "beta";
+	private static final String BETA_NO = "3";
+	private static final String REV_STRING = "";
+	private static final String REV_NO = "";
 	private static final File settingsFile = new File(getsettingsFilePath(), "REFLUXEDITPREF.PROPERTIES");
 	private static final Properties prop = new Properties();
 	private static final Color gray = new Color(238,238,238);
 	private static final Color vlgray = new Color(250,250,250);
 	private static final Color lightGreen = new Color(243,255,241);
 	private static final Color lightYellow = new Color(252,247,221);
+	private static final Color brown = new Color(111,107,100);
 	private static Color transYellow;
 	private static final DecimalFormat format3 = new DecimalFormat("##0.###");
 	private static final Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -46,6 +50,9 @@ public class RefluxEdit extends JFrame implements Resources
 	// components
 	private JTextArea textArea = new JTextArea();
 	private JLayer<JTextArea> layer1 = new JLayer<>(textArea, new MyUmbrellaLayerUI());
+	private JScrollPane scrollPane = new JScrollPane(layer1);
+	private DropTarget dropTarget = textArea.getDropTarget();
+	private TextAreaListener taListener = new TextAreaListener();
 	private MyPanel bottomP1 = new MyPanel(MyPanel.CENTER);
 	private MyPanel bottomP2 = new MyPanel(MyPanel.CENTER);
 	private FlaggedLabel countLabel = new FlaggedLabel(0,true);
@@ -117,7 +124,6 @@ public class RefluxEdit extends JFrame implements Resources
 		splash.createGraphics();
 		SwingUtilities.invokeLater(new Runnable()
 		{
-			volatile boolean done1 = false, done2 = false;
 			@Override
 			public void run()
 			{
@@ -126,36 +132,46 @@ public class RefluxEdit extends JFrame implements Resources
 				w = new RefluxEdit("RefluxEdit " + VERSION_NO);
 				w.restoreFrame();
 				w.restoreTextArea();
-				(new Thread()
+				w.restoreMenus();
+				w.restorePopup();
+				Thread t1 = new Thread()
 				{
 					@Override
 					public void run()
 					{
-						w.restoreChoosers();
 						w.restoreUndoDialog();
-						done1 = true;
+						w.restoreChoosers();
 					}
-				}).start();
-				(new Thread()
+				};
+				t1.start();
+				try
 				{
-					@Override
-					public void run()
-					{
-						w.restoreMenus();
-						w.restorePopup();						
-						done2 = true;
-					}
-				}).start();
-				showJFrame();
+					t1.join();
+					showJFrame();
+				}
+				catch (InterruptedException ex)
+				{
+					exception(ex);
+				}
 			}
 			//
 			void showJFrame()
 			{
-				while (!(done1&&done2))
-				{ //wait
-				}
 				splash.close();
 				w.setVisible(true);
+				writeConfig("LastStartupTimeTaken", System.currentTimeMillis()-initialTime + "ms");
+				if (getBoolean0("CheckUpdate"))
+				{
+					(new Thread()
+					{
+						@Override
+						public void run()
+						{
+							checkUpdate(false);
+						}
+							
+					}).start();
+				}
 				if (args.length == 1)
 				{
 					try
@@ -165,8 +181,7 @@ public class RefluxEdit extends JFrame implements Resources
 					catch (Exception ex)
 					{
 					}
-				}			
-				writeConfig("LastStartupTimeTaken", System.currentTimeMillis()-initialTime + "ms");
+				}
 			}
 		});
 	}
@@ -249,10 +264,12 @@ public class RefluxEdit extends JFrame implements Resources
 				setConfig("Compile.runCommandFileName","CMD.BAT");
 				setConfig("Compile.removeOriginal", "false");
 				setConfig("Compile.regex", ".*\\.class");
+				setConfig("Compile.useGlobal", "true");
 				setConfig("Caret.save", "true");
+				setConfig("CheckUpdate", "true");
 				saveConfig();
 			}
-			catch (Exception ex)
+			catch (IOException ex)
 			{
 			}
 		}
@@ -340,7 +357,6 @@ public class RefluxEdit extends JFrame implements Resources
 			this.add(leftEdgeOld, BorderLayout.LINE_START);
 			this.add(rightEdgeOld, BorderLayout.LINE_END);
 		}
-		JScrollPane scrollPane = new JScrollPane(layer1);
 		this.add(scrollPane, BorderLayout.CENTER);
 		this.addTopPanel();
 		this.addWindowListener(new WindowAdapter()
@@ -408,6 +424,114 @@ public class RefluxEdit extends JFrame implements Resources
 		});
 	}
 	
+	static void checkUpdate(boolean showUpToDate)
+	{
+		BufferedReader reader = null;
+		try
+		{
+			//load information
+			URL update = new URL("http://refluxedit.sourceforge.net/update/newversion.txt");
+			reader = new BufferedReader(new InputStreamReader(update.openStream()));
+			StringBuilder builder = new StringBuilder();
+			String buffer;
+			while ((buffer=reader.readLine()) != null)
+			{
+				builder.append(buffer+"\n");
+			}
+			final String[] fragment = builder.toString().split("\n");
+			//compare
+			double newVersionNumber = getVersionNumber(fragment);
+			double currentVersionNumber = getVersionNumber(new String[]{VERSION_NO, BETA_STRING, BETA_NO, REV_NO});
+			if (newVersionNumber > currentVersionNumber)
+			{
+				StringBuilder des = new StringBuilder();
+				for (int i=5; i<fragment.length; i++)
+				{
+					des.append(fragment[i]+"\n");
+				}
+				final String description = des.toString();
+				SwingUtilities.invokeLater(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						int option = JOptionPane.showConfirmDialog(w, "There is a new version of RefluxEdit."
+														+ "\nVersion: " + fragment[0] + (fragment[1].equals("final")?"":(fragment[1] + fragment[2]
+														+ (Byte.parseByte(fragment[3])==0?"":("rev"+fragment[3]))))
+														+ "\nPublished: " + fragment[4]
+														+ "\n\n" + description
+														+ "\nWould you like to download it?", "Update found", JOptionPane.YES_NO_OPTION);
+						if (option == JOptionPane.YES_OPTION)
+						{
+							try
+							{
+								Desktop.getDesktop().browse(new URI("https://sourceforge.net/projects/refluxedit/"));
+							}
+							catch (Exception ex)
+							{
+							}
+						}
+					}
+				});
+			}
+			else if (showUpToDate)
+			{
+				SwingUtilities.invokeLater(new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						JOptionPane.showMessageDialog(w,"Your RefluxEdit is up to date.", "Check update", JOptionPane.INFORMATION_MESSAGE);
+					}
+				});
+			}
+		}
+		catch (Exception ex)
+		{
+			exception(ex);
+		}
+		finally
+		{
+			try
+			{
+				if (reader != null) reader.close();
+			}
+			catch (IOException ex)
+			{
+			}
+		}
+	}
+						
+	static double getVersionNumber(String[] fragment)
+	{
+		double version_no = Double.parseDouble(fragment[0]);
+		version_no+=getTestNumber(fragment[1])/10.0;
+		version_no+=Double.parseDouble(fragment[2])/100;
+		version_no+=(fragment[3].isEmpty()?0:Double.parseDouble(fragment[3]))/1000;
+		return version_no;
+	}
+	
+	static byte getTestNumber(String str)
+	{
+		byte beta_version;
+		switch (str)
+		{
+			case "alpha":
+			beta_version=0;
+			break;
+			
+			case "beta":
+			beta_version=1;
+			break;
+			
+			case "final":
+			default:
+			beta_version=2;
+			break;
+		}
+		return beta_version;
+	}
+
 	protected void addTopPanel()
 	{
 		TMP1 = getConfig0("isPanel");
@@ -464,6 +588,7 @@ public class RefluxEdit extends JFrame implements Resources
 		switch (TMP1)
 		{
 			case "no": //no container
+			default:
 			topPanel = null;
 			break;
 			
@@ -651,8 +776,6 @@ public class RefluxEdit extends JFrame implements Resources
 			button.add("Export to Image", 43);
 			button.add("Print", 38);
 			button.add("Close", 6);
-			button.add("", -1);
-			button.add("\u2190", 0);
 			ribbon.addAsFirstComponent(button);
 			//
 			MyRibbonTab tab2 = new MyRibbonTab("EDIT");
@@ -678,6 +801,12 @@ public class RefluxEdit extends JFrame implements Resources
 			tab2.add(tab2_2);
 			tab2.add(createSeparator());
 			tab2.add(new MyRibbonButton("Delete", "DELETE32", "<html><font size=\"4\"><b>Delete selected text&nbsp;&nbsp;&nbsp;Delete</b></font><br>The selected text will be deleted.</html>", false, 15));
+			tab2.add(createSeparator());
+			JPanel tab2_3 = new JPanel(new GridLayout(2,1,10,10));
+			tab2_3.setOpaque(false);
+			tab2_3.add(new MyRibbonButton("Indent\u2191", "INDENT+", "<html><font size=\"4\"><b>Increase indentation</b></font><br>Increase the indentation of the selected text by 1</html>", true, 18));
+			tab2_3.add(new MyRibbonButton("Indent\u2193", "INDENT-", "<html><font size=\"4\"><b>Decrease indentation</b></font><br>Decrease the indentation of the selected text by 1</html>", true, 19));
+			tab2.add(tab2_3);
 			// View
 			tab3.add(new MyRibbonButton("<html>Editing/<br>viewing</html>", "EDIT32", "<html><font size=\"4\"><b>Enable/disable editing</b></font><br>Click here to disable/re-enable editing.<br></html>", false, 17));
 			tab3.add(new MyRibbonButton("<html>On top</html>", "ONTOP", "<html><font size=\"4\"><b>Enable/disable always on top</b></font><br>Click here to enable/disable RefluxEdit always staying on top.</html>", false, 21));
@@ -776,6 +905,9 @@ public class RefluxEdit extends JFrame implements Resources
 			menu2.add(new MyMenuItem("Paste", "PASTE", 13).setAccelerator(KeyEvent.VK_V, ActionEvent.CTRL_MASK));
 			menu2.add(new MyMenuItem("Paste on next line", null, 14));
 			menu2.add(new MyMenuItem("Delete", null, 15));
+			menu2.add(new JSeparator());
+			menu2.add(new MyMenuItem("Increase indentation", "INDENT+", 18).setAccelerator(KeyEvent.VK_I, ActionEvent.CTRL_MASK));
+			menu2.add(new MyMenuItem("Decrease indentation", "INDENT-", 19).setAccelerator(KeyEvent.VK_U, ActionEvent.CTRL_MASK));
 			//
 			menu3.add(new MyMenuItem("Enable/disable editing", "EDIT16", 17));
 			menu3.add(new MyMenuItem("Enable/disable always on top", "ONTOP16", 21));
@@ -814,7 +946,7 @@ public class RefluxEdit extends JFrame implements Resources
 			menu6.add(new MyMenuItem("About RefluxEdit", "APPICON16", 16).setAccelerator(KeyEvent.VK_F1, ActionEvent.CTRL_MASK));
 			menu6.add(new MyMenuItem("Visit SourceForge page", "VISIT16", 48));
 			//next one: 54
-			//free: 18,19,47,20,29,36,37
+			//free: 47,20,29,36,37
 		}
 	}
 	
@@ -847,8 +979,8 @@ public class RefluxEdit extends JFrame implements Resources
 				g2d.fillRect(width/2-edge/2+x,height/2-radius-edge+y,edge,edge+1);
 				//umbrella "stick"
 				g2d.fillRect(width/2-edge/2+x,height/2+y,edge,radius);
-				Arc2D.Double bottom = new Arc2D.Double(width/2-2.5*edge+x,height/2+radius-3*edge/2+y,3*edge,3*edge,180,180,Arc2D.PIE);
-				Arc2D.Double removing = new Arc2D.Double(width/2-1.5*edge+x,height/2+radius-edge/2+y,edge,edge,180,180,Arc2D.PIE);
+				Arc2D.Double bottom = new Arc2D.Double(width/2.0-2.5*edge+x,height/2.0+radius-3*edge/2.0+y,3*edge,3*edge,180,180,Arc2D.PIE);
+				Arc2D.Double removing = new Arc2D.Double(width/2.0-1.5*edge+x,height/2.0+radius-edge/2.0+y,edge,edge,180,180,Arc2D.PIE);
 				Area area = new Area(bottom);
 				area.subtract(new Area(removing));
 				g2d.fill(area);
@@ -1045,11 +1177,10 @@ public class RefluxEdit extends JFrame implements Resources
 		textArea.getActionMap().put("none",null);
 		//
 		textArea.addMouseListener(new MyListener(0));
-		TextAreaListener listener = new TextAreaListener();
-		textArea.addKeyListener(listener);
-		textArea.getDocument().addDocumentListener(listener);
-		textArea.addCaretListener(listener);
-		textArea.setDropTarget(listener);
+		textArea.addKeyListener(taListener);
+		textArea.getDocument().addDocumentListener(taListener);
+		textArea.addCaretListener(taListener);
+		textArea.setDropTarget(taListener);
 	}
 	
 	class TextAreaListener extends DropTarget implements KeyListener, CaretListener, DocumentListener
@@ -1144,6 +1275,14 @@ public class RefluxEdit extends JFrame implements Resources
 				{
 					menuItem = new MyMenuItem(null, null, 13);
 				}
+				else if (i == KeyEvent.VK_I)
+				{
+					menuItem = new MyMenuItem(null, null, 18);
+				}
+				else if (i == KeyEvent.VK_U)
+				{
+					menuItem = new MyMenuItem(null, null, 19);
+				}
 				try
 				{
 					menuItem.dispatchEvent(new MouseEvent(menuItem, MouseEvent.MOUSE_RELEASED, 1, MouseEvent.NOBUTTON, 0, 0, 1, false));
@@ -1230,25 +1369,34 @@ public class RefluxEdit extends JFrame implements Resources
 			{
 				if (SwingUtilities.getAncestorOfClass(JPanel.class, bottomP1) != null)
 				{
+					String buffer = null;
 					try
 					{
-						TMP2 = textArea.getSelectedText();
+						buffer = textArea.getSelectedText();
 					}
 					catch (Exception ex)
 					{
-						TMP2 = null;
 					}
-					if (TMP2 != null) TMP1 = TMP2;
-					else TMP1 = textArea.getText();
+					final String text = (buffer != null?buffer:textArea.getText());
+					countLabel.setText("Loading...");
 					//
-					if (countLabel.isWordCount)
+					(new Thread()
 					{
-						countLabel.setCountInfo(wordCount(TMP1),true);
-					}
-					else
-					{
-						countLabel.setCountInfo(charCount(TMP1),false);
-					}
+						@Override
+						public void run()
+						{
+							this.setPriority(Thread.MIN_PRIORITY);
+							final int i = countLabel.isWordCount?wordCount(text):charCount(text);
+							SwingUtilities.invokeLater(new Runnable()
+							{
+								@Override
+								public void run()
+								{
+									countLabel.setCountInfo(i,countLabel.isWordCount);
+								}
+							});
+						}
+					}).start();
 				}
 			}
 		}
@@ -1260,6 +1408,9 @@ public class RefluxEdit extends JFrame implements Resources
 		popup.add(new MyMenuItem("Copy", "COPY", 12));
 		popup.add(new MyMenuItem("Paste", "PASTE", 13));
 		popup.add(new MyMenuItem("Delete", null, 15));
+		popup.add(new JSeparator());
+		popup.add(new MyMenuItem("Select all", "SELECT", 9));
+		popup.add(new MyMenuItem("Select all and copy", null, 10));
 	}
 	
 	protected void restoreUndoDialog()
@@ -1940,6 +2091,7 @@ public class RefluxEdit extends JFrame implements Resources
 				switch (TMP1)
 				{
 					case "Java":
+					default:
 					JavaChooser.resetChoosableFileFilters();
 					JavaChooser.addChoosableFileFilter(textFilter);
 					i = JavaChooser.showOpenDialog(w);
@@ -2154,7 +2306,7 @@ public class RefluxEdit extends JFrame implements Resources
 				break;
 				
 				case 16: //about RefluxEdit
-				TMP1 = "RefluxEdit " + VERSION_NO + BETA_NO + " -- a lightweight plain text editor written in Java.\nBy tony200910041, http://tony200910041.wordpress.com\nDistributed under MPL 2.0.\nuser.home: " + System.getProperty("user.home") + "\nYour operating system is " + System.getProperty("os.name") + " (" + System.getProperty("os.version") + "), " + System.getProperty("os.arch") + "\n\nIcon sources: http://www.iconarchive.com and LibreOffice.";
+				TMP1 = "RefluxEdit " + VERSION_NO + BETA_STRING + BETA_NO + REV_STRING + REV_NO + " -- a lightweight plain text editor written in Java.\nBy tony200910041, http://tony200910041.wordpress.com\nDistributed under MPL 2.0.\nuser.home: " + System.getProperty("user.home") + "\nYour operating system is " + System.getProperty("os.name") + " (" + System.getProperty("os.version") + "), " + System.getProperty("os.arch") + "\n\nIcon sources: http://www.iconarchive.com and LibreOffice.";
 				TMP2 = "About RefluxEdit " + VERSION_NO;
 				try
 				{
@@ -2178,6 +2330,44 @@ public class RefluxEdit extends JFrame implements Resources
 					textArea.setEditable(true);
 					textArea.setBackground(Color.WHITE);
 					writeConfig("isEditable", "true");
+				}
+				break;
+				
+				case 18: //increase indentation
+				case 19: //decrease indentation
+				if (textArea.isEditable())
+				{
+					i = textArea.getSelectionStart();
+					j = textArea.getSelectionEnd();
+					int start = Math.min(i,j);
+					int end = Math.max(i,j);
+					try
+					{
+						int start_line = textArea.getLineOfOffset(start);
+						int end_line = textArea.getLineOfOffset(end);
+						for (int x=start_line; x<=end_line; x++)
+						{
+							int offset = textArea.getLineStartOffset(x);
+							if (this.x == 18)
+								textArea.insert("\t",offset);
+							else
+							{
+								String _char = textArea.getText(offset,1);
+								if (_char.equals("\t")||_char.equals(" "))
+								{
+									textArea.replaceRange(null,offset,offset+1);
+								}
+							}
+							isSaved = false;
+						}
+					}
+					catch (BadLocationException ex)
+					{
+					}
+				}
+				else
+				{
+					cannotEdit();
 				}
 				break;
 				
@@ -3006,7 +3196,7 @@ public class RefluxEdit extends JFrame implements Resources
 										else return;
 									} while (!save1);
 								}
-								else if (TMP1.equals("System"))
+								else// if (TMP1.equals("System"))
 								{
 									outdo3:
 									do
@@ -3510,6 +3700,7 @@ public class RefluxEdit extends JFrame implements Resources
 						});
 						compileList.setFont(f13);
 						compileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+						final boolean isGlobal = getBoolean0("Compile.useGlobal");
 						try
 						{
 							save(file,true);
@@ -3534,7 +3725,12 @@ public class RefluxEdit extends JFrame implements Resources
 								}
 							}
 							//start running
-							String command = getConfig0("Compile.command");
+							String command = null;
+							if ((!isGlobal)||(file!=null))
+							{
+								command = getConfig0("Compile.command."+file.getPath());
+							}
+							command = command==null?getConfig0("Compile.command"):command;
 							ProcessBuilder builder1;
 							if (command == null)
 							{
@@ -3596,7 +3792,12 @@ public class RefluxEdit extends JFrame implements Resources
 									public void run()
 									{
 										loadConfig();
-										String command = getConfig0("Compile.runCommand");
+										String command = null;
+										if ((!isGlobal)&&(file != null))
+										{
+											command = getConfig0("Compile.runCommand."+file.getPath());
+										}
+										command = (command==null)?getConfig0("Compile.runCommand"):command;
 										if (command == null)
 										{
 											command = "java -classpath " + file.getParent() + " " + getFileName(file) + "\nPAUSE";
@@ -3605,7 +3806,12 @@ public class RefluxEdit extends JFrame implements Resources
 										{
 											command = replaceExpressions(command);
 										}
-										String cmdFileName = getConfig0("Compile.runCommandFileName");
+										String cmdFileName = null;
+										if ((!isGlobal)&&(file != null))
+										{
+											cmdFileName = getConfig0("Compile.runCommandFileName."+file.getPath());
+										}
+										cmdFileName = (cmdFileName==null)?getConfig0("Compile.runCommandFileName"):cmdFileName;
 										if (cmdFileName == null)
 										{
 											cmdFileName = "CMD.BAT";
@@ -3638,6 +3844,9 @@ public class RefluxEdit extends JFrame implements Resources
 						compileDialog.setVisible(true);
 					}
 				}
+				break;
+				
+				default:
 				break;
 			}
 		}
@@ -3803,7 +4012,7 @@ public class RefluxEdit extends JFrame implements Resources
 			tab1.add(P5);
 			//
 			MyPanel P6 = new MyPanel(MyPanel.LEFT);
-			MyCheckBox useIndent = new MyCheckBox("Use auto indentation", autoIndent);
+			MyCheckBox useIndent = new MyCheckBox("Use automatic indentation", autoIndent);
 			P6.add(useIndent);
 			tab1.add(P6);
 			//
@@ -3935,7 +4144,7 @@ public class RefluxEdit extends JFrame implements Resources
 								for (Object n: names)
 								{
 									String name = n.toString();
-									if ((name.startsWith("Caret."))&&(!names.equals("Caret.save")))
+									if ((name.startsWith("Caret."))&&(!name.equals("Caret.save")))
 									{
 										removeConfig0(name);
 									}
@@ -4127,6 +4336,7 @@ public class RefluxEdit extends JFrame implements Resources
 			switch (TMP1)
 			{
 				case "Java":
+				default:
 				Java = true;
 				break;
 				
@@ -4251,30 +4461,41 @@ public class RefluxEdit extends JFrame implements Resources
 			LAFOption.add(LAFOption_inner);
 			//
 			//tab9: compile command
-			JPanel compilePanel_inner = new JPanel(new GridLayout(5,1,0,0));
+			JPanel compilePanel_inner = new JPanel(new GridLayout(6,1,0,0));
 			compilePanel_inner.setBackground(Color.WHITE);
-			String command = getConfig0("Compile.command");
-			String runcommand = getConfig0("Compile.runCommand");
-			String filename = getConfig0("Compile.runCommandFileName");
+			boolean isGlobal = getBoolean0("Compile.useGlobal");
+			String command = null, runcommand = null, filename = null;
+			if ((!isGlobal)&&(file != null))
+			{
+				//read from file
+				String path = file.getPath();
+				command = getConfig0("Compile.command."+path);
+				runcommand = getConfig0("Compile.runCommand."+path);
+				filename = getConfig0("Compile.runCommandFileName."+path);
+			}
+			command = command==null?getConfig0("Compile.command"):command;
+			runcommand = runcommand==null?getConfig0("Compile.runCommand"):runcommand;
+			filename = filename==null?getConfig0("Compile.runCommandFileName"):filename;
+			//
 			boolean isDeleteOld = getBoolean0("Compile.removeOriginal");
 			String regex = getConfig0("Compile.regex");
 			//
 			MyPanel compileP0 = new MyPanel(MyPanel.LEFT);
-			MyTextField compiletf = new MyTextField(30,0);
+			final MyTextField compiletf = new MyTextField(30,0);
 			compiletf.setPreferredSize(new Dimension(compiletf.getSize().width,25));
 			compiletf.setText(command);
 			compileP0.add(new MyLabel("Compile command: "));
 			compileP0.add(compiletf);
 			//
 			MyPanel compileP1 = new MyPanel(MyPanel.LEFT);
-			MyTextField runtf = new MyTextField(30,0);
+			final MyTextField runtf = new MyTextField(30,0);
 			runtf.setPreferredSize(new Dimension(compiletf.getSize().width,25));
 			runtf.setText(runcommand);
 			compileP1.add(new MyLabel("Run command: "));
 			compileP1.add(runtf);
 			//
 			MyPanel compileP2 = new MyPanel(MyPanel.LEFT);
-			MyTextField filetf = new MyTextField(30,0);
+			final MyTextField filetf = new MyTextField(30,0);
 			filetf.setPreferredSize(new Dimension(compiletf.getSize().width,25));
 			filetf.setText(filename);
 			compileP2.add(new MyLabel("Command file name: "));
@@ -4298,15 +4519,69 @@ public class RefluxEdit extends JFrame implements Resources
 			compileP3.add(removeRegexTF);
 			//
 			MyPanel compileP4 = new MyPanel(MyPanel.LEFT);
-			compileP4.add(new MyLabel("Use %f for the file path, %p for the directory, %s for the simple name of the file and %n for a new line."));
+			final MyCheckBox useGlobal = new MyCheckBox("Use global commands", isGlobal);
+			compileP4.add(useGlobal);
+			useGlobal.addActionListener(new ActionListener()
+			{
+				@Override
+				public void actionPerformed(ActionEvent ev)
+				{
+					String s1 = null, s2 = null, s3 = null;
+					if ((!useGlobal.isSelected())&&(file != null))
+					{
+						String path = file.getPath();
+						s1 = getConfig0("Compile.command."+path);
+						s2 = getConfig0("Compile.runCommand."+path);
+						s3 = getConfig0("Compile.runCommandFileName."+path);						
+					}
+					//use global
+					s1 = s1==null?getConfig0("Compile.command"):s1;
+					s2 = s2==null?getConfig0("Compile.runCommand"):s2;
+					s3 = s3==null?getConfig0("Compile.runCommandFileName"):s3;
+					compiletf.setText(s1);
+					runtf.setText(s2);
+					filetf.setText(s3);
+				}
+			});
+			//
+			MyPanel compileP5 = new MyPanel(MyPanel.LEFT);
+			compileP5.add(new MyLabel("Use %f for the file path, %p for the directory, %s for the simple name of the file and %n for a new line."));
 			//
 			compilePanel_inner.add(compileP0);
 			compilePanel_inner.add(compileP1);
 			compilePanel_inner.add(compileP2);
 			compilePanel_inner.add(compileP3);
 			compilePanel_inner.add(compileP4);
+			compilePanel_inner.add(compileP5);
 			MyPanel compilePanel = new MyPanel(MyPanel.CENTER);
 			compilePanel.add(compilePanel_inner);
+			//tab10: check update
+			JPanel updatePanel = new MyPanel(MyPanel.LEFT);			
+			MyCheckBox update = new MyCheckBox("Check update automatically", getBoolean0("CheckUpdate"));
+			updatePanel.add(update);
+			MyButton checkUpdateButton = new MyButton("Check now")
+			{
+				@Override
+				public void mouseReleased(MouseEvent ev)
+				{
+					(new Thread()
+					{
+						@Override
+						public void run()
+						{
+							checkUpdate(true);
+						}
+							
+					}).start();
+				}
+				
+				@Override
+				public Dimension getPreferredSize()
+				{
+					return new Dimension(80,28);
+				}
+			};
+			updatePanel.add(checkUpdateButton);
 			//
 			//
 			//restore toolbar to original location
@@ -4329,6 +4604,7 @@ public class RefluxEdit extends JFrame implements Resources
 			tabbedPane.addTab("Selection color",icon("SELECTIONCOLOR16"),selectionColor,"Selection color");
 			tabbedPane.addTab("Look and Feel",icon("LAF"),LAFOption,"Look and Feel");
 			tabbedPane.addTab("Compile",icon("COMPILE16"),compilePanel,"Compile");
+			tabbedPane.addTab("Check update",icon("APPICON16"),updatePanel,"Check update");
 			tabbedPane.setFont(f13);
 			option.setLayout(new BorderLayout());
 			option.add(tabbedPane, BorderLayout.CENTER);
@@ -4479,7 +4755,7 @@ public class RefluxEdit extends JFrame implements Resources
 				catch (Exception ex)
 				{
 					i = 4;
-				}
+				}				
 				finally
 				{
 					textArea.setTabSize(i);
@@ -4509,11 +4785,27 @@ public class RefluxEdit extends JFrame implements Resources
 			}
 			{
 				//compile
-				setConfig("Compile.command", compiletf.getText());
-				setConfig("Command.runCommand", runtf.getText());
-				setConfig("Command.runCommandFileName", filetf.getText());
+				boolean global = useGlobal.isSelected();
 				setConfig("Compile.removeOriginal", removeOld.isSelected()+"");
 				setConfig("Compile.regex", removeRegexTF.getText());
+				setConfig("Compile.useGlobal", global+"");
+				if (global||(file==null))
+				{
+					setConfig("Compile.command", compiletf.getText());
+					setConfig("Compile.runCommand", runtf.getText());
+					setConfig("Compile.runCommandFileName", filetf.getText());					
+				}
+				else
+				{					
+					String path = file.getPath();
+					setConfig("Compile.command."+path, compiletf.getText());
+					setConfig("Compile.runCommand."+path, runtf.getText());
+					setConfig("Compile.runCommandFileName."+path, filetf.getText());
+				}
+			}
+			{
+				//check update
+				setConfig("CheckUpdate", update.isSelected()+"");
 			}
 			//
 			w.revalidate();
@@ -4681,10 +4973,10 @@ public class RefluxEdit extends JFrame implements Resources
 				systemChooser.setFilenameFilter(systemTextFilter);
 				systemChooser.setMode(FileDialog.SAVE);
 				systemChooser.setVisible(true);
-				String child = systemChooser.getFile();
-				if ((!child.toLowerCase().endsWith(".txt"))&&(!child.contains("."))) f = new File(child+".txt");
+				String child = systemChooser.getFile();				
 				if (child != null)
 				{
+					if ((!child.toLowerCase().endsWith(".txt"))&&(!child.contains("."))) f = new File(child+".txt");
 					f = new File(systemChooser.getDirectory(), child);	
 					if (f.exists())
 					{
@@ -4782,13 +5074,16 @@ public class RefluxEdit extends JFrame implements Resources
 				{
 					input = new FileInputStream(f);
 					//remove BOM
+					long x;
 					if (encoding.startsWith("UTF-16"))
 					{
-						input.skip(2);
+						x = input.skip(2);
+						assert x == 2;
 					}
 					else if (encoding.startsWith("UTF-32"))
 					{
-						input.skip(4);
+						x = input.skip(4);
+						assert x == 4;
 					}
 					//
 					while (((byte_read = input.read(buffer,0,4096)) != -1)&&(!this.isCancelled()))
@@ -5022,7 +5317,7 @@ public class RefluxEdit extends JFrame implements Resources
 			{
 				input.close();
 			}
-			catch (IOException ex)
+			catch (Exception ex)
 			{
 			}
 		}
@@ -5448,9 +5743,11 @@ public class RefluxEdit extends JFrame implements Resources
 		}
 	}
 	
-	class MyRibbonFirst extends JButton implements MouseListener
+	class MyRibbonFirst extends JButton implements MouseListener, PopupMenuListener
 	{
 		private JPanel panel = new JPanel();
+		private JPopupMenu menu = new JPopupMenu();
+		private boolean visible = false;
 		public MyRibbonFirst()
 		{
 			super("FILE");
@@ -5461,20 +5758,56 @@ public class RefluxEdit extends JFrame implements Resources
 			this.setBorder(bord1);
 			this.setFocusPainted(false);
 			this.addMouseListener(this);
-			panel.setBackground(new Color(111,107,100));
+			panel.setBackground(brown);
 			panel.setLayout(new FlowLayout(FlowLayout.LEFT,0,3));
-			panel.setPreferredSize(new Dimension(165,0));
+			menu.insert(this.panel,0);
+			menu.addPopupMenuListener(this);
+			menu.setBorder(new LineBorder(brown,1));
 		}
 		
-		public JPanel getPanel()
+		@Override
+		public void popupMenuCanceled(PopupMenuEvent ev)
 		{
-			return this.panel;
+			Point p = MouseInfo.getPointerInfo().getLocation();
+			SwingUtilities.convertPointFromScreen(p,this);
+			visible = this.contains(p.x, p.y);
+		}
+		
+		@Override
+		public void popupMenuWillBecomeInvisible(PopupMenuEvent ev)
+		{
+		}
+		
+		@Override
+		public void mousePressed(MouseEvent ev)
+		{
+			if (!visible)
+			{
+				this.panel.setPreferredSize(new Dimension(165, textArea.getVisibleRect().height));
+				menu.pack();
+				menu.show(this,0,110);
+			}
+			else
+			{
+				menu.setVisible(false);
+			}
+			visible = !visible;
+		}
+		
+		@Override
+		public void popupMenuWillBecomeVisible(PopupMenuEvent ev)
+		{
+		}
+		
+		@Override
+		public void mouseReleased(MouseEvent ev)
+		{
 		}
 		
 		class MyItemButton extends MyPureButton
 		{
 			private int x;
-			public MyItemButton(String item, int x)
+			public MyItemButton(String item, final int x)
 			{
 				super("  " + item);
 				this.setBackground(new Color(111,107,100));
@@ -5486,36 +5819,15 @@ public class RefluxEdit extends JFrame implements Resources
 				if (x != -1)
 				{
 					this.setPreferredSize(new Dimension(165,33));
-					if (x != 0)
-					{
-						this.addMouseListener(new MyListener(x));
-					}
 					this.addMouseListener(new MouseAdapter()
 					{
 						@Override
 						public void mouseReleased(MouseEvent ev)
 						{
-							((Component)(ev.getSource())).setBackground(new Color(111,107,100));
-							w.remove(panel);
-							try
-							{
-								TMP1 = getConfig("isUseNarrowEdge");
-								if (TMP1 == null) throw new Exception();
-							}
-							catch (Exception ex)
-							{
-								TMP1 = "false";
-							}
-							if (TMP1.equals("true"))
-							{
-								w.add(leftEdge, BorderLayout.LINE_START);
-							}
-							else
-							{
-								w.add(leftEdgeOld, BorderLayout.LINE_START);
-							}
-							w.revalidate();
-							w.repaint();
+							menu.setVisible(false);
+							visible = false;
+							this.mouseExited(ev);
+							(new MyListener(x)).mouseReleased(ev);
 						}
 						
 						@Override
@@ -5549,52 +5861,6 @@ public class RefluxEdit extends JFrame implements Resources
 			}
 		}
 		
-		public void add(String item, int x)
-		{
-			this.panel.add(new MyItemButton(item, x));
-		}
-		
-		@Override
-		public void mouseReleased(MouseEvent ev)
-		{
-			if (ev.getSource() instanceof MyRibbonFirst)
-			{
-				boolean contain = false;
-				if (Arrays.asList(w.getContentPane().getComponents()).contains(this.panel))
-				{
-					w.remove(this.panel);
-					try
-					{
-						TMP1 = getConfig("isUseNarrowEdge");
-						if (TMP1 == null) throw new Exception();
-					}
-					catch (Exception ex)
-					{
-						TMP1 = "false";
-					}
-					if (TMP1.equals("true"))
-					{
-						w.add(leftEdge, BorderLayout.LINE_START);
-					}
-					else
-					{
-						w.add(leftEdgeOld, BorderLayout.LINE_START);
-					}
-				}
-				else
-				{
-					w.add(this.panel, BorderLayout.LINE_START);
-				}
-				w.revalidate();
-				w.repaint();
-			}
-		}
-		
-		@Override
-		public void mousePressed(MouseEvent ev)
-		{
-		}
-		
 		@Override
 		public void mouseClicked(MouseEvent ev)
 		{
@@ -5610,6 +5876,16 @@ public class RefluxEdit extends JFrame implements Resources
 		public void mouseEntered(MouseEvent ev)
 		{
 			this.setBackground(new Color(183,206,228));
+		}
+		
+		public JPanel getPanel()
+		{
+			return this.panel;
+		}
+		
+		public void add(String item, int x)
+		{
+			this.panel.add(new MyItemButton(item, x));
 		}
 	}
 	

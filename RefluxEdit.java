@@ -8,29 +8,26 @@ import javax.swing.filechooser.*;
 import javax.swing.plaf.ColorUIResource;
 
 import java.io.*;
+import java.util.Locale;
 
 public class RefluxEdit extends JFrame
 {
 	//values:
-	int confirmvalue;
-	int returnvalue;
-	int i;
-	int j;
-	int k;
-	int timematch;
+	int i, j, k, l, timematch, confirmvalue, returnvalue;
 	
 	byte wordamended = 0;
 	byte currentstring = 0;
 	
 	boolean ready = false;
 	
-	public static void main(String [] args)
+	public static void main(String[] args)
 	{
 		RefluxEdit w = new RefluxEdit();
 		w.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		w.setSize(460,395);
+		w.setMinimumSize(new Dimension(275,250));
 		w.setVisible(true);
-		w.setTitle("RefluxEdit 1.0");
+		w.setTitle("RefluxEdit 1.1");
 		w.setLocationRelativeTo(null);
 		w.addWindowListener(new WindowAdapter()
 		{
@@ -59,20 +56,16 @@ public class RefluxEdit extends JFrame
 	JScrollPane jsp = new JScrollPane(TEXTAREA);
 	
 	JFileChooser chooser = new JFileChooser();
-	FileNameExtensionFilter[] filter1 = {new FileNameExtensionFilter("Text files (*.txt, *.ini, *.log, *.java, *.py, *.bat, *.cmd, *.htm, *.html, *.xml, *.php)", "txt", "ini", "log", "java", "py", "bat", "cmd", "htm", "html", "xml", "php"), new FileNameExtensionFilter("Text (*.txt, *.ini, *.log)", "txt", "ini", "log"), new FileNameExtensionFilter("Command (*.bat, *.cmd)", "bat", "cmd"), new FileNameExtensionFilter("Website and programming (*.htm, *.html, *.xml, *.php, *.java, *.py)", "htm", "html", "xml", "php", "java", "py")};
+	FileNameExtensionFilter[] filter1 = {new FileNameExtensionFilter("Text files", "txt", "ini", "log", "java", "py", "bat", "cmd", "htm", "html", "xml", "php"), new FileNameExtensionFilter("Text (*.txt, *.ini, *.log)", "txt", "ini", "log"), new FileNameExtensionFilter("Command (*.bat, *.cmd)", "bat", "cmd"), new FileNameExtensionFilter("Website and programming (*.htm, *.html, *.xml, *.php, *.java, *.py)", "htm", "html", "xml", "php", "java", "py")};
 	
 	//GUI:
 	Font J1 = new Font("Microsoft Jhenghei", Font.PLAIN, 12);
 	Font J2 = new Font("Microsoft Jhenghei", Font.PLAIN, 15);
 	
 	Border bord1 = new LineBorder(Color.BLACK, 1);
-	
-	Color blue = new Color(242,254,255);	
+
 	Color darkblue = new Color(37,47,104);
-	Color orange = new Color(245,223,134);
 	Color brown = new Color(120,77,26);
-	Color green = new Color(219,255,197);
-	Color grey = new Color(230,230,230);
 	
 	//others:
 	File file = null;
@@ -92,10 +85,14 @@ public class RefluxEdit extends JFrame
 	
 	public RefluxEdit()
 	{
+		//set language: English
+		JComponent.setDefaultLocale(Locale.ENGLISH);
+		chooser = new JFileChooser();
+		
 		//Menu bar:
 		JMenuBar menubar1 = new JMenuBar();
 		menubar1.setFont(J1);
-		menubar1.setBackground(blue);
+		menubar1.setBackground(new Color(242,254,255));
 		
 		JMenu menu1 = new JMenu("File");
 		menu1.setMnemonic(KeyEvent.VK_F);
@@ -105,16 +102,19 @@ public class RefluxEdit extends JFrame
 		JMenuItem item3 = new JMenuItem("Save As...");
 		JMenuItem item4 = new JMenuItem("Save");
 		JMenuItem item5 = new JMenuItem("Close");
+		JMenuItem item29 = new JMenuItem("Open File (Quick)");
 		item1.setFont(J1);
 		item2.setFont(J1);
 		item3.setFont(J1);
 		item4.setFont(J1);
 		item5.setFont(J1);
+		item29.setFont(J1);
 		item1.setBackground(Color.WHITE);
 		item2.setBackground(Color.WHITE);
 		item3.setBackground(Color.WHITE);
 		item4.setBackground(Color.WHITE);
 		item5.setBackground(Color.WHITE);
+		item29.setBackground(Color.WHITE);
 		
 		JMenu menu2 = new JMenu("Edit");
 		menu2.setMnemonic(KeyEvent.VK_E);
@@ -165,6 +165,10 @@ public class RefluxEdit extends JFrame
 		JMenuItem item23 = new JMenuItem("Undo");
 		JMenuItem item24 = new JMenuItem("Redo");
 		JMenuItem item25 = new JMenuItem("Delete blank line");
+		JMenuItem item26 = new JMenuItem("Insert key words (html)");
+		JMenuItem item27 = new JMenuItem("Insert key words (Java)");
+		JMenuItem item28 = new JMenuItem("Generate random words");
+		JMenuItem item30 = new JMenuItem("Convert to invert case");
 		
 		item6.setFont(J1);
 		item7.setFont(J1);
@@ -178,6 +182,10 @@ public class RefluxEdit extends JFrame
 		item23.setFont(J1);
 		item24.setFont(J1);
 		item25.setFont(J1);
+		item26.setFont(J1);
+		item27.setFont(J1);
+		item28.setFont(J1);
+		item30.setFont(J1);
 				
 		item6.setBackground(Color.WHITE);
 		item7.setBackground(Color.WHITE);
@@ -191,9 +199,14 @@ public class RefluxEdit extends JFrame
 		item23.setBackground(Color.WHITE);
 		item24.setBackground(Color.WHITE);
 		item25.setBackground(Color.WHITE);
+		item26.setBackground(Color.WHITE);
+		item27.setBackground(Color.WHITE);
+		item28.setBackground(Color.WHITE);
+		item30.setBackground(Color.WHITE);
 		
 		menu1.add(item1);
 		menu1.add(item2);
+		menu1.add(item29);
 		menu1.add(new JSeparator());
 		menu1.add(item3);
 		menu1.add(item4);
@@ -216,18 +229,23 @@ public class RefluxEdit extends JFrame
 		menu4.add(item7);
 		menu4.add(item20);
 		menu4.add(new JSeparator());
-		menu4.add(item16);
-		menu4.add(item17);
-		menu4.add(new JSeparator());
 		menu4.add(item18);
 		menu4.add(item19);
 		menu4.add(new JSeparator());
+		menu4.add(item16);
+		menu4.add(item17);
+		menu4.add(item30);	
+		menu4.add(new JSeparator());
 		menu4.add(item21);
 		menu4.add(item22);
+		menu4.add(item26);
+		menu4.add(item27);
+		menu4.add(item28);
 		menu4.add(item25);
 		
 		menu3.add(item8);
 		
+		menubar1.add(new JLabel(" "));
 		menubar1.add(menu1);
 		menubar1.add(new JLabel(" "));
 		menubar1.add(menu2);
@@ -262,6 +280,11 @@ public class RefluxEdit extends JFrame
 		item23.addMouseListener(new MouseLis(24));
 		item24.addMouseListener(new MouseLis(25));
 		item25.addMouseListener(new MouseLis(26));
+		item26.addMouseListener(new MouseLis(27));
+		item27.addMouseListener(new MouseLis(28));
+		item28.addMouseListener(new MouseLis(29));
+		item29.addMouseListener(new MouseLis(30));
+		item30.addMouseListener(new MouseLis(31));
 		
 		getContentPane().setLayout(new BorderLayout());
 		
@@ -304,7 +327,6 @@ public class RefluxEdit extends JFrame
 		uim.put("OptionPane.messageFont", J1);		
 		
 		uim.put("OptionPane.okButtonText", "OK");
-		uim.put("OptionPane.cancelButtonText", "NO");
 		
 		uim.put("Button.background", Color.WHITE);
 		uim.put("PopupMenu.background", Color.WHITE);
@@ -442,10 +464,11 @@ public class RefluxEdit extends JFrame
 			}
 			current.setText("File: " + tmp);
 			tmp = null;
+			TEXTAREA.requestFocus();
 		}
 		catch (Exception ex)
 		{
-			ex.getMessage();
+			JOptionPane.showMessageDialog(null, "Cannot save file!\nException message\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		}
 	} 
 	
@@ -471,10 +494,11 @@ public class RefluxEdit extends JFrame
 			current.setText("File: " + tmp);
 			tmp = null;
 			str = null;
+			TEXTAREA.requestFocus();
 		}
 		catch (Exception ex)
 		{
-			ex.getMessage();
+			JOptionPane.showMessageDialog(null, "Cannot open file!\nException message:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 	
@@ -577,13 +601,12 @@ public class RefluxEdit extends JFrame
 					TEXTAREA.setSelectionEnd(i+tmp.length());
 					timematch++;
 					tmp = JOptionPane.showInputDialog(null, "Enter the word(s) you want to find:", tmp) + "";
-					if (tmp != null)
+					if (tmp.compareTo("null") != 0)
 					{
 						continue;
 					}
 					else
 					{
-						tmp = null;
 						uim.put("OptionPane.okButtonText", "OK");
 						uim.put("OptionPane.cancelButtonText", "NO");
 						break;
@@ -665,6 +688,225 @@ public class RefluxEdit extends JFrame
 		wordamended = 0;
 	}
 	
+	public void InsertKeyWord(Object[] options)
+	{
+		uim.put("OptionPane.cancelButtonText", "Cancel");
+		uim.put("ComboBox.font", J1);
+		tmp = (String)JOptionPane.showInputDialog(null, "Choose the key words you want to insert:", "Insert key words", JOptionPane.INFORMATION_MESSAGE, null, options, options[0]); 
+		uim.put("OptionPane.cancelButtonText", "NO");
+		if (tmp != null)
+		{
+			SwitchBackup();
+			TEXTAREA.insert(tmp, TEXTAREA.getCaretPosition());
+			TEXTAREA.requestFocus();
+		}
+	}
+	
+	public void CannotParseInt()
+	{
+		JOptionPane.showMessageDialog(null, "Please enter a positive integer!", "Error", JOptionPane.ERROR_MESSAGE);
+	}
+	
+	public String NumberToLetter(long a)
+	{
+		if (a == 1)
+		{
+			return "a";
+		}
+		if (a == 2)
+		{
+			return "b";
+		}
+		if (a == 3)
+		{
+			return "c";
+		}
+		if (a == 4)
+		{
+			return "d";
+		}
+		if (a == 5)
+		{
+			return "e";
+		}
+		if (a == 6)
+		{
+			return "f";
+		}
+		if (a == 7)
+		{
+			return "g";
+		}
+		if (a == 8)
+		{
+			return "h";
+		}
+		if (a == 9)
+		{
+			return "i";
+		}
+		if (a == 10)
+		{
+			return "j";
+		}
+		if (a == 11)
+		{
+			return "k";
+		}
+		if (a == 12)
+		{
+			return "l";
+		}
+		if (a == 13)
+		{
+			return "m";
+		}
+		if (a == 14)
+		{
+			return "n";
+		}
+		if (a == 15)
+		{
+			return "o";
+		}
+		if (a == 16)
+		{
+			return "p";
+		}
+		if (a == 17)
+		{
+			return "q";
+		}
+		if (a == 18)
+		{
+			return "r";
+		}
+		if (a == 19)
+		{
+			return "s";
+		}
+		if (a == 20)
+		{
+			return "t";
+		}
+		if (a == 21)
+		{
+			return "u";
+		}
+		if (a == 22)
+		{
+			return "v";
+		}
+		if (a == 23)
+		{
+			return "w";
+		}
+		if (a == 24)
+		{
+			return "x";
+		}
+		if (a == 25)
+		{
+			return "y";
+		}
+		else
+		{
+			return "z";
+		}
+	}
+	
+	public void ShowNotEditable(String str)
+	{
+		JOptionPane.showMessageDialog(null, "Editing the text is DISABLED!\nPlease enable editing before " + str, "NOT Editable", JOptionPane.WARNING_MESSAGE);
+	}
+	
+	public String UC(String str)
+	{
+		str = str.replace("a", "A");
+		str = str.replace("b", "B");
+		str = str.replace("c", "C");
+		str = str.replace("d", "D");
+		str = str.replace("e", "E");
+		str = str.replace("f", "F");
+		str = str.replace("g", "G");
+		str = str.replace("h", "H");
+		str = str.replace("i", "I");
+		str = str.replace("j", "J");
+		str = str.replace("k", "K");
+		str = str.replace("l", "L");
+		str = str.replace("m", "M");
+		str = str.replace("n", "N");
+		str = str.replace("o", "O");
+		str = str.replace("p", "P");
+		str = str.replace("q", "Q");
+		str = str.replace("r", "R");
+		str = str.replace("s", "S");
+		str = str.replace("t", "T");
+		str = str.replace("u", "U");
+		str = str.replace("v", "V");
+		str = str.replace("w", "W");
+		str = str.replace("x", "X");
+		str = str.replace("y", "Y");
+		str = str.replace("z", "Z");
+		return str;
+	}
+	
+	public String LC(String str)
+	{
+		str = str.replace("A", "a");
+		str = str.replace("B", "b");
+		str = str.replace("C", "c");
+		str = str.replace("D", "d");
+		str = str.replace("E", "e");
+		str = str.replace("F", "f");
+		str = str.replace("G", "g");
+		str = str.replace("H", "h");
+		str = str.replace("I", "i");
+		str = str.replace("J", "j");
+		str = str.replace("K", "k");
+		str = str.replace("L", "l");
+		str = str.replace("M", "m");
+		str = str.replace("N", "n");
+		str = str.replace("O", "o");
+		str = str.replace("P", "p");
+		str = str.replace("Q", "q");
+		str = str.replace("R", "r");
+		str = str.replace("S", "s");
+		str = str.replace("T", "t");
+		str = str.replace("U", "u");
+		str = str.replace("V", "v");
+		str = str.replace("W", "w");
+		str = str.replace("X", "x");
+		str = str.replace("Y", "y");
+		str = str.replace("Z", "x");
+		return str;
+	}
+	
+	public String IC(String str)
+	{
+		tmp1 = "";
+		for (i=0; i<str.length(); i++)
+		{
+			char TMP_C = str.charAt(i);
+			if (Character.isUpperCase(TMP_C))
+			{
+				tmp1 = tmp1 + LC(TMP_C + "");
+				System.out.println("Convert to lowercase: " + tmp1);
+			}
+			else if (Character.isLowerCase(TMP_C))
+			{
+				tmp1 = tmp1 + UC(TMP_C + "");
+				System.out.println("Convert to uppercase: " + tmp1);
+			}
+			else
+			{
+				tmp1 = tmp1 + TMP_C;
+				System.out.println("No conversion: " + tmp1);
+			}	
+		}
+		return tmp1;
+	}
+	
 	class MouseLis extends MouseAdapter
 	{
 		int select;
@@ -737,7 +979,7 @@ public class RefluxEdit extends JFrame
 				if (TEXTAREA.isEditable())
 				{
 					TEXTAREA.setEditable(false);
-					TEXTAREA.setBackground(grey);
+					TEXTAREA.setBackground(new Color(245,245,245));
 				}
 				else
 				{
@@ -758,7 +1000,7 @@ public class RefluxEdit extends JFrame
 				break;
 				
 				case 9:
-				JOptionPane.showConfirmDialog(null, "RefluxEdit 1.0 is a very small text editor written in Java.\nBy tony200910041\nhttp://tony200910041.wordpress.com\nDistributed under MPL2.0.", "About RefluxEdit", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showConfirmDialog(null, "RefluxEdit 1.1 is a very small text editor written in Java.\nBy tony200910041\nhttp://tony200910041.wordpress.com\nDistributed under MPL2.0.", "About RefluxEdit", JOptionPane.PLAIN_MESSAGE);
 				break;
 				
 				//Select all
@@ -789,6 +1031,7 @@ public class RefluxEdit extends JFrame
 					{
 						SwitchBackup();
 						TEXTAREA.insert(tmp2.getTransferData(DataFlavor.stringFlavor) + "", TEXTAREA.getCaretPosition());
+						TEXTAREA.requestFocus();
 					}
 					catch (Exception ex)
 					{
@@ -796,7 +1039,7 @@ public class RefluxEdit extends JFrame
 				}
 				else
 				{
-					JOptionPane.showMessageDialog(null, "Editing the text is DISABLED!\nPlease enable editing before pasting word(s)!", "NOT Editable", JOptionPane.WARNING_MESSAGE);
+					ShowNotEditable("pasting word(s)");
 				}
 				break;
 				
@@ -810,7 +1053,7 @@ public class RefluxEdit extends JFrame
 				}
 				else if (!TEXTAREA.isEditable())
 				{
-					JOptionPane.showMessageDialog(null, "Editing the text is DISABLED!\nPlease enable editing before cutting word(s)!", "NOT Editable", JOptionPane.WARNING_MESSAGE);
+					ShowNotEditable("cutting word(s)!");
 				}
 				break;
 				
@@ -823,6 +1066,7 @@ public class RefluxEdit extends JFrame
 					{
 						SwitchBackup();
 						TEXTAREA.insert("\n" + tmp2.getTransferData(DataFlavor.stringFlavor) + "", TEXTAREA.getCaretPosition());
+						TEXTAREA.requestFocus();
 					}
 					catch (Exception ex)
 					{
@@ -830,7 +1074,7 @@ public class RefluxEdit extends JFrame
 				}
 				else
 				{
-					JOptionPane.showMessageDialog(null, "Editing the text is DISABLED!\nPlease enable editing before pasting word(s)!", "NOT Editable", JOptionPane.WARNING_MESSAGE);
+					ShowNotEditable("pasting word(s)");
 				}
 				break;
 				
@@ -843,7 +1087,7 @@ public class RefluxEdit extends JFrame
 				}
 				else
 				{
-					JOptionPane.showMessageDialog(null, "Editing the text is DISABLED!\nPlease enable editing before deleting word(s)!", "NOT Editable", JOptionPane.WARNING_MESSAGE);
+					ShowNotEditable("deleting word(s)");
 				}
 				break;
 				
@@ -852,38 +1096,11 @@ public class RefluxEdit extends JFrame
 				if (TEXTAREA.isEditable())
 				{
 					SwitchBackup();
-					tmp3 = TEXTAREA.getSelectedText();
-					tmp3 = tmp3.replace("a", "A");
-					tmp3 = tmp3.replace("b", "B");
-					tmp3 = tmp3.replace("c", "C");
-					tmp3 = tmp3.replace("d", "D");
-					tmp3 = tmp3.replace("e", "E");
-					tmp3 = tmp3.replace("f", "F");
-					tmp3 = tmp3.replace("g", "G");
-					tmp3 = tmp3.replace("h", "H");
-					tmp3 = tmp3.replace("i", "I");
-					tmp3 = tmp3.replace("j", "J");
-					tmp3 = tmp3.replace("k", "K");
-					tmp3 = tmp3.replace("l", "L");
-					tmp3 = tmp3.replace("m", "M");
-					tmp3 = tmp3.replace("n", "N");
-					tmp3 = tmp3.replace("o", "O");
-					tmp3 = tmp3.replace("p", "P");
-					tmp3 = tmp3.replace("q", "Q");
-					tmp3 = tmp3.replace("r", "R");
-					tmp3 = tmp3.replace("s", "S");
-					tmp3 = tmp3.replace("t", "T");
-					tmp3 = tmp3.replace("u", "U");
-					tmp3 = tmp3.replace("v", "V");
-					tmp3 = tmp3.replace("w", "W");
-					tmp3 = tmp3.replace("x", "X");
-					tmp3 = tmp3.replace("y", "Y");
-					tmp3 = tmp3.replace("z", "Z");
-					TEXTAREA.replaceSelection(tmp3);
+					TEXTAREA.replaceSelection(UC(TEXTAREA.getSelectedText()));
 				}
 				else
 				{
-					JOptionPane.showMessageDialog(null, "Editing the text is DISABLED!\nPlease enable editing before case conversion!", "NOT Editable", JOptionPane.WARNING_MESSAGE);
+					ShowNotEditable("case conversion!");
 				}
 				break;
 				
@@ -891,39 +1108,12 @@ public class RefluxEdit extends JFrame
 				case 18:
 				if (TEXTAREA.isEditable())
 				{
-					SwitchBackup();
-					tmp3 = TEXTAREA.getSelectedText();
-					tmp3 = tmp3.replace("A", "a");
-					tmp3 = tmp3.replace("B", "b");
-					tmp3 = tmp3.replace("C", "c");
-					tmp3 = tmp3.replace("D", "d");
-					tmp3 = tmp3.replace("E", "e");
-					tmp3 = tmp3.replace("F", "f");
-					tmp3 = tmp3.replace("G", "g");
-					tmp3 = tmp3.replace("H", "h");
-					tmp3 = tmp3.replace("I", "i");
-					tmp3 = tmp3.replace("J", "j");
-					tmp3 = tmp3.replace("K", "k");
-					tmp3 = tmp3.replace("L", "l");
-					tmp3 = tmp3.replace("M", "m");
-					tmp3 = tmp3.replace("N", "n");
-					tmp3 = tmp3.replace("O", "o");
-					tmp3 = tmp3.replace("P", "p");
-					tmp3 = tmp3.replace("Q", "q");
-					tmp3 = tmp3.replace("R", "r");
-					tmp3 = tmp3.replace("S", "s");
-					tmp3 = tmp3.replace("T", "t");
-					tmp3 = tmp3.replace("U", "u");
-					tmp3 = tmp3.replace("V", "v");
-					tmp3 = tmp3.replace("W", "w");
-					tmp3 = tmp3.replace("X", "x");
-					tmp3 = tmp3.replace("Y", "y");
-					tmp3 = tmp3.replace("Z", "x");
-					TEXTAREA.replaceSelection(tmp3);
+					SwitchBackup();					
+					TEXTAREA.replaceSelection(LC(TEXTAREA.getSelectedText()));
 				}
 				else
 				{
-					JOptionPane.showMessageDialog(null, "Editing the text is DISABLED!\nPlease enable editing before case conversion!", "NOT Editable", JOptionPane.WARNING_MESSAGE);
+					ShowNotEditable("case conversion!");
 				}
 				break;
 				
@@ -932,6 +1122,7 @@ public class RefluxEdit extends JFrame
 				SearchWord();				
 				break;
 				
+				//replace
 				case 20:
 				if (TEXTAREA.isEditable())
 				{
@@ -939,7 +1130,7 @@ public class RefluxEdit extends JFrame
 				}
 				else
 				{
-					JOptionPane.showMessageDialog(null, "Editing the text is DISABLED!\nPlease enable editing before replacing words!", "NOT Editable", JOptionPane.WARNING_MESSAGE);
+					ShowNotEditable("replacing word(s)!");
 				}
 				break;
 				
@@ -954,50 +1145,66 @@ public class RefluxEdit extends JFrame
 				}
 				break;
 				
+				//insert 10 equal signs
 				case 22:
 				if (TEXTAREA.isEditable())
 				{
-					TEXTAREA.append("\n==========");
+					TEXTAREA.insert("\n==========\n", TEXTAREA.getCaretPosition());
 				}
 				else
 				{
-					JOptionPane.showMessageDialog(null, "Editing the text is DISABLED!\nPlease enable editing before inserting characters!", "NOT Editable", JOptionPane.WARNING_MESSAGE);
+					ShowNotEditable("inserting characters!");
 				}
 				break;
 				
+				//insert four space
 				case 23:
 				if (TEXTAREA.isEditable())
 				{
-					TEXTAREA.append("    ");
+					TEXTAREA.insert("    ", TEXTAREA.getCaretPosition());
 				}
 				else
 				{
-					JOptionPane.showMessageDialog(null, "Editing the text is DISABLED!\nPlease enable editing before inserting characters!", "NOT Editable", JOptionPane.WARNING_MESSAGE);
+					ShowNotEditable("inserting characters!");
 				}
 				break;
 				
 				//undo: 0: newest; 9: oldest
 				case 24:
-				if (currentstring == 0)
+				if (TEXTAREA.isEditable())
 				{
-					backup[0] = TEXTAREA.getText();
-				}
-				if (backup[currentstring+1] != "")
-				{
-					if (currentstring != 9)
+					if (currentstring == 0)
 					{
-						currentstring++;
-						TEXTAREA.setText(backup[currentstring]);
+						backup[0] = TEXTAREA.getText();
 					}
+					if (backup[currentstring+1] != "")
+					{
+						if (currentstring != 9)
+						{
+							currentstring++;
+							TEXTAREA.setText(backup[currentstring]);
+						}
+					}
+				}
+				else
+				{
+					ShowNotEditable("performing undo operation!");
 				}
 				break;
 				
 				//redo
 				case 25:
-				if (currentstring != 0)
+				if (TEXTAREA.isEditable())
 				{
-					currentstring--;
-					TEXTAREA.setText(backup[currentstring]);
+					if (currentstring != 0)
+					{
+						currentstring--;
+						TEXTAREA.setText(backup[currentstring]);
+					}
+				}
+				else
+				{
+					ShowNotEditable("performing redo operation!");
 				}
 				break;
 				
@@ -1021,7 +1228,106 @@ public class RefluxEdit extends JFrame
 				}
 				else
 				{
-					JOptionPane.showMessageDialog(null, "Editing the text is DISABLED!\nPlease enable editing before deleting blank lines!", "NOT Editable", JOptionPane.WARNING_MESSAGE);
+					 ShowNotEditable("deleting blank line(s)!");
+				}
+				break;
+				
+				case 27:
+				if (TEXTAREA.isEditable())
+				{
+					Object[] options1 = {"<a href=\"", "</a>", "<img alt=\"\" src=\"", "\n<br>\n", "target=\"_blank\""};
+					InsertKeyWord(options1);
+				}
+				else
+				{
+					ShowNotEditable("inserting characters!");
+				}
+				break;
+				
+				case 28:
+				if (TEXTAREA.isEditable())
+				{
+					Object[] options2 = {"Integer.parseInt(", "Double.parseDouble(", ".setText(", ".getText(", ".setBackground(", ".setForeground(", "getContentPane()", "JOptionPane.showMessageDialog(null, \"", "import java.awt.*;\nimport javax.swing.*;\n", ".addMouseListener(new MouseAdapter() {\n", "public void mouseReleased(MouseEvent ev) {\n", "public static void main(String[] args) {\n", ".setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);\n", ".setLocationRelativeTo(null);\n", ".setVisible(true);\n"};
+					InsertKeyWord(options2);
+				}
+				else
+				{
+					ShowNotEditable("inserting characters!");
+				}
+				break;
+				
+				case 29:
+				if (TEXTAREA.isEditable())
+				{
+					uim.put("OptionPane.cancelButtonText", "Cancel");
+					tmp = JOptionPane.showInputDialog(null, "Enter the number of words: (1-100000)", "Generate random words", JOptionPane.QUESTION_MESSAGE);
+					if (tmp != null)
+					{
+						try
+						{
+							k = Integer.parseInt(tmp);
+						}
+						catch (NumberFormatException ex)
+						{
+							CannotParseInt();
+							break;
+						}
+						if (k < 1)
+						{
+							CannotParseInt();
+							break;
+						}
+						if (k > 100000)
+						{
+							Object[] options2 = {"YES", "NO"};
+							int cont = JOptionPane.showOptionDialog(null, "Generating more than 100000 random words may spend a long period of time.\nDo you want to continue?", "Confirm action", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options2, options2[1]);
+							if (cont == JOptionPane.NO_OPTION)
+							{
+								break;
+							}
+						}
+						SwitchBackup();
+						str = "";
+						TEXTAREA.insert("\n", TEXTAREA.getCaretPosition());
+						for (j=1; j<=k; j++)
+						{
+							tmp = "";
+							long m = Math.round(Math.random()*9+1);
+							for (l=1; l<=m; l++)
+							{
+								TEXTAREA.insert(NumberToLetter(Math.round(Math.random()*25+1)), TEXTAREA.getCaretPosition());
+							}
+							TEXTAREA.insert(" ", TEXTAREA.getCaretPosition());
+						}
+					}
+					TEXTAREA.requestFocus();
+				}
+				else
+				{
+					ShowNotEditable("inserting words!");
+				}
+				break;
+				
+				case 30:
+				uim.put("OptionPane.cancelButtonText", "Cancel");
+				str = JOptionPane.showInputDialog(null, "Please enter the path:", "Open file (quick)", JOptionPane.QUESTION_MESSAGE);
+				if (str != null)
+				{
+					file = new File(str);
+					Openfile();
+				}
+				str = null;
+				break;
+				
+				case 31:
+				if (TEXTAREA.isEditable())
+				{
+					SwitchBackup();
+					TEXTAREA.replaceSelection(IC(TEXTAREA.getSelectedText()));
+				}
+				else
+				{
+					ShowNotEditable("case conversion!");
 				}
 				break;
 			}

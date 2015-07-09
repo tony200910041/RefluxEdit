@@ -13,11 +13,10 @@ import myjava.gui.common.*;
 
 public class MyTextField extends JTextField implements MouseListener, Resources, ColorConstants
 {
-	private int x;
-	public MyTextField(int size, int x)
+	private int x;	
+	public MyTextField()
 	{
-		super(size);
-		this.x = x;
+		super();
 		this.setFont(f13);
 		this.setForeground(Color.BLACK);
 		this.setBackground(vlgray);
@@ -31,6 +30,13 @@ public class MyTextField extends JTextField implements MouseListener, Resources,
 		this.setDragEnabled(true);
 		this.addMouseListener(this);
 		this.setPreferredSize(new Dimension(this.getSize().width,23));
+	}
+	
+	public MyTextField(int size, int x)
+	{
+		this();
+		this.setColumns(size);
+		this.x = x;
 	}
 	
 	public MyTextField(int size)

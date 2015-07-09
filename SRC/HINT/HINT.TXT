@@ -9,3 +9,4 @@ You can change RefluxEdit's Look and Feel in Tools->Options->Look and Feel, or H
 The three files REFLUXEDIT_DO_NOT_REMOVE_# are used for file association.
 You can open a new tab by right-clicking any tabs and choose "New tab".
 The escape/unescape string functions are implemented by I/O operations.
+RefluxEdit is written in pure Java.

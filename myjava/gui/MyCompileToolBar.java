@@ -28,17 +28,15 @@ public class MyCompileToolBar extends JToolBar implements Resources
 	 */
 	private Tab currentTab;
 	/*
-	 * 
-	 */
-	MyToolBarUI toolBarUI = new MyToolBarUI();
-	/*
 	 * private constructor
 	 */
 	private MyCompileToolBar()
 	{
 		super("Compile dialog");
 		this.add(panel);
-		panel.add(new JScrollPane(compileList), BorderLayout.CENTER);
+		JScrollPane scrollPane = new JScrollPane(compileList);
+		scrollPane.setPreferredSize(new Dimension(500,130));
+		panel.add(scrollPane, BorderLayout.CENTER);
 		JPanel bottom = new JPanel(new BorderLayout(10,10));
 		panel.add(bottom, BorderLayout.LINE_END);
 		/*
@@ -106,6 +104,7 @@ public class MyCompileToolBar extends JToolBar implements Resources
 			
 			private File getFile(String value)
 			{
+				//only work for Java...
 				try
 				{
 					Matcher matcher = Pattern.compile(":([0-9]+):").matcher(value);
@@ -141,51 +140,52 @@ public class MyCompileToolBar extends JToolBar implements Resources
 					public void run()
 					{
 						loadConfig();
+						currentTab = MainPanel.getSelectedTab();						
 						boolean isGlobal = getBoolean0("Compile.useGlobal");
 						String command = null;
-						if ((!isGlobal)&&(currentTab.getFile() != null))
+						File currentFile = currentTab.getFile();
+						if ((!isGlobal)&&(currentFile != null))
 						{
-							command = getConfig0("Compile.runCommand."+currentTab.getFile().getPath());
+							command = getConfig0("Compile.runCommand."+currentFile.getPath());
 						}
-						command = (command==null)?getConfig0("Compile.runCommand"):command;
-						if (command == null)
+						else if (isGlobal)
 						{
-							command = "java -classpath " + currentTab.getFile().getParent() + " " + getFileName(currentTab.getFile()) + "\nPAUSE";
+							command = getConfig0("Compile.runCommand");
 						}
-						else
+						if ((command == null)||command.isEmpty())
 						{
-							command = replaceExpressions(command);
+							//still null, use default
+							command = getRunCommand(getFileExtension(currentFile));
 						}
+						command = command.replace("%f", "\""+currentFile.getPath()+"\"");
+						command = command.replace("%p", "\""+currentFile.getParent()+"\"");
+						command = command.replace("%s", currentFile.getName());
+						command = command.replace("%a", getFileName(currentFile));
+						command = command.replace("%n", System.getProperty("line.separator"));
 						String cmdFileName = null;
-						if ((!isGlobal)&&(currentTab.getFile() != null))
+						if ((!isGlobal)&&(currentFile!=null))
 						{
-							cmdFileName = getConfig0("Compile.runCommandFileName."+currentTab.getFile().getPath());
+							cmdFileName = getConfig0("Compile.runCommandFileName."+currentFile.getPath());
 						}
-						cmdFileName = (cmdFileName==null)?getConfig0("Compile.runCommandFileName"):cmdFileName;
-						if (cmdFileName == null)
+						else if (isGlobal)
 						{
-							cmdFileName = "CMD.BAT";
+							cmdFileName = getConfig0("Compile.runCommandFileName");
 						}
-						else
+						if ((cmdFileName == null)||cmdFileName.isEmpty())
 						{
-							command = replaceExpressions(command);
+							cmdFileName = "run.bat";
 						}
-						File cmdfile = new File(currentTab.getFile().getParent(),cmdFileName);
-						try
+						File cmdfile = new File(currentFile.getParent(),cmdFileName);
+						cmdfile.delete();
+						try (PrintWriter writer = new PrintWriter(cmdfile,"UTF-8"))
 						{
-							PrintWriter writer = new PrintWriter(cmdfile,"UTF-8");
-							writer.write(command);
+							writer.println(command);
 							writer.close();
 							Desktop.getDesktop().open(cmdfile);
 						}
 						catch (Exception ex)
 						{
 						}
-					}
-					
-					String replaceExpressions(String command)
-					{
-						return command.replace("%f", currentTab.getFile().getPath()).replace("%p", currentTab.getFile().getParent()).replace("%n",System.getProperty("line.separator")).replace("%s",getFileName(currentTab.getFile()));
 					}
 				}).start();
 			}
@@ -195,7 +195,7 @@ public class MyCompileToolBar extends JToolBar implements Resources
 			@Override
 			public void mouseReleased(MouseEvent ev)
 			{
-				MyCompileToolBar.this.toolBarUI.stopFloating();
+				MyCompileToolBar.this.setUI(new StopFloatingToolBarUI());
 				MyCompileToolBar.this.updateUI();
 				MainPanel.getInstance().remove(MyCompileToolBar.this);
 			}
@@ -225,16 +225,17 @@ public class MyCompileToolBar extends JToolBar implements Resources
 			main.repaint();
 		}
 		lm.removeAllElements();
-		if (currentTab.getFile() != null)
+		File currentFile = currentTab.getFile();
+		if (currentFile != null)
 		{
 			boolean isGlobal = getBoolean0("Compile.useGlobal");
 			try
 			{
-				currentTab.save(currentTab.getFile(),true);
+				currentTab.save(currentFile,true);
 				//delete old
 				loadConfig();
 				String regex = getConfig0("Compile.regex");
-				File parent = currentTab.getFile().getParentFile();
+				File parent = currentFile.getParentFile();
 				File dir = null;
 				if (getBoolean0("Compile.removeOriginal"))
 				{								
@@ -253,53 +254,77 @@ public class MyCompileToolBar extends JToolBar implements Resources
 				}
 				//start running
 				String command = null;
-				if ((!isGlobal)||(currentTab.getFile()!=null))
+				if ((!isGlobal)&&(currentFile!=null))
 				{
-					command = getConfig0("Compile.command."+currentTab.getFile().getPath());
+					command = getConfig0("Compile.command."+currentFile.getPath());
 				}
-				command = command==null?getConfig0("Compile.command"):command;
+				else if (isGlobal)
+				{
+					command = getConfig0("Compile.command");
+				}
 				ProcessBuilder builder1;
-				if (command == null)
+				if ((command == null)||(command.isEmpty()))
 				{
-					command = "javac -classpath " + currentTab.getFile().getParent() + " " + currentTab.getFile().getPath();
+					//default command
+					command = getCommand(getFileExtension(currentFile));
 				}
-				else
+				command = command.replace("%f", "\""+currentFile.getPath()+"\"");
+				command = command.replace("%p", "\""+currentFile.getParent()+"\"");
+				command = command.replace("%s", currentFile.getName());
+				command = command.replace("%a", getFileName(currentFile));				
+				if ((command != null)&&(!command.isEmpty()))
 				{
-					command = command.replace("%f", currentTab.getFile().getPath()).replace("%p", currentTab.getFile().getParent());
-				}
-				Process proc = Runtime.getRuntime().exec(command,null,parent);
-				//from error stream
-				try
-				{
-					BufferedReader reader1 = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
-					String buffer;
-					while ((buffer = reader1.readLine()) != null)
+					lm.addElement(">> Executing " + command);
+					final Process proc = Runtime.getRuntime().exec(command,null,parent);
+					SwingWorker<Void, String> worker = new SwingWorker<Void, String>()
 					{
-						lm.addElement(buffer);
-					}
-					reader1.close();
-				}
-				catch (Exception ex)
-				{
-				}
-				//from input stream
-				try
-				{
-					BufferedReader reader2 = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-					String buffer;
-					while ((buffer = reader2.readLine()) != null)
-					{
-						lm.addElement(buffer);
-					}
-					reader2.close();
+						@Override
+						protected Void doInBackground()
+						{						
+							//from error stream
+							try (BufferedReader reader1 = new BufferedReader(new InputStreamReader(proc.getErrorStream())))
+							{
+								String buffer;
+								while ((buffer = reader1.readLine()) != null)
+								{
+									this.publish(buffer);
+								}
+							}
+							catch (Exception ex)
+							{
+							}
+							//from input stream
+							try (BufferedReader reader2 = new BufferedReader(new InputStreamReader(proc.getInputStream())))
+							{
+								String buffer;
+								while ((buffer = reader2.readLine()) != null)
+								{
+									this.publish(buffer);
+								}
+							}
+							catch (Exception ex)
+							{
+							}
+							return null;
+						}
+						
+						@Override
+						protected void process(java.util.List<String> chunks)
+						{
+							for (String s: chunks)
+							{
+								lm.addElement(s);
+							}
+						}
+						
+						@Override
+						protected void done()
+						{
+							lm.addElement("<html><font color=\"red\">---Process exited with exit code " + proc.exitValue() + "---</font></html>");
+						}
+					};
+					worker.execute();
 					//compiled successfully
-					if (lm.size() == 0)
-					{
-						lm.addElement("The file " + currentTab.getFile().getPath() + " is compiled successfully.");
-					}
-				}
-				catch (Exception ex)
-				{
 				}
 			}
 			catch (Exception ex)

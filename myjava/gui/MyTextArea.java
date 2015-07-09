@@ -14,7 +14,9 @@ import java.io.*;
 import exec.*;
 import myjava.gui.*;
 import myjava.util.*;
+import myjava.gui.common.*;
 import static exec.SourceManager.*;
+import static myjava.util.StaticUtilities.*;
 
 public class MyTextArea extends JTextArea implements MouseListener
 {
@@ -28,6 +30,7 @@ public class MyTextArea extends JTextArea implements MouseListener
 	private static boolean isEditable = getBoolean0("isEditable");
 	private static boolean isLineWrap = getBoolean0("LineWrap");
 	private static boolean isWrapStyleWord = getBoolean0("WrapStyleWord");
+	private static boolean showLineCounter = getBoolean0("showLineCounter");
 	private static int tabSize;
 	private static Color selectionColor;
 	private static Font font;
@@ -93,7 +96,6 @@ public class MyTextArea extends JTextArea implements MouseListener
 	private UndoManager undoManager;
 	private boolean autoBackupEnabled = true;
 	private boolean isOpening = false;
-	private boolean isSaved = true;
 	MyTextArea()
 	{
 		//autoIndent
@@ -105,6 +107,7 @@ public class MyTextArea extends JTextArea implements MouseListener
 		this.setDragEnabled(true);
 		this.setSelectedTextColor(Color.BLACK);
 		this.update();
+		this.setBorder(new TextAreaBorder());
 		//
 		this.defaultDropTarget = this.getDropTarget();
 		this.addMouseListener(this);
@@ -124,7 +127,7 @@ public class MyTextArea extends JTextArea implements MouseListener
 		this.popup.add(new MyMenuItem("Word count", null, 22, KeyEvent.VK_F2));
 	}
 	
-	public static void setGlobalProperties(boolean isEditable, boolean isLineWrap, boolean isWrapStyleWord, int tabSize, Color selectionColor, Font font, boolean autoIndent)
+	public static void setGlobalProperties(boolean isEditable, boolean isLineWrap, boolean isWrapStyleWord, int tabSize, Color selectionColor, Font font, boolean autoIndent, boolean showLineCounter)
 	{
 		MyTextArea.isEditable = isEditable;
 		MyTextArea.isLineWrap = isLineWrap;
@@ -132,6 +135,7 @@ public class MyTextArea extends JTextArea implements MouseListener
 		MyTextArea.tabSize = tabSize;
 		MyTextArea.selectionColor = selectionColor;
 		MyTextArea.font = font;
+		MyTextArea.showLineCounter = showLineCounter;
 		MyIndentFilter.setAutoIndent(autoIndent);
 	}
 	
@@ -157,6 +161,14 @@ public class MyTextArea extends JTextArea implements MouseListener
 		this.setTabSize(tabSize);
 		this.setSelectionColor(selectionColor);
 		this.setFont(font);
+		if (showLineCounter)
+		{
+			this.setBorder(new TextAreaBorder());
+		}
+		else
+		{
+			this.setBorder(null);
+		}
 	}
 	
 	public void setAutoBackup(boolean autoBackupEnabled)
@@ -186,18 +198,19 @@ public class MyTextArea extends JTextArea implements MouseListener
 		/*
 		 * InputMap
 		 */
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK), "export");
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.CTRL_MASK), "search");
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, ActionEvent.CTRL_MASK), "about");		
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, ActionEvent.CTRL_MASK), "wordcount");
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F3, ActionEvent.CTRL_MASK), "charcount");
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.CTRL_MASK), "indent+");
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK), "open");
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK), "print");
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK), "saveas");
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_U, ActionEvent.CTRL_MASK), "indent-");
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, ActionEvent.CTRL_MASK), "redo");
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK), "undo");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_E, Resources.OS_CTRL_MASK), "export");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, Resources.OS_CTRL_MASK), "search");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, Resources.OS_CTRL_MASK), "about");		
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, Resources.OS_CTRL_MASK), "wordcount");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F3, Resources.OS_CTRL_MASK), "charcount");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_I, Resources.OS_CTRL_MASK), "indent+");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_O, Resources.OS_CTRL_MASK), "open");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_P, Resources.OS_CTRL_MASK), "print");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, Resources.OS_CTRL_MASK), "saveas");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_U, Resources.OS_CTRL_MASK), "indent-");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, Resources.OS_CTRL_MASK), "redo");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Resources.OS_CTRL_MASK), "undo");
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0), "compile");
 		/*
 		 * ActionMap
 		 */
@@ -213,21 +226,12 @@ public class MyTextArea extends JTextArea implements MouseListener
 		actionMap.put("indent-", new MyListener(19));
 		actionMap.put("redo", new MyListener(8));
 		actionMap.put("undo", new MyListener(7));
+		actionMap.put("compile", new MyListener(53));
 	}
 	
 	public UndoManager getUndoManager()
 	{
 		return this.undoManager;
-	}
-	
-	public boolean isSaved()
-	{
-		return this.isSaved;
-	}
-	
-	public void setSaved(boolean isSaved)
-	{
-		this.isSaved = isSaved;
 	}
 	
 	public MyIndentFilter getFilter()

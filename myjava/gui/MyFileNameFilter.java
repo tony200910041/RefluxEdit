@@ -7,6 +7,7 @@ package myjava.gui;
 
 import java.awt.*;
 import java.io.*;
+import myjava.util.*;
 
 public class MyFileNameFilter implements FilenameFilter
 {
@@ -25,7 +26,12 @@ public class MyFileNameFilter implements FilenameFilter
 		switch (filterFormat.length)
 		{
 			case 0: //FILTER_TEXTFILE
-			return (dir.isDirectory())||(file.endsWith("txt"))||(file.endsWith("java"))||(file.endsWith("py"))||(file.endsWith("php"))||(file.endsWith("html"))||(file.endsWith("htm"))||(file.endsWith("xml"))||(file.endsWith("properties")||(file.endsWith("c"))||(file.endsWith("cpp")));
+			if (dir.isDirectory()) return true;
+			else for (String format: TextFileFormat.getFormatList())
+			{
+				if (file.endsWith(format)) return true;
+			}
+			return false;
 			
 			default: //FILTER_USER_DEFINED
 			if (dir.isDirectory()) return true;

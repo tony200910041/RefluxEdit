@@ -97,18 +97,24 @@ public class MyDropTarget extends DropTarget
 					outFor:
 					for (File file: files)
 					{
-						for (Tab tab: MainPanel.getAllTab())
+						if (file.isFile())
 						{
-							if (file.equals(tab.getFile()))
+							for (Tab tab: MainPanel.getAllTab())
 							{
-								//select existing tab
-								MainPanel.setSelectedComponent(tab);
-								continue outFor;
+								if (file.equals(tab.getFile()))
+								{
+									//select existing tab
+									MainPanel.setSelectedComponent(tab);
+									continue outFor;
+								}
 							}
+							Tab newTab = Tab.getNewTab();
+							if (!MainPanel.getAllTab().contains(newTab))
+							{
+								MainPanel.getInstance().addTab(newTab);
+							}
+							newTab.openAndWait(file);
 						}
-						Tab newTab = Tab.getNewTab();
-						MainPanel.getInstance().addTab(newTab);
-						newTab.openAndWait(file);
 					}
 				}
 			}

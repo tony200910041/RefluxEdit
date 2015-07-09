@@ -8,16 +8,19 @@ package myjava.gui;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.plaf.basic.*;
 import exec.*;
 import static exec.SourceManager.*;
 
 public class MyToolBar extends JToolBar
 {
-	private static final MyToolBar INSTANCE = new MyToolBar();
+	//section 1:
 	private MyToolBarButton buttonNew = new MyToolBarButton("NEW32", "New file", 1);
 	private MyToolBarButton buttonOpen = new MyToolBarButton("OPEN32", "Open file", 2);
 	private MyToolBarButton buttonSave = new MyToolBarButton("SAVE32", "Save as", 4);
+	private MyToolBarButton buttonExport = new MyToolBarButton("EXPORT32", "Export", 43);
 	private MyToolBarButton buttonPrint = new MyToolBarButton("PRINT32", "Print", 38);
+	//section 2:
 	private MyToolBarButton buttonUndo = new MyToolBarButton("UNDO32", "Undo", 7);
 	private MyToolBarButton buttonRedo = new MyToolBarButton("REDO32", "Redo", 8);
 	private MyToolBarButton buttonCut = new MyToolBarButton("CUT32", "Cut selection", 11);
@@ -26,13 +29,13 @@ public class MyToolBar extends JToolBar
 	private MyToolBarButton buttonDelete = new MyToolBarButton("DELETE32", "Delete selection", 15);
 	private MyToolBarButton buttonSelectAll = new MyToolBarButton("SELECT32", "Select all", 9);
 	private MyToolBarButton buttonSelectAllCopy = new MyToolBarButton("SELECT32", "Select all and copy", 10);
+	//section 3:
 	private MyToolBarButton buttonReplace = new MyToolBarButton("REPLACE32", "Search/Replace", 24);
 	private MyToolBarButton buttonOptions = new MyToolBarButton("OPTIONS32", "Toolbar options", 0);
-	private MyToolBarUI toolBarUI = new MyToolBarUI();
+	private static final MyToolBar INSTANCE = new MyToolBar();
 	private MyToolBar()
 	{
 		super("ToolBar");
-		this.setUI(toolBarUI);
 		this.update();
 	}
 	
@@ -56,6 +59,9 @@ public class MyToolBar extends JToolBar
 		b1 = getBoolean0("ToolBar.save");
 		b2 = b2||b1;
 		if (b1) this.add(buttonSave);
+		b1 = getBoolean0("ToolBar.export");
+		b2 = b2||b1;
+		if (b1) this.add(buttonExport);
 		b1 = getBoolean0("ToolBar.print");
 		b2 = b2||b1;
 		if (b1) this.add(buttonPrint);
@@ -94,21 +100,15 @@ public class MyToolBar extends JToolBar
 		this.repaint();
 	}
 	
-	public void stopFloating()
-	{
-		this.toolBarUI.stopFloating();
-	}
-	
-	class MyToolBarButton extends JButton implements MouseListener
+	static class MyToolBarButton extends JButton implements MouseListener
 	{
 		//MyToolBarButton: buttons on JToolBar
 		private int x;
 		MyToolBarButton(String icon, String tooltip, int x)
 		{
 			super();
-			this.setFocusable(true);
 			this.setToolTipText(tooltip);
-			this.setPreferredSize(new Dimension(32,32));
+			this.setFocusPainted(false);
 			this.setBackground(new Color(224,223,227));
 			if (x != 0)
 			{
@@ -149,6 +149,7 @@ public class MyToolBar extends JToolBar
 				MyCheckBox _new = new MyCheckBox("New", getBoolean0("ToolBar.new"));
 				MyCheckBox open = new MyCheckBox("Open", getBoolean0("ToolBar.open"));
 				MyCheckBox save = new MyCheckBox("Save", getBoolean0("ToolBar.save"));
+				MyCheckBox export = new MyCheckBox("Export to image", getBoolean0("ToolBar.export"));
 				MyCheckBox print = new MyCheckBox("Print", getBoolean0("ToolBar.print"));
 				MyCheckBox undo = new MyCheckBox("Undo", getBoolean0("ToolBar.undo"));
 				MyCheckBox redo = new MyCheckBox("Redo", getBoolean0("ToolBar.redo"));
@@ -162,10 +163,11 @@ public class MyToolBar extends JToolBar
 				/*
 				 * add checkboxes to dialog
 				 */
-				dialog.setLayout(new GridLayout(7,2,0,0));
+				dialog.setLayout(new GridLayout(7,2,1,5));
 				dialog.add(_new);
 				dialog.add(open);
 				dialog.add(save);
+				dialog.add(export);
 				dialog.add(print);
 				dialog.add(undo);
 				dialog.add(redo);
@@ -188,6 +190,7 @@ public class MyToolBar extends JToolBar
 				boolean isNew = _new.isSelected();
 				boolean isOpen = open.isSelected();
 				boolean isSave = save.isSelected();
+				boolean isExport = export.isSelected();
 				boolean isPrint = print.isSelected();
 				boolean isUndo = undo.isSelected();
 				boolean isRedo = redo.isSelected();
@@ -202,6 +205,7 @@ public class MyToolBar extends JToolBar
 				setConfig("ToolBar.new", isNew + "");
 				setConfig("ToolBar.open", isOpen + "");
 				setConfig("ToolBar.save", isSave + "");
+				setConfig("ToolBar.export", isExport + "");
 				setConfig("ToolBar.print", isPrint + "");
 				setConfig("ToolBar.undo", isUndo + "");
 				setConfig("ToolBar.redo", isRedo + "");
@@ -213,8 +217,8 @@ public class MyToolBar extends JToolBar
 				setConfig("ToolBar.selectAllAndCopy", isSelectAllCopy + "");
 				setConfig("ToolBar.search", isSearch + "");
 				saveConfig();
-				MyToolBar.this.removeAll();
-				MyToolBar.this.update();
+				MyToolBar.getInstance().removeAll();
+				MyToolBar.getInstance().update();
 			}
 		}		
 		@Override

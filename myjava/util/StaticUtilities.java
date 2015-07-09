@@ -8,6 +8,7 @@ package myjava.util;
 import java.util.*;
 import java.util.regex.*;
 import java.io.*;
+import static exec.SourceManager.*;
 
 public final class StaticUtilities
 {
@@ -220,7 +221,7 @@ public final class StaticUtilities
 	{
 		//e.g. from "ABC" to "A B C"
 		char[] chars = text.toCharArray();
-		ArrayList<Character> tmpList = new ArrayList<>();
+		ArrayList<Character> tmpList = new ArrayList<>(chars.length*2);
 		for (int i=0; i<chars.length; i++)
 		{
 			tmpList.add(chars[i]);
@@ -232,12 +233,12 @@ public final class StaticUtilities
 			}
 			if (_this&&_next) tmpList.add(' ');
 		}
-		char[] returnArray = new char[tmpList.size()];
-		for (int i=0; i<returnArray.length; i++)
+		StringBuilder builder = new StringBuilder(tmpList.size());
+		for (Character c: tmpList)
 		{
-			returnArray[i] = tmpList.get(i).charValue();
+			builder.append(c);
 		}
-		return new String(returnArray);
+		return builder.toString();
 	}
 	
 	public static String reverse(String text)
@@ -261,8 +262,84 @@ public final class StaticUtilities
 	public static String getFileName(File file)
 	{
 		//e.g. from new File("C:/1.txt") to "1"
-		String path = file.getName();
-		return path.substring(0,path.lastIndexOf("."));
+		String name = file.getName();
+		if (name.contains("."))
+		{
+			return name.substring(0, name.lastIndexOf("."));
+		}
+		return name;
+	}
+	
+	public static String getFileExtension(File file)
+	{
+		String name = file.getName();
+		int lastIndex = name.lastIndexOf(".");
+		if (lastIndex > -1)
+		{
+			return name.substring(lastIndex+1).toLowerCase();
+		}
+		return "";
+	}
+	
+	public static String getCommand(String ext)
+	{
+		//must not return null
+		String command = getConfig("Compile.command.default."+ext);
+		if (command != null)
+		{
+			return command;
+		}
+		else
+		{
+			switch (ext)
+			{
+				case "c":
+				return "gcc -o %a %f";
+				
+				case "cpp":
+				return "g++ -o %a %f";
+				
+				case "pl":
+				case "plx":				
+				case "py":
+				return "";
+						
+				default:
+				case "":
+				case "java":
+				return "javac -classpath %p %f";
+			}
+		}
+	}
+	
+	public static String getRunCommand(String ext)
+	{
+		String runCommand = getConfig("Compile.runCommand.default."+ext);
+		if (runCommand != null)
+		{
+			return runCommand;
+		}
+		else
+		{
+			switch (ext)
+			{
+				case "c":
+				case "cpp":
+				return "cd %p%n%a%nPAUSE%ndel \"%~f0\"";
+				
+				case "pl":
+				case "plx":
+				return "cd %p%nperl %f%nPAUSE%ndel \"%~f0\"";
+				
+				case "py":
+				return "cd %p%npython %f%nPAUSE%ndel \"%~f0\"";
+				
+				default:
+				case "":
+				case "java":
+				return "cd %p%njava -classpath %p %a%nPAUSE%ndel \"%~f0\"";
+			}
+		}
 	}
 	
 	public static int count(String text, String find, boolean useRegex, boolean isCaseSensitive)

@@ -73,8 +73,11 @@ public class UndoDialog extends JDialog implements Resources
 				}
 			}
 		};
-		undo_b.setPreferredSize(new Dimension(125,28));
-		redo_b.setPreferredSize(new Dimension(125,28));
+		if (!isWindows)
+		{
+			undo_b.setPreferredSize(new Dimension(125,28));
+			redo_b.setPreferredSize(new Dimension(125,28));
+		}
 		bottom.add(undo_b);
 		bottom.add(redo_b);
 		bottom.add(new MyButton("Reload")
@@ -86,6 +89,7 @@ public class UndoDialog extends JDialog implements Resources
 			}
 		});
 		this.add(bottom, BorderLayout.PAGE_END);
+		this.setSize(400,400);
 	}
 	
 	public void resetUndoDialogList()

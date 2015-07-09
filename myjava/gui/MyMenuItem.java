@@ -31,7 +31,7 @@ public class MyMenuItem extends JMenuItem implements Resources
 	
 	public MyMenuItem(String str, String icon, int x, int keyEvent)
 	{
-		this(str, icon, x, keyEvent, ActionEvent.CTRL_MASK);
+		this(str, icon, x, keyEvent, OS_CTRL_MASK);
 	}
 	
 	public MyMenuItem(String str, String icon, int x, int keyEvent, int actionEvent)

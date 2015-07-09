@@ -9,10 +9,11 @@ import java.awt.*;
 import java.awt.geom.*;
 import javax.swing.*;
 import javax.swing.plaf.*;
+import javax.swing.text.*;
 import exec.*;
 import myjava.gui.common.*;
 
-public class MyUmbrellaLayerUI extends LayerUI<JTextArea>
+public class MyUmbrellaLayerUI extends LayerUI<MyTextArea>
 {
 	/*
 	 * static member
@@ -39,6 +40,9 @@ public class MyUmbrellaLayerUI extends LayerUI<JTextArea>
 	 * instance fields
 	 */
 	private boolean drop = false;
+	/*
+	 * constructor
+	 */
 	public MyUmbrellaLayerUI()
 	{
 		super();
@@ -78,7 +82,10 @@ public class MyUmbrellaLayerUI extends LayerUI<JTextArea>
 		int width = rect.width;
 		int height = rect.height;
 		if (this.drop)
-		{			
+		{
+			/*
+			 * drag enter
+			 */		
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 			g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
 			g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
@@ -102,6 +109,9 @@ public class MyUmbrellaLayerUI extends LayerUI<JTextArea>
 		}
 		else if (this.paintUmbrella)
 		{
+			/*
+			 * paint umbrella
+			 */
 			int x = rect.x;
 			int y = rect.y;
 			int radius = (int)((Math.min(width,height)-20)/2.43);

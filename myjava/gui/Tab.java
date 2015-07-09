@@ -11,6 +11,7 @@ import java.awt.dnd.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.event.*;
+import javax.swing.text.*;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.charset.*;
@@ -24,7 +25,7 @@ import static exec.SourceManager.*;
 import static myjava.gui.ExceptionDialog.*;
 import static myjava.util.StaticUtilities.*;
 
-public class Tab extends JPanel implements DocumentListener, Resources
+public class Tab extends JPanel implements DocumentListener, CaretListener, Resources
 {
 	/*
 	 * constants
@@ -35,7 +36,7 @@ public class Tab extends JPanel implements DocumentListener, Resources
 	 */
 	private MyTextArea textArea = new MyTextArea();
 	private MyUmbrellaLayerUI layerUI = new MyUmbrellaLayerUI();
-	private JLayer<JTextArea> layer1 = new JLayer<JTextArea>(textArea,layerUI);
+	private JLayer<? extends JComponent> layer1 = new JLayer<MyTextArea>(textArea, layerUI);
 	private JPanel bottomPanel = new JPanel(new BorderLayout());
 	private MyBlackLinePanel bottomP1 = new MyBlackLinePanel(0);
 	private MyBlackLinePanel bottomP2 = new MyBlackLinePanel(1);
@@ -46,12 +47,13 @@ public class Tab extends JPanel implements DocumentListener, Resources
 	private FileWatcher watcher;
 	private BorderLayout layout = new BorderLayout();
 	private boolean isNew = true;
+	private boolean isSaved = true;
 	/*
 	 * for adding to JTabbedPane
 	 */
-	private JPanel tabPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,2,0));
-	private MyLabel label = new MyLabel();
-	private JPopupMenu popup = new JPopupMenu();
+	private JPanel tabPanel = new JPanel(new BorderLayout());
+	private MyLabel tabLabel = new MyLabel();
+	private JPopupMenu tabPopup = new JPopupMenu();
 	/*
 	 * static properties
 	 */
@@ -78,10 +80,8 @@ public class Tab extends JPanel implements DocumentListener, Resources
 		//
 		this.update();
 		this.textArea.getDocument().addDocumentListener(this);
+		this.textArea.addCaretListener(this);
 		//
-		tabPanel.add(label);
-		tabPanel.setOpaque(false);
-		tabPanel.setFocusable(false);
 		MouseAdapter mouseListener = new MouseAdapter()
 		{
 			@Override
@@ -89,7 +89,7 @@ public class Tab extends JPanel implements DocumentListener, Resources
 			{
 				if (ev.isPopupTrigger())
 				{					
-					popup.show(tabPanel,ev.getX(),ev.getY());					
+					tabPopup.show(tabLabel,ev.getX(),ev.getY());					
 				}
 				else
 				{
@@ -99,9 +99,9 @@ public class Tab extends JPanel implements DocumentListener, Resources
 					 */
 					if (ev.getClickCount() == 1)
 					{
-						JTabbedPane tPane = MainPanel.getInstance().getTabbedPane();
-						MouseEvent me = SwingUtilities.convertMouseEvent(tabPanel,ev,tPane);
-						tPane.getMouseListeners()[0].mousePressed(me);
+						JTabbedPane tabbedPane = MainPanel.getInstance().getTabbedPane();
+						MouseEvent me = SwingUtilities.convertMouseEvent(tabLabel,ev,tabbedPane);
+						tabbedPane.getMouseListeners()[0].mousePressed(me);
 					}
 				}
 			}
@@ -109,19 +109,42 @@ public class Tab extends JPanel implements DocumentListener, Resources
 			@Override
 			public void mouseEntered(MouseEvent ev)
 			{
-				JTabbedPane tPane = MainPanel.getInstance().getTabbedPane();
-				MouseEvent me = SwingUtilities.convertMouseEvent(tabPanel,ev,tPane);
-				tPane.getMouseListeners()[0].mouseEntered(me);
+				JTabbedPane tabbedPane = MainPanel.getInstance().getTabbedPane();
+				MouseEvent me = SwingUtilities.convertMouseEvent(tabLabel,ev,tabbedPane);
+				tabbedPane.getMouseListeners()[0].mouseEntered(me);
+			}
+			
+			@Override 
+			public void mouseDragged(MouseEvent ev)
+			{
+				JTabbedPane tabbedPane = MainPanel.getInstance().getTabbedPane();
+				MouseEvent me = SwingUtilities.convertMouseEvent(tabLabel,ev,tabbedPane);
+				int draggedIndex = tabbedPane.indexOfComponent(Tab.this);
+				int reachedIndex = tabbedPane.indexAtLocation(me.getX(), me.getY());
+				if ((reachedIndex != -1)&&(draggedIndex != reachedIndex))
+				{
+					/*
+					 * swap "draggedIndex" and "reachedIndex"
+					 * remove dragged->add dragged to reachedIndex->remove reached->add reached to draggedIndex
+					 */
+					if (draggedIndex != reachedIndex)
+					{
+						Tab reached = (Tab)(tabbedPane.getComponentAt(draggedIndex));
+						MainPanel.getInstance().swapTab(draggedIndex, reachedIndex);
+					}
+				}
 			}
 		};
-		tabPanel.addMouseListener(mouseListener);
-		tabPanel.addMouseMotionListener(mouseListener);
+		tabLabel.addMouseListener(mouseListener);
+		tabLabel.addMouseMotionListener(mouseListener);
+		tabPanel.setOpaque(false);
+		tabPanel.add(tabLabel, BorderLayout.CENTER);
 		//
-		popup.add(new MyPopupMenuItem("New tab","NEW",-14));
-		popup.add(new MyPopupMenuItem("Save as","SAVE",-12));
-		popup.add(new MyPopupMenuItem("Save",-13));
-		popup.addSeparator();
-		popup.add(new MyPopupMenuItem("Close","CLOSE",-11));
+		tabPopup.add(new MyPopupMenuItem("New tab","NEW",-14));
+		tabPopup.add(new MyPopupMenuItem("Save as","SAVE",-12));
+		tabPopup.add(new MyPopupMenuItem("Save",-13));
+		tabPopup.addSeparator();
+		tabPopup.add(new MyPopupMenuItem("Close","CLOSE",-11));
 	}
 	
 	public Tab()
@@ -151,11 +174,11 @@ public class Tab extends JPanel implements DocumentListener, Resources
 		return new Tab();
 	}
 	
-	public static void setGlobalProperties(int edgeType, boolean countWords, boolean isEditable, boolean isLineWrap, boolean isWrapStyleWord, int tabSize, Color selectionColor, Font font, boolean autoIndent)
+	public static void setGlobalProperties(int edgeType, boolean countWords, boolean isEditable, boolean isLineWrap, boolean isWrapStyleWord, int tabSize, Color selectionColor, Font font, boolean autoIndent, boolean showLineCounter)
 	{
 		Tab.edgeType = edgeType;
 		Tab.countWords = countWords;
-		MyTextArea.setGlobalProperties(isEditable, isLineWrap, isWrapStyleWord, tabSize, selectionColor, font, autoIndent);
+		MyTextArea.setGlobalProperties(isEditable, isLineWrap, isWrapStyleWord, tabSize, selectionColor, font, autoIndent, showLineCounter);
 	}
 	
 	public void update()
@@ -194,10 +217,16 @@ public class Tab extends JPanel implements DocumentListener, Resources
 	}
 	
 	@Override
+	public void caretUpdate(CaretEvent ev)
+	{
+		this.updateCount();
+	}
+	
+	@Override
 	public void insertUpdate(DocumentEvent ev)
 	{
 		this.isNew = false;
-		this.textArea.setSaved(false);
+		this.setSaved(false);
 		this.updateCount();
 	}
 	
@@ -205,7 +234,7 @@ public class Tab extends JPanel implements DocumentListener, Resources
 	public void changedUpdate(DocumentEvent ev)
 	{
 		this.isNew = false;
-		this.textArea.setSaved(false);
+		this.setSaved(false);
 		this.updateCount();
 	}
 	
@@ -213,7 +242,7 @@ public class Tab extends JPanel implements DocumentListener, Resources
 	public void removeUpdate(DocumentEvent ev)
 	{
 		this.isNew = false;
-		this.textArea.setSaved(false);
+		this.setSaved(false);
 		this.updateCount();
 	}
 	
@@ -291,12 +320,18 @@ public class Tab extends JPanel implements DocumentListener, Resources
 		/*
 		 * now start writing the file
 		 */
+		File tempFile = createTempSaveFile(dest);
+		if (dest.exists())
+		{
+			assert (!tempFile.exists());
+			Files.move(dest.toPath(), tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		}
 		if (encoding.equals("default1"))
 		{
 			/*
 			 * default1 mode: use PrintWriter
 			 */
-			dest.delete();
+			
 			PrintWriter out = new PrintWriter(new FileOutputStream(dest),true);
 			String[] strs = this.textArea.getText().split("\n");
 			for (String str: strs)
@@ -333,13 +368,20 @@ public class Tab extends JPanel implements DocumentListener, Resources
 		 */
 		setCaret(this.file, this.textArea.getCaretPosition());
 		saveConfig();
-		this.textArea.setSaved(true);		
+		this.setSaved(true);		
 		this.setFile(dest);
 		/*
 		 * 
 		 */
 		encoding = null;
 		lineSeparator = null;
+		/*
+		 * finally remove backup
+		 */
+		if (tempFile.exists())
+		{
+			tempFile.delete();
+		}
 	}
 	
 	class MyWorker extends SwingWorker<String,String>
@@ -524,7 +566,7 @@ public class Tab extends JPanel implements DocumentListener, Resources
 				Tab.this.setFile(null);
 			}
 			MainPanel.setSelectedComponent(Tab.this);
-			Tab.this.textArea.setSaved(true);
+			Tab.this.setSaved(true);
 		}
 	}
 	
@@ -684,7 +726,7 @@ public class Tab extends JPanel implements DocumentListener, Resources
 				{
 					updateCount();
 				}
-				Tab.this.textArea.setSaved(true);
+				Tab.this.setSaved(true);
 				/*
 				 * remove old watcher, and create a new one
 				 */
@@ -868,26 +910,30 @@ public class Tab extends JPanel implements DocumentListener, Resources
 					strs.add("Load the current version");
 				}
 				String[] option = strs.toArray(new String[strs.size()]);
-				String chosen = (String)JOptionPane.showInputDialog(SwingUtilities.windowForComponent(Tab.this), "The file has been amended externally.", "Warning", JOptionPane.WARNING_MESSAGE, null, option, option[0]);
-				if (chosen != null)
+				String chosen = (String)JOptionPane.showInputDialog(SwingUtilities.windowForComponent(Tab.this), "The file " + Tab.this.file.getPath() + " has been amended externally.", "Warning", JOptionPane.WARNING_MESSAGE, null, option, option[0]);
+				if (option[0].equals(chosen))
 				{
-					if (chosen.equals(option[0]))
+					//save
+					try
 					{
-						try
-						{
-							Tab.this.save(Tab.this.file, true);
-						}
-						catch (IOException ex)
-						{
-							exception(ex);
-						}
+						Tab.this.save(Tab.this.file, true);
 					}
-					else if (option.length == 3)
+					catch (IOException ex)
 					{
-						if (chosen.equals(option[2]))
-						{
-							Tab.this.open(Tab.this.file);
-						}
+						exception(ex);
+					}
+				}
+				else if (option[1].equals(chosen)||(chosen == null))
+				{
+					//ignore
+					Tab.this.setSaved(false);
+				}
+				else if (option.length == 3)
+				{
+					if (option[2].equals(chosen))
+					{
+						//load
+						Tab.this.open(Tab.this.file);
 					}
 				}
 			}
@@ -899,12 +945,36 @@ public class Tab extends JPanel implements DocumentListener, Resources
 		return this.file;
 	}
 	
-	public void setFile(File file)
+	public void setFile(final File file)
 	{
 		this.file = file;
 		this.fileLabel.setFile(file);
 		MainPanel.getInstance().updateTabName(this);
 		this.watcher = this.createFileWatcher(file);
+		Runnable runnable = new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				//save recent files
+				Set<String> filePaths = new LinkedHashSet<>();
+				filePaths.add(file.getPath());
+				//re-add old files
+				String recentFiles = getConfig("recentFiles");
+				if (recentFiles != null)
+				{
+					Collections.addAll(filePaths, recentFiles.split("\n"));
+				}
+				java.util.List<String> filePathList = new ArrayList<>(filePaths).subList(0,Math.min(10,filePaths.size()));
+				StringBuilder builder = new StringBuilder();
+				for (String path: filePathList)
+				{
+					builder.append("\n"+path);
+				}
+				writeConfig("recentFiles", builder.toString());
+			}
+		};
+		(new Thread(runnable)).start();
 	}
 	
 	public FileLabel getFileLabel()
@@ -917,7 +987,7 @@ public class Tab extends JPanel implements DocumentListener, Resources
 		return this.textArea;
 	}
 	
-	public JLayer<JTextArea> getLayer()
+	public JLayer<? extends JComponent> getLayer()
 	{
 		return this.layer1;
 	}
@@ -932,19 +1002,40 @@ public class Tab extends JPanel implements DocumentListener, Resources
 		return this.undoDialog;
 	}
 	
+	public MyLabel getTabLabel()
+	{
+		return this.tabLabel;
+	}
+	
 	public JPanel getTabPanel()
 	{
 		return this.tabPanel;
 	}
 	
-	public MyLabel getTabLabel()
+	public JPopupMenu getTabPopupMenu()
 	{
-		return this.label;
+		return this.tabPopup;
 	}
 	
 	public FileWatcher getFileWatcher()
 	{
 		return this.watcher;
+	}
+	
+	public boolean isSaved()
+	{
+		return this.isSaved;
+	}
+	
+	public void setSaved(boolean isSaved)
+	{
+		boolean oldIsSaved = this.isSaved;
+		this.isSaved = isSaved;
+		if (oldIsSaved ^ this.isSaved)
+		{
+			//changed
+			MainPanel.getInstance().updateTabName(this);
+		}
 	}
 	
 	public static JComboBox<String> createCharsetComboBox()
@@ -954,6 +1045,17 @@ public class Tab extends JPanel implements DocumentListener, Resources
 		comboBox.setBackground(Color.WHITE);
 		comboBox.setFont(f13);
 		return comboBox;
+	}
+	
+	public static File createTempSaveFile(File file)
+	{
+		int i = 0;
+		File tmp;
+		while ((tmp = new File(file.getParent(), file.getName()+"_refluxedit_save_backup_" + i)).exists())
+		{
+			i++;
+		}
+		return tmp;
 	}
 	
 	class MyBlackLinePanel extends JPanel
@@ -1024,18 +1126,8 @@ public class Tab extends JPanel implements DocumentListener, Resources
 		@Override
 		public void mouseReleased(MouseEvent ev)
 		{
-			if (isWordCount)
-			{
-				isWordCount = false;
-				//now set to charCount
-				this.setCountInfo(Tab.this.textArea.getText().length(),false);
-			}
-			else
-			{
-				isWordCount = true;
-				//now set to wordCount
-				this.setCountInfo(wordCount(Tab.this.textArea.getText()),true);
-			}
+			isWordCount = !isWordCount;
+			Tab.this.updateCount();
 		}
 		
 		@Override
@@ -1083,7 +1175,7 @@ public class Tab extends JPanel implements DocumentListener, Resources
 			{
 				case -11: //close
 				{
-					if (textArea.isSaved())
+					if (Tab.this.isSaved())
 					{
 						MainPanel.close(Tab.this);
 					}
@@ -1101,7 +1193,7 @@ public class Tab extends JPanel implements DocumentListener, Resources
 							{
 								try
 								{
-									Tab.this.save(Tab.this.file,false);
+									Tab.this.save(dest,false);
 									MainPanel.close(Tab.this);
 								}
 								catch (Exception ex)

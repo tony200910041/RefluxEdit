@@ -219,6 +219,10 @@ public class BaseConverter extends JDialog implements DocumentListener, ActionLi
 				result += otherBase + " ";
 			}
 		}
+		if (result.endsWith(" "))
+		{
+			return result.substring(0, result.length()-1);
+		}
 		return result;
 	}
 }

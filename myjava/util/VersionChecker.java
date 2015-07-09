@@ -23,7 +23,7 @@ public class VersionChecker implements VersionConstants
 		try
 		{
 			//load information
-			URL update = new URL("http://refluxedit.sourceforge.net/update/newversion.txt");
+			URL update = new URL("http://tony200910041.github.io/RefluxEdit/update/newversion.txt");
 			reader = new BufferedReader(new InputStreamReader(update.openStream()));
 			StringBuilder builder = new StringBuilder();
 			String buffer;
@@ -61,7 +61,7 @@ public class VersionChecker implements VersionConstants
 						{
 							try
 							{
-								Desktop.getDesktop().browse(new URI("https://sourceforge.net/projects/refluxedit/"));
+								Desktop.getDesktop().browse(new URI("https://github.com/tony200910041/RefluxEdit/releases"));
 							}
 							catch (Exception ex)
 							{

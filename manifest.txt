@@ -1,2 +1,2 @@
-Main-Class: exec.RefluxEdit
+Main-Class: exec.Launcher
 SplashScreen-Image: SRC/Splash.gif

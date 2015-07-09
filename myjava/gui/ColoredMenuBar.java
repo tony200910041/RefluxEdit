@@ -67,6 +67,8 @@ public class ColoredMenuBar extends JMenuBar
 		menu1_2.add(new MyMenuItem("Open file", "OPEN", 2, KeyEvent.VK_O));
 		menu1_2.add(new MyMenuItem("Open file (quick)", null, 3));
 		menu1_2.add(new MyMenuItem("Open file (charset)",null, 51));
+		menu1_2.add(new JSeparator());
+		menu1_2.add(RecentMenu.getInstance());
 		menu1.add(new JSeparator());
 		menu1.add(new MyMenuItem("Save as", "SAVE", 4, KeyEvent.VK_S));
 		menu1.add(new MyMenuItem("Save", null, 5));
@@ -92,14 +94,15 @@ public class ColoredMenuBar extends JMenuBar
 		//
 		menu3.add(new MyMenuItem("Enable/disable editing", "EDIT16", 17));
 		menu3.add(new MyMenuItem("Enable/disable always on top", "ONTOP16", 21));
-		menu3.add(new MyMenuItem("Undo record dialog", null, 52));
-		menu3.add(new MyMenuItem("Clipboard listener", null, 29));
+		menu3.add(new MyMenuItem("Undo record dialog", "UNDODIALOG16", 52));
+		menu3.add(new MyMenuItem("Clipboard listener", "PASTE", 29));
+		menu3.add(new MyMenuItem("File browser", "FILEBROWSER16", 59));
 		menu3.add(new JSeparator());
 		menu3.add(new MyMenuItem("Goto line", "GOTOLINE16", 47));
 		//
 		menu4.add(new MyMenuItem("Options", "OPTIONS16", 39));
 		menu4.add(new JSeparator());
-		menu4.add(new MyMenuItem("Compile code", "COMPILE16", 53));
+		menu4.add(new MyMenuItem("Compile code", "COMPILE16", 53, KeyEvent.VK_F8, 0));
 		menu4.add(new MyMenuItem("Word count", null, 22, KeyEvent.VK_F2));
 		menu4.add(new MyMenuItem("Character count", null, 44, KeyEvent.VK_F3));
 		menu4.add(new MyMenuItem("Delete blank lines", null, 35));
@@ -134,7 +137,7 @@ public class ColoredMenuBar extends JMenuBar
 		//
 		menu6.add(new MyMenuItem("About RefluxEdit", "APPICON16", 16, KeyEvent.VK_F1));
 		menu6.add(new MyMenuItem("About MPL 2.0", null, 58));
-		menu6.add(new MyMenuItem("Visit SourceForge page", "VISIT16", 48));
+		menu6.add(new MyMenuItem("Visit GitHub page", "VISIT16", 48));
 	}
 	
 	@Override

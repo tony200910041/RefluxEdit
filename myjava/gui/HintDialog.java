@@ -74,7 +74,7 @@ public class HintDialog extends JDialog
 		/*
 		 * configure dialog
 		 */
-		this.setSize(new Dimension(350,216));
+		this.setSize(new Dimension(381,239));
 		this.setLocationRelativeTo(parent);
 	}
 	

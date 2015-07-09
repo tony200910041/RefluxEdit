@@ -30,7 +30,6 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 	static
 	{
 		//initialization:
-		SourceManager.initialize();
 		RefluxEdit.setLAF();
 		UISetter.initialize();
 	}
@@ -98,7 +97,7 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 	/*
 	 * main method:
 	 */
-	public static void main(final String[] args)
+	protected static void launch(final String[] args)
 	{
 		final double initialTime = System.currentTimeMillis();
 		SwingUtilities.invokeLater(new Runnable()
@@ -156,13 +155,6 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 					}).start();
 				}
 				detector.setInstance(true);
-				if (getBoolean0("FirstTime.welcome"))
-				{
-					Point p = MainPanel.getSelectedTab().getTextArea().getLocationOnScreen();
-					ToolTipMessage.showMessage(p.x+5, p.y+5, "Welcome!", "Welcome to RefluxEdit!");
-					setConfig("FirstTime.welcome","false");
-				}
-				saveConfig();
 				ClipboardDialog.initialize();
 				if (getBoolean0("showHint"))
 				{
@@ -416,7 +408,7 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 			}
 			else topPanel = null;
 		}
-		this.add(MainPanel.getInstance());
+		this.add(MainPanel.getInstance(), BorderLayout.CENTER);
 	}
 	
 	/*
@@ -472,7 +464,7 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 		outFor:
 		for (Tab tab: MainPanel.getAllTab())
 		{
-			if (!tab.getTextArea().isSaved())
+			if (!tab.isSaved())
 			{
 				isSaved = false;
 				break outFor;
@@ -501,7 +493,7 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 				 */
 				for (Tab tab: new ArrayList<Tab>(MainPanel.getAllTab()))
 				{
-					if (!tab.getTextArea().isSaved())
+					if (!tab.isSaved())
 					{
 						File tabFile = tab.getFile();
 						if (tabFile!=null)

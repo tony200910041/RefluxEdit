@@ -8,7 +8,10 @@ package myjava.gui;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.event.*;
 import javax.swing.table.*;
+import javax.swing.tree.*;
 import java.io.*;
 import java.util.*;
 import java.text.*;
@@ -23,27 +26,30 @@ public class OptionDialog extends JDialog implements Resources
 	/*
 	 * predefined variables
 	 */
-	private static final boolean isWindows = Resources.LAF.contains("windows");
-	private static final RefluxEdit w = RefluxEdit.getInstance();
-	private static final JComponent topPanel = w.getPageStartComponent();
-	private static final Tab tab = MainPanel.getSelectedTab();
-	private static final MyTextArea textArea = tab.getTextArea();
-	private static final File file = tab.getFile();
-	private static final UndoManager undoManager = textArea.getUndoManager();
-	private static String TMP1;
-	
+	private static final RefluxEdit w = RefluxEdit.getInstance();		
 	/*
 	 * for convenience
 	 */	
+	private static String TMP1;
 	public static void showDialog(Frame parent)
 	{
+		final JComponent topPanel = w.getPageStartComponent();
+		final Tab tab = MainPanel.getSelectedTab();
+		final MyTextArea textArea = tab.getTextArea();
+		final File file = tab.getFile();
+		final UndoManager undoManager = textArea.getUndoManager();
+		/*
+		 * build diaog
+		 */
 		final JDialog option = new JDialog(w, "Other options", true);
+		option.setLayout(new BorderLayout());
 		option.getContentPane().setBackground(Color.WHITE);
-		JTabbedPane tabbedPane = new JTabbedPane();
+		final CardLayout centerCardLayout = new CardLayout();
+		final JPanel centerPanel = new JPanel(centerCardLayout);
 		loadConfig();
 		//
 		//tab1: general
-		JPanel tab1 = new JPanel(new GridLayout(9,1,0,0));
+		JPanel tab1 = new JPanel(new GridLayout(7,1,0,0));
 		String isPanelString = getConfig0("isPanel");
 		final MyRadioButton isPanel = new MyRadioButton("Use panel", false, 1);
 		final MyRadioButton isToolBar = new MyRadioButton("Use toolbar", false, 2);
@@ -92,70 +98,34 @@ public class OptionDialog extends JDialog implements Resources
 		isPanel.addActionListener(optlistener);
 		isToolBar.addActionListener(optlistener);
 		NoContainer.addActionListener(optlistener);
-		MyPanel P1 = new MyPanel(MyPanel.LEFT);
-		P1.add(new MyLabel("Toolbar mode: "));
-		P1.add(isPanel);
-		P1.add(isToolBar);
-		P1.add(NoContainer);
-		tab1.add(P1);
+		MyPanel P1_1 = new MyPanel(MyPanel.LEFT);
+		P1_1.add(new MyLabel("Toolbar mode: "));
+		P1_1.add(isPanel);
+		P1_1.add(isToolBar);
+		P1_1.add(NoContainer);
+		tab1.add(P1_1);
 		//
-		String fontName = getConfig0("TextAreaFont.fontName");
-		if (fontName == null)
-		{
-			fontName = "Microsoft Jhenghei";
-		}
-		int fontStyle, fontSize;
-		try
-		{
-			fontStyle = Integer.parseInt(getConfig0("TextAreaFont.fontStyle"));
-			if ((fontStyle<0)||(fontStyle>2)) fontStyle = 0;
-		}
-		catch (Exception ex)
-		{
-			fontStyle = 0;
-		}
-		try
-		{
-			fontSize = Integer.parseInt(getConfig0("TextAreaFont.fontSize"));
-			if ((fontSize<1)||(fontSize>200)) fontSize = 13;
-		}
-		catch (Exception ex)
-		{
-			fontSize = 13;
-		}
-		MyPanel P2 = new MyPanel(MyPanel.LEFT);
-		P2.add(new MyLabel("Text area font:"));
-		MyFontChooser fontChooser = new MyFontChooser(new Font(fontName,fontStyle,fontSize));
-		P2.add(fontChooser);
-		tab1.add(P2);
-		//
-		MyPanel P3 = new MyPanel(MyPanel.LEFT);
+		MyPanel P1_2 = new MyPanel(MyPanel.LEFT);
 		boolean isUseNewMenuBar = getBoolean0("isUseNewMenuBar");
 		MyCheckBox useNewMenuBar = new MyCheckBox("Use new colored menu bar (for CrossPlatform Look and Feel only):", isUseNewMenuBar);
-		P3.add(useNewMenuBar);
-		tab1.add(P3);
+		P1_2.add(useNewMenuBar);
+		tab1.add(P1_2);
 		//
-		MyPanel P4 = new MyPanel(MyPanel.LEFT);
+		MyPanel P1_3 = new MyPanel(MyPanel.LEFT);
 		boolean narrowEdge = getBoolean0("isUseNarrowEdge");
 		MyCheckBox useNarrowEdge = new MyCheckBox("Use narrower edge", narrowEdge);
-		P4.add(useNarrowEdge);
-		tab1.add(P4);	
+		P1_3.add(useNarrowEdge);
+		tab1.add(P1_3);	
 		//
-		MyPanel P5 = new MyPanel(MyPanel.LEFT);
-		boolean showCount = getBoolean0("showCount");
-		MyCheckBox useCount = new MyCheckBox("Show word and character count", showCount);
-		P5.add(useCount);
-		tab1.add(P5);
-		//
-		MyPanel P6 = new MyPanel(MyPanel.LEFT);
+		MyPanel P1_4 = new MyPanel(MyPanel.LEFT);
 		MyCheckBox useIndent = new MyCheckBox("Use automatic indentation", textArea.getFilter().isAutoIndent());
-		P6.add(useIndent);
-		tab1.add(P6);
+		P1_4.add(useIndent);
+		tab1.add(P1_4);
 		//
-		MyPanel P7 = new MyPanel(MyPanel.LEFT);
-		MyCheckBox useUmbrella = new MyCheckBox("Show umbrella", MyUmbrellaLayerUI.isPaintUmbrella());
-		P7.add(useUmbrella);
-		JSlider alphaYellow = new JSlider(0,255);
+		MyPanel P1_5 = new MyPanel(MyPanel.LEFT);
+		final MyCheckBox useUmbrella = new MyCheckBox("Show umbrella", MyUmbrellaLayerUI.isPaintUmbrella());
+		P1_5.add(useUmbrella);
+		final JSlider alphaYellow = new JSlider(0,255);
 		alphaYellow.setValue(MyUmbrellaLayerUI.getUmbrellaColor().getAlpha());
 		alphaYellow.setBackground(Color.WHITE);
 		alphaYellow.setFont(f13);
@@ -165,14 +135,23 @@ public class OptionDialog extends JDialog implements Resources
 		dict.put(60,new MyLabel("60"));
 		dict.put(255,new MyLabel("255"));
 		alphaYellow.setLabelTable(dict);
-		P7.add(new MyLabel("alpha value:"));
-		P7.add(alphaYellow);
-		tab1.add(P7);
+		P1_5.add(new MyLabel("alpha value:"));
+		P1_5.add(alphaYellow);
+		useUmbrella.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent ev)
+			{
+				alphaYellow.setEnabled(useUmbrella.isSelected());
+			}
+		});
+		alphaYellow.setEnabled(useUmbrella.isSelected());
+		tab1.add(P1_5);
 		//
-		MyPanel P8 = new MyPanel(MyPanel.LEFT);
+		MyPanel P1_6 = new MyPanel(MyPanel.LEFT);
 		boolean saveCaret = getBoolean0("Caret.save");
 		final MyCheckBox saveCaretPosition = new MyCheckBox("Remember caret position", saveCaret);
-		P8.add(saveCaretPosition);
+		P1_6.add(saveCaretPosition);
 		final MyButton manage = new MyButton("Manage")
 		{
 			@Override
@@ -199,7 +178,7 @@ public class OptionDialog extends JDialog implements Resources
 				table.setAutoCreateRowSorter(true);
 				tam.addColumn("File name");
 				tam.addColumn("Caret position");
-				for (String name: propertyNames())
+				for (String name: keys())
 				{
 					if (name.startsWith("Caret.")&&(!name.equals("Caret.save")))
 					{
@@ -213,25 +192,28 @@ public class OptionDialog extends JDialog implements Resources
 					@Override
 					public void actionPerformed(ActionEvent ev)
 					{
-						int option = JOptionPane.showConfirmDialog(w,"Remove caret data?", "Confirm", JOptionPane.YES_NO_OPTION);
-						if (option == JOptionPane.YES_OPTION)
+						int[] rows = table.getSelectedRows();
+						if ((rows != null)&&(rows.length != 0))
 						{
-							int[] rows = table.getSelectedRows();
-							ArrayList<String> paths = new ArrayList<>();
-							for (int count=0; count<rows.length; count++)
-							{
-								paths.add(tam.getValueAt(rows[count],0).toString());
+							int option = JOptionPane.showConfirmDialog(w,"Remove caret data?", "Confirm", JOptionPane.YES_NO_OPTION);
+							if (option == JOptionPane.YES_OPTION)
+							{							
+								ArrayList<String> paths = new ArrayList<>();
+								for (int count=0; count<rows.length; count++)
+								{
+									paths.add(tam.getValueAt(rows[count],0).toString());
+								}
+								for (String path: paths)
+								{
+									removeConfig0("Caret." + path);
+								}
+								for (int i=rows.length-1; i>=0; i--)
+								{
+									tam.removeRow(rows[i]);
+								}
+								saveConfig();
 							}
-							for (String path: paths)
-							{
-								removeConfig0("Caret." + path);
-							}
-							for (int i=rows.length-1; i>=0; i--)
-							{
-								tam.removeRow(rows[i]);
-							}
-							saveConfig();
-						}							
+						}
 					}
 				};
 				if (!isWindows) remove.setPreferredSize(new Dimension(65,28));
@@ -284,17 +266,64 @@ public class OptionDialog extends JDialog implements Resources
 			}
 		});
 		if (!isWindows) manage.setPreferredSize(new Dimension(65,25));
-		P8.add(manage);
-		tab1.add(P8);
+		P1_6.add(manage);
+		tab1.add(P1_6);
 		//
-		MyPanel P9 = new MyPanel(MyPanel.LEFT);
+		MyPanel P1_7 = new MyPanel(MyPanel.LEFT);
 		boolean confirmDrag = getBoolean("ConfirmDrag");
 		MyCheckBox useConfirmDrag = new MyCheckBox("Confirm drag", confirmDrag);
-		P9.add(useConfirmDrag);
-		tab1.add(P9);
+		P1_7.add(useConfirmDrag);
+		tab1.add(P1_7);
 		//
-		//tab2: line wrap
-		MyPanel wrap = new MyPanel(MyPanel.CENTER);
+		//tab1_1: editor
+		JPanel tab1_1 = new JPanel(new GridLayout(2,1,0,0));
+		tab1_1.setBackground(Color.WHITE);
+		JPanel tab1_1_inner = new JPanel(new GridLayout(4,1,0,0));
+		tab1_1.add(tab1_1_inner);
+		//
+		String fontName = getConfig0("TextAreaFont.fontName");
+		if (fontName == null)
+		{
+			fontName = "Microsoft Jhenghei";
+		}
+		int fontStyle, fontSize;
+		try
+		{
+			fontStyle = Integer.parseInt(getConfig0("TextAreaFont.fontStyle"));
+			if ((fontStyle<0)||(fontStyle>2)) fontStyle = 0;
+		}
+		catch (Exception ex)
+		{
+			fontStyle = 0;
+		}
+		try
+		{
+			fontSize = Integer.parseInt(getConfig0("TextAreaFont.fontSize"));
+			if ((fontSize<1)||(fontSize>200)) fontSize = 13;
+		}
+		catch (Exception ex)
+		{
+			fontSize = 13;
+		}
+		MyPanel P1_1_1 = new MyPanel(MyPanel.LEFT);
+		P1_1_1.add(new MyLabel("Text area font:"));
+		MyFontChooser fontChooser = new MyFontChooser(new Font(fontName,fontStyle,fontSize));
+		P1_1_1.add(fontChooser);
+		tab1_1_inner.add(P1_1_1);
+		//
+		MyPanel P1_1_2 = new MyPanel(MyPanel.LEFT);
+		boolean showCount = getBoolean0("showCount");
+		MyCheckBox useCount = new MyCheckBox("Show word and character count", showCount);
+		P1_1_2.add(useCount);
+		tab1_1_inner.add(P1_1_2);
+		//
+		MyPanel P1_1_3 = new MyPanel(MyPanel.LEFT);
+		boolean showLineCounter = getBoolean0("showLineCounter");
+		MyCheckBox useLineCounter = new MyCheckBox("Show line counter", showLineCounter);
+		P1_1_3.add(useLineCounter);
+		tab1_1_inner.add(P1_1_3);
+		//
+		MyPanel P1_1_4 = new MyPanel(MyPanel.LEFT);
 		final MyCheckBox lineWrap = new MyCheckBox("Line Wrap", textArea.getLineWrap());
 		final MyCheckBox wrapStyleWord = new MyCheckBox("Wrap by word", textArea.getWrapStyleWord());
 		wrapStyleWord.setEnabled(lineWrap.isSelected());
@@ -306,8 +335,38 @@ public class OptionDialog extends JDialog implements Resources
 				wrapStyleWord.setEnabled(lineWrap.isSelected());
 			}
 		});
-		wrap.add(lineWrap);
-		wrap.add(wrapStyleWord);
+		P1_1_4.add(lineWrap);
+		P1_1_4.add(wrapStyleWord);
+		JSpinner spinnerTabSize = new JSpinner();
+		spinnerTabSize.setModel(new SpinnerNumberModel(textArea.getTabSize(), 1, 50, 1));
+		spinnerTabSize.setFont(f13);
+		P1_1_4.add(new MyLabel("     Tab size: "));
+		P1_1_4.add(spinnerTabSize);
+		tab1_1_inner.add(P1_1_4);
+		//
+		JPanel P1_1_6 = new JPanel(new BorderLayout());	
+		P1_1_6.setBorder(new TitledBorder("Selection color"));	
+		final MyColorChooser colorChooser = new MyColorChooser(MyColorChooser.LARGE);
+		colorChooser.setColor(textArea.getSelectionColor());
+		P1_1_6.setBackground(Color.WHITE);
+		P1_1_6.add(colorChooser, BorderLayout.CENTER);
+		MyPanel scP1 = new MyPanel(MyPanel.CENTER);
+		MyLabel defaultColorLabel = new MyLabel("Default: (244, 223, 255)");
+		defaultColorLabel.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseReleased(MouseEvent ev)
+			{
+				if (ev.getClickCount() == 2)
+				{
+					colorChooser.setColor(new Color(244,223,255));
+				}
+			}
+		});
+		scP1.add(defaultColorLabel);
+		P1_1_6.add(scP1, BorderLayout.PAGE_END);
+		//
+		tab1_1.add(P1_1_6);		
 		//
 		//tab3: encoding
 		JPanel encoding_inner = new JPanel(new GridLayout(4,1,0,0));
@@ -488,28 +547,6 @@ public class OptionDialog extends JDialog implements Resources
 		chooserOption.add(isJava);
 		chooserOption.add(isSystem);
 		//
-		//tab6: tab size
-		MyPanel tab6 = new MyPanel(MyPanel.CENTER);
-		JSpinner spinnerTabSize = new JSpinner();
-		spinnerTabSize.setModel(new SpinnerNumberModel(textArea.getTabSize(), 1, 50, 1));
-		spinnerTabSize.setFont(f13);
-		tab6.add(new MyLabel("Tab size: "));
-		tab6.add(spinnerTabSize);
-		//
-		//tab7: selection color
-		MyPanel selectionColor = new MyPanel(MyPanel.CENTER);
-		MyColorChooser colorChooser = new MyColorChooser(MyColorChooser.LARGE);
-		colorChooser.setColor(textArea.getSelectionColor());
-		JPanel selectionColor_inner = new JPanel(new BorderLayout());
-		selectionColor_inner.setBackground(Color.WHITE);
-		selectionColor_inner.add(colorChooser, BorderLayout.CENTER);
-		//
-		MyPanel scP1 = new MyPanel(MyPanel.CENTER);
-		scP1.add(new MyLabel("Default: (244, 223, 255)"));
-		selectionColor_inner.add(scP1, BorderLayout.PAGE_END);
-		//
-		selectionColor.add(selectionColor_inner);
-		//
 		//tab8: LAF
 		JPanel LAFOption_inner = new JPanel(new GridLayout(2,1,0,0));
 		LAFOption_inner.setBackground(Color.WHITE);
@@ -592,12 +629,14 @@ public class OptionDialog extends JDialog implements Resources
 			runcommand = getConfig0("Compile.runCommand."+path);
 			filename = getConfig0("Compile.runCommandFileName."+path);
 		}
+		//else, or null
 		command = command==null?getConfig0("Compile.command"):command;
 		runcommand = runcommand==null?getConfig0("Compile.runCommand"):runcommand;
 		filename = filename==null?getConfig0("Compile.runCommandFileName"):filename;
 		//
 		boolean isDeleteOld = getBoolean0("Compile.removeOriginal");
 		String regex = getConfig0("Compile.regex");
+		String toolTip = "<html>%f: file path<br>%p: directory<br>%s: simple name of file<br>%a: file name without extension<br>%n: new line.</html>";
 		//
 		MyPanel compileP0 = new MyPanel(MyPanel.LEFT);
 		final MyTextField compiletf = new MyTextField(30,0);
@@ -605,6 +644,7 @@ public class OptionDialog extends JDialog implements Resources
 		compiletf.setText(command);
 		compileP0.add(new MyLabel("Compile command: "));
 		compileP0.add(compiletf);
+		compiletf.setToolTipText(toolTip);
 		//
 		MyPanel compileP1 = new MyPanel(MyPanel.LEFT);
 		final MyTextField runtf = new MyTextField(30,0);
@@ -612,6 +652,7 @@ public class OptionDialog extends JDialog implements Resources
 		runtf.setText(runcommand);
 		compileP1.add(new MyLabel("Run command: "));
 		compileP1.add(runtf);
+		runtf.setToolTipText(toolTip);
 		//
 		MyPanel compileP2 = new MyPanel(MyPanel.LEFT);
 		final MyTextField filetf = new MyTextField(30,0);
@@ -664,7 +705,208 @@ public class OptionDialog extends JDialog implements Resources
 		});
 		//
 		MyPanel compileP5 = new MyPanel(MyPanel.LEFT);
-		compileP5.add(new MyLabel("Use %f for the file path, %p for the directory, %s for the simple name of the file and %n for a new line.     "));
+		MyButton manageCommand = new MyButton("Manage")
+		{
+			@Override
+			public void actionPerformed(ActionEvent ev)
+			{
+				final DefaultTableModel tam = new DefaultTableModel();
+				final JTable table = new JTable(tam)
+				{
+					@Override
+					public boolean isCellEditable(int row, int column)
+					{
+						return column != 0;
+					}
+				};
+				table.setAutoCreateRowSorter(true);
+				table.setRowHeight(25);
+				table.setFont(f13);
+				table.getTableHeader().setFont(f13);
+				table.getTableHeader().setReorderingAllowed(false);
+				tam.addColumn("Key");
+				tam.addColumn("Value");
+				//
+				Set<String> keys = SourceManager.keys();
+				for (String key: keys)
+				{
+					if (key.startsWith("Compile.command.default."))
+					{
+						tam.addRow(new String[]{key, getConfig0(key)});
+					}
+				}
+				for (String key: keys)
+				{
+					if (key.startsWith("Compile.runCommand.default."))
+					{
+						tam.addRow(new String[]{key, getConfig0(key)});
+					}
+				}
+				//
+				final JDialog dialog = new JDialog(w,"Default command",true);
+				dialog.setLayout(new BorderLayout());
+				dialog.add(new JScrollPane(table), BorderLayout.CENTER);
+				//
+				JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+				dialog.addWindowListener(new WindowAdapter()
+				{
+					@Override
+					public void windowClosing(WindowEvent ev)
+					{
+						//discard change
+						loadConfig();
+					}
+				});
+				bottomPanel.add(new MyButton("Add")
+				{
+					@Override
+					public void actionPerformed(ActionEvent ev)
+					{
+						JPanel commandPanel = new JPanel(new GridBagLayout());
+						GridBagConstraints c = new GridBagConstraints();
+						//
+						c.gridx = 0;
+						c.gridy = 0;
+						c.weightx = 0;
+						c.insets = new Insets(3,3,3,3);
+						commandPanel.add(new MyLabel("Extension:"), c);
+						//
+						c.gridx = 1;
+						c.weightx = 1;
+						c.gridwidth = 3;						
+						c.fill = GridBagConstraints.HORIZONTAL;
+						MyTextField extension = new MyTextField(20);
+						commandPanel.add(extension, c);
+						//
+						c.gridx = 0;
+						c.gridy = 1;
+						c.weightx = 0;
+						c.gridwidth = 1;
+						c.fill = GridBagConstraints.NONE;
+						commandPanel.add(new MyLabel("Command:"), c);
+						//
+						c.gridx = 1;
+						c.gridwidth = 3;
+						c.weightx = 1;
+						c.fill = GridBagConstraints.HORIZONTAL;
+						MyTextField command = new MyTextField(20);
+						commandPanel.add(command, c);
+						//
+						c.gridx = 0;
+						c.gridy = 2;
+						c.weightx = 0;
+						c.gridwidth = 1;
+						c.fill = GridBagConstraints.NONE;
+						commandPanel.add(new MyLabel("Run command:"), c);
+						//
+						c.gridx = 1;
+						c.weightx = 1;
+						c.gridwidth = 3;
+						c.fill = GridBagConstraints.HORIZONTAL;
+						MyTextField runCommand = new MyTextField(20);
+						commandPanel.add(runCommand, c);
+						//
+						int option = JOptionPane.showConfirmDialog(w, commandPanel, "Command", JOptionPane.OK_CANCEL_OPTION);
+						if (option == JOptionPane.OK_OPTION)
+						{
+							String key = extension.getText();
+							if (!key.isEmpty())
+							{
+								String commandKey = "Compile.command.default."+key;
+								String runCommandKey = "Compile.runCommand.default."+key;
+								//
+								String commandText = command.getText();
+								String runCommandText = runCommand.getText();
+								if (!commandText.isEmpty())
+								{
+									if (keys().contains("Compile.command.default."+key))
+									{
+										int replace = JOptionPane.showConfirmDialog(dialog,"Replace command?","Confirm",JOptionPane.YES_NO_OPTION);
+										if (replace == JOptionPane.YES_OPTION)
+										{
+											setConfig(commandKey, commandText);
+											if (!runCommandText.isEmpty())
+											{
+												setConfig(runCommandKey, runCommandText);
+											}
+										}
+									}
+									else
+									{
+										setConfig(commandKey, commandText);
+										tam.addRow(new String[]{commandKey, commandText});
+										if (!runCommandText.isEmpty())
+										{
+											setConfig(runCommandKey, runCommandText);
+											tam.addRow(new String[]{runCommandKey, runCommandText});											
+										}
+									}
+								}
+							}
+						}
+					}
+				});
+				MyButton removeCommand = new MyButton("Remove")
+				{
+					@Override
+					public void actionPerformed(ActionEvent ev)
+					{
+						int option = JOptionPane.showConfirmDialog(w, "Remove commands?", "Confirm", JOptionPane.YES_NO_OPTION);
+						int[] rows = table.getSelectedRows();
+						if ((rows != null)&&(rows.length != 0))
+						{
+							if (option == JOptionPane.YES_OPTION)
+							{							
+								Set<String> _keySet = new HashSet<>();
+								for (int count=0; count<rows.length; count++)
+								{
+									_keySet.add((String)(tam.getValueAt(rows[count],0)));
+								}
+								for (String _key: _keySet)
+								{
+									removeConfig0(_key);
+								}
+								for (int count=rows.length-1; count>=0; count--)
+								{
+									tam.removeRow(rows[count]);
+								}
+							}
+						}
+					}	
+				};
+				if (!isWindows)
+				{
+					removeCommand.setPreferredSize(new Dimension(70,28));
+				}
+				bottomPanel.add(removeCommand);
+				bottomPanel.add(new MyButton("Done")
+				{
+					@Override
+					public void actionPerformed(ActionEvent ev)
+					{
+						Vector<?> vect = tam.getDataVector();
+						for (Object v: vect)
+						{
+							Vector<?> vector = (Vector<?>)v;
+							setConfig((String)(vector.get(0)), (String)(vector.get(1))); //only two columns
+						}
+						dialog.setVisible(false);
+						dialog.dispose();
+						saveConfig();
+					}
+				});
+				dialog.add(bottomPanel, BorderLayout.PAGE_END);
+				//
+				dialog.pack();
+				dialog.setLocationRelativeTo(w);
+				dialog.setVisible(true);
+			}
+		};
+		if (!isWindows)
+		{
+			manageCommand.setPreferredSize(new Dimension(70,28));
+		}
+		compileP5.add(manageCommand);
 		//
 		compilePanel_inner.add(compileP0);
 		compilePanel_inner.add(compileP1);
@@ -672,10 +914,10 @@ public class OptionDialog extends JDialog implements Resources
 		compilePanel_inner.add(compileP3);
 		compilePanel_inner.add(compileP4);
 		compilePanel_inner.add(compileP5);
-		MyPanel compilePanel = new MyPanel(MyPanel.CENTER);
+		MyPanel compilePanel = new MyPanel(MyPanel.LEFT);
 		compilePanel.add(compilePanel_inner);
 		//tab10: check update
-		JPanel updatePanel = new MyPanel(MyPanel.LEFT);			
+		JPanel updatePanel = new MyPanel(MyPanel.CENTER);			
 		MyCheckBox update = new MyCheckBox("Check update automatically", getBoolean0("CheckUpdate"));
 		updatePanel.add(update);
 		MyButton checkUpdateButton = new MyButton("Check now")
@@ -697,7 +939,7 @@ public class OptionDialog extends JDialog implements Resources
 		if (!isWindows) checkUpdateButton.setPreferredSize(new Dimension(80,27));
 		updatePanel.add(checkUpdateButton);
 		//
-		//tab11: compile command
+		//tab11: system tray
 		JPanel trayPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		trayPanel.setBackground(Color.WHITE);
 		final MyCheckBox isUseTray = new MyCheckBox("Use system tray", getBoolean0("useTray"));
@@ -714,7 +956,91 @@ public class OptionDialog extends JDialog implements Resources
 		trayPanel.add(isUseTray);
 		trayPanel.add(closeToTray);
 		//
-		//tab12: show hints
+		//tab12: text format
+		JPanel formatPanel = new JPanel(new BorderLayout());
+		//
+		final JList<String> definedFormat = new JList<>(new Vector<>(TextFileFormat.PRE_DEFINED));
+		definedFormat.setFont(f13);
+		definedFormat.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		definedFormat.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+		//
+		JPanel definedFormatPanel = new JPanel(new BorderLayout());
+		definedFormatPanel.setBorder(new TitledBorder("Pre-defined format:"));
+		definedFormatPanel.add(new JScrollPane(definedFormat), BorderLayout.CENTER);
+		definedFormatPanel.setBackground(Color.WHITE);
+		//
+		final DefaultListModel<String> userFormatModel = new DefaultListModel<>();
+		final JList<String> userFormat = new JList<>(userFormatModel);
+		for (String ext: TextFileFormat.USER_DEFINED)
+		{
+			userFormatModel.addElement(ext);
+		}
+		userFormat.setFont(f13);
+		userFormat.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		userFormat.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+		//
+		JPanel userFormatPanel = new JPanel(new BorderLayout());
+		userFormatPanel.setBorder(new TitledBorder("Custom format:"));
+		userFormatPanel.add(new JScrollPane(userFormat), BorderLayout.CENTER);
+		userFormatPanel.setBackground(Color.WHITE);
+		//
+		JPanel controlPanel = new JPanel(new GridBagLayout());
+		MyButton formatAdd = new MyButton("Add")
+		{
+			@Override
+			public void actionPerformed(ActionEvent ev)
+			{
+				String ext = JOptionPane.showInputDialog(option, "Enter the extension(s):", "Extensions", JOptionPane.QUESTION_MESSAGE);
+				if ((ext != null)&&(!ext.isEmpty()))
+				{
+					String[] extensions = ext.split("[;, ]");
+					for (String s: extensions)
+					{
+						userFormatModel.addElement(s.toLowerCase());
+					}
+					Collections.addAll(TextFileFormat.USER_DEFINED, extensions);
+					//write to settings
+					writeConfig("userDefinedTextFormats", TextFileFormat.getUserFormatString());
+				}
+			}
+		};
+		MyButton formatRemove = new MyButton("Remove")
+		{
+			@Override
+			public void actionPerformed(ActionEvent ev)
+			{
+				int[] rows = userFormat.getSelectedIndices();
+				if ((rows != null)&&(rows.length != 0))
+				{
+					int option = JOptionPane.showConfirmDialog(w,"Remove format?", "Confirm", JOptionPane.YES_NO_OPTION);
+					if (option == JOptionPane.YES_OPTION)
+					{
+						Set<String> extSet = new HashSet<>();
+						for (int i=rows.length-1; i>=0; i--)
+						{
+							extSet.add(userFormatModel.remove(rows[i]));
+						}
+						TextFileFormat.reloadUserDefinedFormat();
+						TextFileFormat.USER_DEFINED.removeAll(extSet);
+						writeConfig("userDefinedTextFormats", TextFileFormat.getUserFormatString());
+					}
+				}
+			}
+		};
+		if (!isWindows) formatRemove.setPreferredSize(new Dimension(65,28));
+		MyPanel buttonPanel = new MyPanel(MyPanel.CENTER);
+		buttonPanel.add(formatAdd);
+		buttonPanel.add(formatRemove);
+		controlPanel.setBackground(Color.WHITE);
+		controlPanel.add(buttonPanel);
+		//
+		JPanel listPanel = new JPanel(new GridLayout(2,1,0,0));
+		listPanel.add(definedFormatPanel);
+		listPanel.add(userFormatPanel);
+		formatPanel.add(listPanel, BorderLayout.CENTER);
+		formatPanel.add(controlPanel, BorderLayout.LINE_END);
+		//
+		//tab13: show hints
 		JPanel hintPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		hintPanel.setBackground(Color.WHITE);
 		MyCheckBox showHint = new MyCheckBox("Show hints on startup", getBoolean0("showHint"));
@@ -732,23 +1058,52 @@ public class OptionDialog extends JDialog implements Resources
 		//
 		//
 		//restore toolbar to original location
-		MyToolBar.getInstance().stopFloating();
+		MyToolBar.getInstance().setUI(new StopFloatingToolBarUI());
+		MyToolBar.getInstance().updateUI();
+		MyCompileToolBar.getInstance().setUI(new StopFloatingToolBarUI());
+		MyCompileToolBar.getInstance().updateUI();
 		//
-		tabbedPane.addTab("General",icon("OPTIONS16"),tab1,"General");
-		tabbedPane.addTab("Wrapping",icon("LINEWRAP16"),wrap,"Line wrap");
-		tabbedPane.addTab("Encoding",icon("ENCODING16"),encoding,"Encoding");
-		tabbedPane.addTab("Line separator",icon("LINESEPARATOR16"),sepPanel,"Line separator");
-		tabbedPane.addTab("File dialog",icon("FILECHOOSER16"),chooserOption,"File chooser");
-		tabbedPane.addTab("Tab",icon("TABSIZE16"),tab6,"Tab size");
-		tabbedPane.addTab("Selection color",icon("SELECTIONCOLOR16"),selectionColor,"Selection color");
-		tabbedPane.addTab("Look and Feel",icon("LAF"),LAFOption,"Look and Feel");
-		tabbedPane.addTab("Compile",icon("COMPILE16"),compilePanel,"Compile");
-		tabbedPane.addTab("Update",icon("APPICON16"),updatePanel,"Check update");
-		tabbedPane.addTab("System tray",icon("SYSTEMTRAY16"),trayPanel,"System tray");
-		tabbedPane.addTab("Hints",icon("NEWJAVA16"),hintPanel,"Hints");
-		tabbedPane.setFont(f13);
-		option.setLayout(new BorderLayout());
-		option.add(tabbedPane, BorderLayout.CENTER);
+		final Map<String,JPanel> panelMap = new LinkedHashMap<>();
+		panelMap.put("General", tab1);
+		panelMap.put("Editor", tab1_1);
+		panelMap.put("Look and Feel", LAFOption);
+		panelMap.put("File dialog", chooserOption);
+		panelMap.put("Encoding", encoding);
+		panelMap.put("Line separator", sepPanel);
+		panelMap.put("Compile", compilePanel);
+		panelMap.put("Update", updatePanel);
+		panelMap.put("System tray", trayPanel);
+		panelMap.put("File formats", formatPanel);
+		panelMap.put("Hints", hintPanel);
+		DefaultMutableTreeNode root = new DefaultMutableTreeNode("Options");
+		for (String tabName: panelMap.keySet())
+		{
+			root.add(new DefaultMutableTreeNode(tabName));
+		}
+		for (Map.Entry<String,JPanel> entry: panelMap.entrySet())
+		{
+			centerPanel.add(entry.getValue(), entry.getKey());
+		}
+		final JTree tree = new JTree(root);
+		tree.setFont(f13);
+		tree.addTreeSelectionListener(new TreeSelectionListener()
+		{
+			@Override
+			public void valueChanged(TreeSelectionEvent ev)
+			{
+				TreePath path = ev.getNewLeadSelectionPath();
+				String selected = (String)(((DefaultMutableTreeNode)(path.getLastPathComponent())).getUserObject());
+				if (selected != null)
+				{
+					if (!("Options").equals(selected))
+					{
+						centerCardLayout.show(centerPanel, selected);
+					}
+				}
+			}
+		});
+		option.add(new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(tree), centerPanel), BorderLayout.CENTER);
+		//show option dialog
 		option.pack();
 		option.setLocationRelativeTo(parent);
 		option.setVisible(true);
@@ -837,9 +1192,12 @@ public class OptionDialog extends JDialog implements Resources
 			//caret
 			saveCaret = saveCaretPosition.isSelected();
 			setConfig("Caret.save", saveCaret+"");
-			//
+			//confirm drag
 			confirmDrag = useConfirmDrag.isSelected();
 			setConfig("ConfirmDrag", confirmDrag+"");
+			//line count
+			showLineCounter = useLineCounter.isSelected();
+			setConfig("showLineCounter", showLineCounter+"");
 		}
 		{
 			//line wrap
@@ -974,7 +1332,7 @@ public class OptionDialog extends JDialog implements Resources
 		/*
 		 * update:
 		 */
-		Tab.setGlobalProperties(edgeType, countWords, isEditable, isLineWrap, isWrapStyleWord, tabSize, newSelectionColor, font, autoIndent);
+		Tab.setGlobalProperties(edgeType, countWords, isEditable, isLineWrap, isWrapStyleWord, tabSize, newSelectionColor, font, autoIndent, showLineCounter);
 		MainPanel.updateAllTab();
 		ClipboardDialog.getInstance().getTextArea().setSelectionColor(newSelectionColor);
 		/*

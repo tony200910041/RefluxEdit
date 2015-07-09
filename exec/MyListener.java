@@ -73,7 +73,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 		final File file = tab.getFile();
 		final UndoManager undoManager = textArea.getUndoManager();
 		/*
-		 * next one: 59
+		 * next one: 60, 48
 		 * free: 36, 37
 		 * 
 		 * 
@@ -101,7 +101,10 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 					if (src.exists())
 					{
 						Tab _tab = Tab.getNewTab();
-						MainPanel.add(_tab);
+						if (!MainPanel.getAllTab().contains(_tab))
+						{
+							MainPanel.add(_tab);
+						}
 						_tab.open(src);
 					}
 					else
@@ -175,8 +178,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 							{
 								Tab _tab = Tab.getNewTab();
 								MainPanel.add(_tab);
-								_tab.open(src);
-								
+								_tab.open(src);								
 							}
 							else
 							{
@@ -255,11 +257,12 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			
 			case 7: //undo
 			if (textArea.isEditable())
-			{				
+			{
 				int caret = textArea.getCaretPosition();
 				textArea.setAutoBackup(false);
 				undoManager.undo();
 				textArea.setAutoBackup(true);
+				//calculate new caret position
 				try
 				{
 					textArea.setCaretPosition(caret);
@@ -310,7 +313,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			if (textArea.isEditable())
 			{
 				textArea.cut();
-				textArea.setSaved(false);
+				tab.setSaved(false);
 			}
 			else
 			{
@@ -344,7 +347,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			break;
 			
 			case 16: //about RefluxEdit
-			String s1 = "RefluxEdit " + VERSION_NO + BETA_STRING + BETA_NO + REV_STRING + REV_NO + " -- a lightweight plain text editor written in Java.\nBy tony200910041, http://tony200910041.wordpress.com\nDistributed under MPL 2.0.\nuser.home: " + System.getProperty("user.home") + "\nYour operating system is " + System.getProperty("os.name") + " (" + System.getProperty("os.version") + "), " + System.getProperty("os.arch") + ".\n\nIcon sources: http://www.iconarchive.com and LibreOffice.";
+			String s1 = "RefluxEdit " + VERSION_NO + BETA_STRING + BETA_NO + REV_STRING + REV_NO + " -- a lightweight plain text editor written in Java.\nBy tony200910041, http://tony200910041.github.io/RefluxEdit/\nDistributed under MPL 2.0.\nuser.home: " + System.getProperty("user.home") + "\nYour operating system is " + System.getProperty("os.name") + " (" + System.getProperty("os.version") + "), " + System.getProperty("os.arch") + ".\n\nIcon sources: http://www.iconarchive.com and LibreOffice.";
 			String s2 = "About RefluxEdit " + VERSION_NO;
 			try
 			{
@@ -356,7 +359,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			}
 			break;
 			
-			case 17: //editing
+			case 17: //editable
 			((Component)(ev.getSource())).requestFocusInWindow(); //must be invoked, bug #00032
 			if (textArea.isEditable())
 			{
@@ -399,7 +402,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 								textArea.replaceRange(null,offset,offset+1);
 							}
 						}
-						textArea.setSaved(false);
+						tab.setSaved(false);
 					}
 				}
 				catch (BadLocationException ex)
@@ -442,11 +445,11 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 					int count = wordCount(buffer);
 					if (count == 0)
 					{
-						JOptionPane.showMessageDialog(w, "Number of words (separated by space): 0\nNumber of characters: 0\nNumber of rows: " + buffer.split("\n").length, "Word count", JOptionPane.INFORMATION_MESSAGE);
+						JOptionPane.showMessageDialog(w, "Number of words (separated by space): 0\nNumber of characters: 0\nNumber of rows: " + textArea.getLineCount(), "Word count", JOptionPane.INFORMATION_MESSAGE);
 					}
 					else
 					{
-						JOptionPane.showMessageDialog(w, "Number of words (separated by space): " + count + "\nNumber of characters: " + charCount(buffer) + "\nNumber of rows: " + buffer.split("\n").length, "Word count", JOptionPane.INFORMATION_MESSAGE);
+						JOptionPane.showMessageDialog(w, "Number of words (separated by space): " + count + "\nNumber of characters: " + charCount(buffer) + "\nNumber of rows: " + textArea.getLineCount(), "Word count", JOptionPane.INFORMATION_MESSAGE);
 					}
 				}
 			}
@@ -460,240 +463,9 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			{
 				//check if show dialog:
 				final String text = textArea.getText();
-				if (text != null)
+				if ((text != null)&&(!text.isEmpty()))
 				{
-					if (!text.isEmpty())
-					{
-						final JDialog replace = new JDialog(w, "Search and Replace", false);
-						replace.getContentPane().setBackground(Color.WHITE);
-						replace.setLayout(new GridBagLayout());
-						GridBagConstraints c = new GridBagConstraints();		
-						/*
-						 * original text:
-						 */
-						MyLabel la1 = new MyLabel("Original: ");
-						final MyTextField wd1 = new MyTextField(20);
-						c.gridx=0;
-						c.gridy=0;
-						c.weightx=0.2;
-						c.insets=new Insets(5,5,5,5);
-						c.fill=GridBagConstraints.NONE;
-						replace.add(la1,c);
-						c.gridx=1;
-						c.gridy=0;
-						c.weightx=0.8;
-						c.fill=GridBagConstraints.HORIZONTAL;
-						replace.add(wd1,c);
-						/*
-						 * replace text:
-						 */							
-						MyLabel la2 = new MyLabel("Replaced by: ");
-						final MyTextField wd2 = new MyTextField(20);
-						c.gridx=0;
-						c.gridy=1;
-						c.weightx=0.2;
-						c.fill=GridBagConstraints.NONE;
-						replace.add(la2,c);
-						c.gridx=1;
-						c.gridy=1;
-						c.weightx=0.8;
-						c.fill=GridBagConstraints.HORIZONTAL;
-						replace.add(wd2,c);
-						/*
-						 * options
-						 */
-						final MyCheckBox regex = new MyCheckBox("Use regex",false);
-						final MyCheckBox caseSensitive = new MyCheckBox("Case sensitive",true);
-						MyPanel panelBox = new MyPanel(MyPanel.CENTER);
-						panelBox.add(regex);
-						panelBox.add(caseSensitive);
-						c.gridx=0;
-						c.gridy=2;
-						c.gridwidth=2;
-						c.fill=GridBagConstraints.HORIZONTAL;
-						replace.add(panelBox,c);
-						/*
-						 * start button
-						 */
-						MyPanel panelButton = new MyPanel(MyPanel.CENTER);
-						MyButton button1 = new MyButton("Start")
-						{
-							@Override
-							public void mouseReleased(MouseEvent ev)
-							{
-								if (textArea.isEditable())
-								{
-									String original = text;
-									String selected = textArea.getSelectedText();
-									String buffer = selected==null?text:selected;
-									String find = wd1.getText();
-									String match = wd2.getText();
-									boolean useRegex = regex.isSelected();
-									boolean isCaseSensitive = caseSensitive.isSelected();
-									int count = StaticUtilities.count(buffer,find,useRegex,isCaseSensitive);
-									if (count != 0)
-									{
-										String result = StaticUtilities.replace(buffer,find,match,useRegex,isCaseSensitive);
-										if (selected != null)
-										{
-											int start = textArea.getSelectionStart();
-											textArea.replaceSelection(result);
-											textArea.select(start,start+result.length());
-										}
-										else
-										{
-											textArea.setText(result);
-										}
-									}
-									JOptionPane.showMessageDialog(w, count + " time(s) replaced", "Replace", JOptionPane.INFORMATION_MESSAGE);
-								}
-								else
-								{
-									cannotEdit();
-								}
-							}
-						};
-						panelButton.add(button1);
-						MyButton button2 = new MyButton("Next")
-						{
-							@Override
-							public void mouseReleased(MouseEvent ev)
-							{
-								String original = text;
-								String find = wd1.getText();
-								boolean useRegex = regex.isSelected();
-								if (!caseSensitive.isSelected())
-								{
-									//case insensitive
-									original = original.toLowerCase();
-									find = find.toLowerCase();
-								}
-								int caret = Math.max(Math.max(textArea.getCaretPosition(),textArea.getSelectionStart()),textArea.getSelectionEnd());
-								int index=0, end=0;
-								Pattern pattern = Pattern.compile(find);
-								if (caret != original.length())
-								{
-									if (useRegex)
-									{
-										//use regex
-										Matcher matcher = pattern.matcher(original);
-										if (matcher.find(caret))
-										{
-											index = matcher.start();
-											end = matcher.end();
-										}
-										else
-										{
-											index = -1;
-										}
-									}
-									else
-									{
-										index = original.indexOf(find,caret);
-										end = index+find.length();
-									}
-								}
-								else
-								{
-									index = -1;
-								}
-								if (index != -1)
-								{
-									textArea.select(index, end);
-								}
-								else
-								{
-									int option = JOptionPane.showConfirmDialog(w, "Reached the end of the file!\nSearch from the start again?", "Error", JOptionPane.YES_NO_OPTION);
-									if (option == JOptionPane.YES_OPTION)
-									{
-										textArea.setCaretPosition(0);
-										this.mouseReleased(ev);
-									}
-								}
-							}
-						};
-						button2.setToolTipText("Find next occurrence");
-						panelButton.add(button2);
-						MyButton button3 = new MyButton("Last")
-						{
-							@Override
-							public void mouseReleased(MouseEvent ev)
-							{
-								String original = text;
-								String find = wd1.getText();
-								boolean useRegex = regex.isSelected();
-								if (!caseSensitive.isSelected())
-								{
-									//case insensitive
-									original = original.toLowerCase();
-									find = find.toLowerCase();
-								}
-								int caret = Math.min(Math.min(textArea.getCaretPosition(),textArea.getSelectionStart()),textArea.getSelectionEnd());
-								int index=0, end=0;
-								Pattern pattern = Pattern.compile(find);
-								if (caret != 0)
-								{
-									if (useRegex)
-									{
-										for (int i=caret-find.length(); i>=0; i--)
-										{
-											//use regex
-											String fragment = original.substring(i,caret);
-											Matcher matcher = pattern.matcher(fragment);
-											if (matcher.find())
-											{
-												index = matcher.start()+i;
-												end = matcher.end()+i;
-												break;
-											}
-											else
-											{
-												index = -1;
-											}
-										}
-									}
-									else
-									{
-										String fragment = original.substring(0,caret);
-										index = fragment.lastIndexOf(find);
-										if (index != -1)
-										{
-											end = index + find.length();
-										}
-									}
-								}
-								else
-								{
-									index = -1;
-								}
-								if (index != -1)
-								{
-									textArea.select(index, end);
-									return;
-								}
-								else
-								{
-									int option = JOptionPane.showConfirmDialog(w, "Reached the start of the file!\nSearch from the end again?", "Error", JOptionPane.YES_NO_OPTION);
-									if (option == JOptionPane.YES_OPTION)
-									{
-										textArea.setCaretPosition(original.length());
-										this.mouseReleased(ev);
-										return;
-									}
-								}
-							}
-						};
-						button3.setToolTipText("Find last occurrence");
-						panelButton.add(button3);
-						c.gridx=0;
-						c.gridy=3;
-						c.gridwidth=2;
-						c.fill=GridBagConstraints.HORIZONTAL;
-						replace.add(panelButton,c);
-						replace.pack();
-						replace.setLocationRelativeTo(w);
-						replace.setVisible(true);
-					}
+					SearchDialog.showDialog(w,textArea);
 				}
 				else
 				{
@@ -848,7 +620,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 							{
 							}
 							prog.dispose();
-							textArea.setSaved(false);
+							tab.setSaved(false);
 							/*
 							 * re-enable backup
 							 */
@@ -873,7 +645,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 							}
 							textArea.getUndoManager().backup();
 							textArea.setAutoBackup(true);
-							textArea.setSaved(false);
+							tab.setSaved(false);
 						}
 					});
 				}
@@ -909,26 +681,21 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			case 35: //delete blank lines
 			if (textArea.isEditable())
 			{
-				int count = textArea.getLineCount();
-				int option = JOptionPane.YES_OPTION;
-				if (count>=1000)
+				Boolean option = BlankLineDialog.showDialog(w);
+				if (option != null)
 				{
-					option = JOptionPane.showConfirmDialog(w, "This may spend very long time if you have more than 1000 lines.\nContinue?", "Warning", JOptionPane.YES_NO_OPTION);
-				}
-				if (option == JOptionPane.YES_OPTION)
-				{
-					String text = textArea.getText();
-					int caret = textArea.getCaretPosition();
-					for (int i=count; i>=2; i--)
+					if (option.booleanValue())
 					{
-						String buffer = "";
-						for (int k=1; k<=i; k++)
-						{
-							buffer+="\n";
-						}
-						text = text.replace(buffer, "\n");
+						String text = textArea.getText().replaceAll("\n+", "\n").replaceAll("\n[\\s\\t]*\n", "\n");
+						if (text.startsWith("\n")) text = text.substring(1);
+						textArea.setText(text);
 					}
-					textArea.setText(text);
+					else
+					{
+						String text = textArea.getText().replaceAll("\n+", "\n");
+						if (text.startsWith("\n")) text = text.substring(1);
+						textArea.setText(text);
+					}
 				}
 			}
 			else
@@ -1306,7 +1073,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 							if (textArea.isEditable())
 							{
 								textArea.insert(toChar(unicodeField.getText())+"", textArea.getCaretPosition());
-								textArea.setSaved(false);
+								tab.setSaved(false);
 							}
 						}
 						catch (Exception ex)
@@ -1352,7 +1119,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 				unicodeDialog.setLocationRelativeTo(w);
 				unicodeDialog.setMinimumSize(new Dimension(315,205));
 				unicodeDialog.setVisible(true);
-				textArea.setSaved(false);
+				tab.setSaved(false);
 			}
 			break;
 			
@@ -1387,7 +1154,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 							if (textArea.isEditable())
 							{
 								textArea.insert(toUnicodeValue(charField.getText().charAt(0)), textArea.getCaretPosition());
-								textArea.setSaved(false);
+								tab.setSaved(false);
 							}
 						}
 						catch (Exception ex)
@@ -1475,14 +1242,13 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			}
 			break;
 			
-			case 48: //visit SourceForge
+			case 48: //visit GitHub
 			try
 			{
-				Desktop.getDesktop().browse(new URI("http://refluxedit.sourceforge.net/"));
+				Desktop.getDesktop().browse(new URI("https://github.com/tony200910041/RefluxEdit/releases"));
 			}
 			catch (Exception ex)
 			{
-				exception(ex);
 			}
 			break;
 			
@@ -1525,7 +1291,6 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			{
 				UndoDialog undoDialog = tab.getUndoDialog();
 				undoDialog.resetUndoDialogList();
-				undoDialog.pack();
 				undoDialog.setLocationRelativeTo(w);
 				undoDialog.setVisible(true);
 			}
@@ -1579,11 +1344,14 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			
 			case 56: //new file from clipboard
 			{
-				Tab _new = new Tab();
-				_new.getTextArea().paste();
-				MainPanel.add(_new);
+				Tab _new = Tab.getNewTab();
+				if (!MainPanel.getAllTab().contains(_new))
+				{				
+					MainPanel.add(_new);
+				}
 				MainPanel.getInstance().updateTabName(_new);
-				MainPanel.setSelectedComponent(_new);				
+				MainPanel.setSelectedComponent(_new);
+				_new.getTextArea().paste();
 			}
 			break;
 			
@@ -1593,16 +1361,28 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 				if (text != null)
 				{
 					Tab _new = Tab.getNewTab();
+					if (!MainPanel.getAllTab().contains(_new))
+					{
+						MainPanel.getInstance().addTab(_new);
+					}
 					_new.getTextArea().setText(text);
-					MainPanel.add(_new);					
-					MainPanel.getInstance().updateTabName(_new);
 					MainPanel.setSelectedComponent(_new);
+					int option = JOptionPane.showConfirmDialog(w,"A new class has been created.\nWould you like to save it?","Saving",JOptionPane.YES_NO_OPTION);
+					if (option == JOptionPane.YES_OPTION)
+					{
+						new MyListener(4).update(ev); //call save as
+					}
 				}
 			}
 			break;
 			
 			case 58: //about MPL
 			MPLDialog.showDialog(w);
+			break;
+			
+			case 59: //file browser
+			FileBrowserDialog dialog = FileBrowserDialog.getInstance();
+			dialog.setVisible(!dialog.isVisible());
 			break;
 			
 			default:

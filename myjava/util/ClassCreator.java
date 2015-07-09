@@ -5,6 +5,8 @@
 
 package myjava.util;
 
+import java.util.*;
+
 public class ClassCreator
 {
 	public static final int DEFAULT = 0;
@@ -86,6 +88,40 @@ public class ClassCreator
 		this.isStatic = isStatic;
 	}
 	
+	private Set<String> getImportStatements()
+	{
+		Set<String> returnSet = new TreeSet<>();
+		Set<Class<?>> classSet = new HashSet<>();
+		if (interfaces != null)
+		{
+			Collections.addAll(classSet, interfaces);
+		}
+		if (superClass != null)
+		{
+			classSet.add(superClass);
+		}
+		for (Class<?> c: classSet)
+		{
+			String classImport = getImportStatement(c);
+			if (classImport != null)
+			{
+				returnSet.add("import " + classImport + ".*;");
+			}
+		}
+		return returnSet;
+	}
+	
+	private static String getImportStatement(Class<?> c)
+	{
+		Package p = c.getPackage();
+		String name = p.getName();
+		if (name.equals("java.lang"))
+		{
+			return null;
+		}
+		return name;
+	}
+	
 	public String toClassString()
 	{
 		StringBuilder s = new StringBuilder("");
@@ -93,9 +129,20 @@ public class ClassCreator
 		{
 			s.append("package " + packageName + ";\n\n");
 		}
+		Set<String> imports = getImportStatements();
 		if (isGUI)
 		{
-			s.append("import java.awt.*;\nimport java.awt.event.*;\nimport javax.swing.*;\n\n");
+			imports.add("import java.awt.*;");
+			imports.add("import java.awt.event.*;");
+			imports.add("import javax.swing.*;");
+		}
+		if (imports.size() != 0)
+		{
+			for (String statement: imports)
+			{
+				s.append(statement+"\n");
+			}
+			s.append("\n");
 		}
 		switch (this.access)
 		{
@@ -119,14 +166,14 @@ public class ClassCreator
 		{
 			s.append("static ");
 		}
-		s.append("class " + this.name + " ");
+		s.append("class " + this.name);
 		if (superClass != null)
 		{
-			s.append("extends " + superClass.getSimpleName() + " ");
+			s.append(" extends " + superClass.getSimpleName());
 		}
 		if (interfaces != null)
 		{
-			s.append("implements ");
+			s.append(" implements ");
 			for (int i=0; i<interfaces.length; i++)
 			{
 				s.append(interfaces[i].getSimpleName());

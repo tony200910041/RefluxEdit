@@ -10,6 +10,7 @@ import javax.swing.*;
 import javax.swing.filechooser.*;
 import java.io.*;
 import java.util.*;
+import myjava.util.*;
 import static exec.SourceManager.*;
 
 public final class FileChooser
@@ -17,7 +18,7 @@ public final class FileChooser
 	//defaults
 	private static final MyWhiteFileChooser JavaChooser = MyWhiteFileChooser.getInstance();
 	private static FileDialog systemChooser;
-	private static final FileNameExtensionFilter textFilter = new FileNameExtensionFilter("Text file", new String[]{"txt", "java", "py", "php", "html", "htm", "xml", "properties", "c", "cpp"});
+	private static final FileNameExtensionFilter textFilter = new FileNameExtensionFilter("Text file", TextFileFormat.getFormats());
 	//
 	public static final int OPEN = 0;
 	public static final int SAVE = 1;

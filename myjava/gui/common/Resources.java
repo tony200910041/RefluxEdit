@@ -6,6 +6,7 @@
 package myjava.gui.common;
 
 import java.awt.*;
+import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
 
@@ -24,9 +25,14 @@ public interface Resources
 	boolean isWindows = LAF.contains("windows");
 	boolean isNimbus = LAF.contains("nimbus");
 	/*
+	 * "ctrl"/"meta"(command) key
+	 */
+	String osName = System.getProperty("os.name").toLowerCase();
+	int OS_CTRL_MASK = osName.contains("mac")?ActionEvent.META_MASK:ActionEvent.CTRL_MASK;
+	/*
 	 * ui constants
 	 */
-	Font f13 = LAF.contains("windows")?(new Font("PMingLiU", Font.PLAIN, 12)):(new Font("Microsoft Jhenghei", Font.PLAIN, 13));
+	Font f13 = LAF.contains("windows")?(new JButton().getFont().deriveFont(12f)):(new Font("Microsoft Jhenghei", Font.PLAIN, 13));
 	LineBorder bord1 = new LineBorder(Color.BLACK, 1);
 	LineBorder bord2 = new LineBorder(Color.LIGHT_GRAY, 1);
 	BevelBorder raisedBorder = new BevelBorder(BevelBorder.RAISED);

@@ -169,27 +169,24 @@ public class ClassCreatorDialog extends JDialog
 		}
 		
 		@Override
-		public void run()
+		public synchronized void run()
 		{
-			synchronized(this)
+			SwingUtilities.invokeLater(new Runnable()
 			{
-				SwingUtilities.invokeLater(new Runnable()
+				@Override
+				public void run()
 				{
-					@Override
-					public void run()
+					String text = MyDocumentListener.this.t.getText();
+					if (isValidClassNames(text))
 					{
-						String text = MyDocumentListener.this.t.getText();
-						if (isValidClassNames(text))
-						{
-							MyDocumentListener.this.t.setBackground(Color.WHITE);
-						}
-						else
-						{
-							MyDocumentListener.this.t.setBackground(RED);
-						}
+						MyDocumentListener.this.t.setBackground(Color.WHITE);
 					}
-				});
-			}
+					else
+					{
+						MyDocumentListener.this.t.setBackground(RED);
+					}
+				}
+			});
 		}
 	}
 	
@@ -225,59 +222,69 @@ public class ClassCreatorDialog extends JDialog
 		/*
 		 * closed
 		 */
-		if (dialog.isDone)
+		while (dialog.isDone)
 		{
 			ClassCreator c = new ClassCreator();
 			try
 			{
-				String superClassInput = dialog.superClass.getText();
-				if (superClassInput.isEmpty())
+				String className = dialog.name.getText();
+				if (!className.isEmpty())
 				{
-					c.setSuperClass(null);
-				}
-				else
-				{
-					c.setSuperClass(Class.forName(superClassInput));
-				}
-				String inameinput = dialog.interfaces.getText();
-				if (inameinput.isEmpty())
-				{
-					c.setInterfaces(null);
-				}
-				else
-				{
-					String[] inames = inameinput.replace(", ", ",").split(",");
-					Class<?>[] iclasses = new Class<?>[inames.length];
-					for (int i=0; i<iclasses.length; i++)
+					c.setName(className);
+					String superClassInput = dialog.superClass.getText();
+					if (superClassInput.isEmpty())
 					{
-						iclasses[i] = Class.forName(inames[i]);
+						c.setSuperClass(null);
 					}
-					c.setInterfaces(iclasses);
+					else
+					{
+						c.setSuperClass(Class.forName(superClassInput));
+					}
+					String inameinput = dialog.interfaces.getText();
+					if (inameinput.isEmpty())
+					{
+						c.setInterfaces(null);
+					}
+					else
+					{
+						String[] inames = inameinput.replace(", ", ",").split(",");
+						Class<?>[] iclasses = new Class<?>[inames.length];
+						for (int i=0; i<iclasses.length; i++)
+						{
+							iclasses[i] = Class.forName(inames[i]);
+						}
+						c.setInterfaces(iclasses);
+					}
+					c.setSingleton(dialog.isSingleton.isSelected());
+					c.setCreateMain(dialog.createMain.isSelected());
+					c.setPackage(dialog.packageName.getText());
+					c.setGUI(dialog.isGUI.isSelected());
+					c.setStatic(dialog._static.isSelected());
+					c.setIndentation(dialog._allman.isSelected()?ClassCreator.ALLMAN:ClassCreator.ONETBS);
+					if (dialog._default.isSelected())
+					{
+						c.setAccess(ClassCreator.DEFAULT);
+					}
+					else if (dialog._public.isSelected())
+					{
+						c.setAccess(ClassCreator.PUBLIC);
+					}
+					else if (dialog._protected.isSelected())
+					{
+						c.setAccess(ClassCreator.PROTECTED);
+					}
+					else if (dialog._private.isSelected())
+					{
+						c.setAccess(ClassCreator.PRIVATE);
+					}
+					return c.toClassString();
 				}
-				c.setSingleton(dialog.isSingleton.isSelected());
-				c.setCreateMain(dialog.createMain.isSelected());
-				c.setName(dialog.name.getText());
-				c.setPackage(dialog.packageName.getText());
-				c.setGUI(dialog.isGUI.isSelected());
-				c.setStatic(dialog._static.isSelected());
-				c.setIndentation(dialog._allman.isSelected()?ClassCreator.ALLMAN:ClassCreator.ONETBS);
-				if (dialog._default.isSelected())
+				else
 				{
-					c.setAccess(ClassCreator.DEFAULT);
+					ExceptionDialog.error("No class name specified!");
+					dialog.setVisible(true);
+					continue;
 				}
-				else if (dialog._public.isSelected())
-				{
-					c.setAccess(ClassCreator.PUBLIC);
-				}
-				else if (dialog._protected.isSelected())
-				{
-					c.setAccess(ClassCreator.PROTECTED);
-				}
-				else if (dialog._private.isSelected())
-				{
-					c.setAccess(ClassCreator.PRIVATE);
-				}
-				return c.toClassString();
 			}
 			catch (Exception ex)
 			{
@@ -285,6 +292,6 @@ public class ClassCreatorDialog extends JDialog
 				return null;
 			}
 		}
-		else return null;
+		return null;
 	}
 }

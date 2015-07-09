@@ -7,6 +7,7 @@ package myjava.gui;
 
 import java.awt.*;
 import javax.swing.*;
+import javax.swing.border.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
 import myjava.gui.*;
@@ -14,41 +15,46 @@ import myjava.gui.common.*;
 
 public class RegexDialog extends JDialog implements DocumentListener, ColorConstants
 {
-	private static final Font f20 = new Font("Microsoft Jhenghei",Font.PLAIN,20);
-	private JTextField string = new JTextField();
+	private static final Font f20 = Resources.f13.deriveFont(20f);
+	private JTextArea string = new JTextArea();
 	private JTextField regex = new JTextField();
 	private JLabel match = new JLabel("Regex matcher");
 	public static void showRegexDialog(Frame parent)
 	{
 		RegexDialog dialog = new RegexDialog(parent);
+		dialog.setMinimumSize(new Dimension(370,330));
 		dialog.pack();
 		dialog.setLocationRelativeTo(parent);
-		dialog.setResizable(false);
 		dialog.setVisible(true);
 	}
 	
 	private RegexDialog(Frame parent)
 	{
-		super(parent,"Regex matcher",true);
-		this.setLayout(new GridLayout(3,1,0,0));
-		JPanel p0 = new JPanel(new FlowLayout(FlowLayout.CENTER,5,5));
+		super(parent,"Regex matcher",false);
+		this.setLayout(new BorderLayout());
+		//
 		string.setFont(f20);
-		string.setPreferredSize(new Dimension(350,33));
+		string.setDragEnabled(true);
+		string.setLineWrap(true);
+		string.setWrapStyleWord(true);
 		string.getDocument().addDocumentListener(this);
-		p0.add(string);
-		this.add(p0);
+		JScrollPane scrollPane = new JScrollPane(string);
+		this.add(scrollPane, BorderLayout.CENTER);
+		//
+		regex.setFont(f20);
+		regex.setPreferredSize(new Dimension(350,33));
+		regex.getDocument().addDocumentListener(this);
+		regex.setDragEnabled(true);
 		//
 		JPanel p1 = new JPanel(new FlowLayout(FlowLayout.CENTER,5,5));
 		match.setFont(f20);
 		p1.add(match);
-		this.add(p1);
 		//
-		JPanel p2 = new JPanel(new FlowLayout(FlowLayout.CENTER,5,5));
-		regex.setFont(f20);
-		regex.setPreferredSize(new Dimension(350,33));
-		regex.getDocument().addDocumentListener(this);
-		p2.add(regex);
-		this.add(p2);
+		JPanel lower = new JPanel(new GridLayout(2,1,0,0));
+		lower.add(p1);
+		lower.add(regex);
+		this.add(lower, BorderLayout.PAGE_END);
+		
 	}
 	
 	public void update()

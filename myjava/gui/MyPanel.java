@@ -19,4 +19,14 @@ public class MyPanel extends JPanel
 		this.setLayout(new FlowLayout(x));
 		this.setBackground(Color.WHITE);
 	}
+	
+	public static MyPanel wrap(Component... c)
+	{
+		MyPanel panel = new MyPanel(LEFT);
+		for (Component component: c)
+		{
+			panel.add(component);
+		}
+		return panel;
+	}
 }

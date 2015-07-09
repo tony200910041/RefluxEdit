@@ -6,25 +6,76 @@
 package myjava.gui;
 
 import java.awt.*;
+import java.awt.event.*;
 import javax.swing.*;
 import java.util.*;
 import java.io.*;
+import exec.*;
 import myjava.io.*;
 
 public class MainPanel extends JPanel
-{	
-	private static final ArrayList<Tab> tabList = new ArrayList<>();
-	private MyCompileToolBar compileDialog = MyCompileToolBar.getInstance();
-	private JTabbedPane tabbedPane = new JTabbedPane();
+{
 	private static final MainPanel INSTANCE = new MainPanel();
+	private MyCompileToolBar compileDialog = MyCompileToolBar.getInstance();
+	private JTabbedPane tabbedPane = new JTabbedPane();	
 	private MainPanel()
 	{
-		super(new BorderLayout());
+		super(new BorderLayout(0,5));
 		this.add(tabbedPane, BorderLayout.CENTER);
-		Tab tab = Tab.getNewTab();
+		Tab tab = new Tab();
 		this.addTab(tab);
 		this.updateTabName(tab);
 		this.tabbedPane.setFocusable(false);
+		MouseAdapter mouseListener = new MouseAdapter()
+		{
+			private Tab lastPressedTab = null;
+			@Override
+			public void mousePressed(MouseEvent ev)
+			{
+				int index = tabbedPane.indexAtLocation(ev.getX(), ev.getY());
+				if (index != -1)
+				{
+					this.lastPressedTab = (Tab)(tabbedPane.getComponentAt(index));
+				}
+				else
+				{
+					this.lastPressedTab = null;
+				}
+			}
+			
+			@Override
+			public void mouseReleased(MouseEvent ev)
+			{
+				if (ev.isPopupTrigger())
+				{
+					int index = tabbedPane.indexAtLocation(ev.getX(), ev.getY());
+					if (index != -1)
+					{
+						Tab tab = (Tab)(tabbedPane.getComponentAt(index));
+						JLabel tabLabel = tab.getTabLabel();
+						for (MouseListener listener: tabLabel.getMouseListeners())
+						{
+							listener.mouseReleased(SwingUtilities.convertMouseEvent(tabbedPane,ev,tabLabel));
+						}
+					}
+				}
+			}
+			
+			@Override 
+			public void mouseDragged(MouseEvent ev)
+			{
+				if (this.lastPressedTab != null)
+				{
+					JLabel tabLabel = this.lastPressedTab.getTabLabel();
+					for (MouseMotionListener listener: tabLabel.getMouseMotionListeners())
+					{
+						listener.mouseDragged(SwingUtilities.convertMouseEvent(tabbedPane,ev,tabLabel));
+					}
+				}
+			}
+		};
+		this.tabbedPane.addMouseListener(mouseListener);
+		this.tabbedPane.addMouseMotionListener(mouseListener);
 	}
 	
 	public static MainPanel getInstance()
@@ -37,9 +88,14 @@ public class MainPanel extends JPanel
 		return (Tab)(INSTANCE.tabbedPane.getSelectedComponent());
 	}
 	
-	public static ArrayList<Tab> getAllTab()
+	public static Set<Tab> getAllTab()
 	{
-		return tabList;
+		Set<Tab> tabs = new LinkedHashSet<>();
+		for (int i=0; i<INSTANCE.tabbedPane.getTabCount(); i++)
+		{
+			tabs.add((Tab)(INSTANCE.tabbedPane.getComponentAt(i)));
+		}
+		return tabs;
 	}
 	
 	public static void updateAllTab()
@@ -58,21 +114,26 @@ public class MainPanel extends JPanel
 	
 	public void addTab(Tab tab)
 	{
-		File file = tab.getFile();
 		this.tabbedPane.addTab(null, null, tab, null);
-		//
-		tabList.add(tab);
 	}
 	
 	public void updateTabName(Tab tab)
 	{
 		File file = tab.getFile();
-		tab.getTabLabel().setText(file==null?"Untitled":file.getName());
+		//set tabLabel text
+		JLabel tabLabel = tab.getTabLabel();
+		String tabText = (tab.isSaved()?"":"*") + (file==null?"Untitled":file.getName());
+		tabLabel.setText(tabText);
+		//calculate size
+		JPanel tabPanel = tab.getTabPanel();
+		int stringWidth = tabLabel.getFontMetrics(tabLabel.getFont()).stringWidth(tabText);
+		tabPanel.setPreferredSize(new Dimension(Math.max(stringWidth,60), UISetter.getLookAndFeelTabHeight()));
+		//add tabLabel
 		int index = tabbedPane.indexOfComponent(tab);
-		tabbedPane.setTabComponentAt(index, tab.getTabPanel());
+		tabbedPane.setTabComponentAt(index, tabPanel);
+		//tooltip: whole path
 		String path = file==null?"Untitled":file.getPath();
-		tabbedPane.setToolTipTextAt(index, path);
-		tab.getTabPanel().setToolTipText(path);
+		tabLabel.setToolTipText(path);
 	}
 	
 	public static void setSelectedComponent(Tab tab)
@@ -83,6 +144,12 @@ public class MainPanel extends JPanel
 	public JTabbedPane getTabbedPane()
 	{
 		return this.tabbedPane;
+	}
+	
+	public static void close(Tab tab)
+	{
+		//convenient method
+		MainPanel.getInstance().removeTab(tab);
 	}
 	
 	public void removeTab(Tab tab)
@@ -99,12 +166,18 @@ public class MainPanel extends JPanel
 		{
 			watcher.close();
 		}
-		tabList.remove(tab);
 	}
 	
-	public static void close(Tab tab)
+	public void swapTab(int draggedIndex, int reachedIndex)
 	{
-		//convenient method
-		MainPanel.getInstance().removeTab(tab);
+		Tab dragged = (Tab)(tabbedPane.getComponentAt(draggedIndex));
+		Tab reached = (Tab)(tabbedPane.getComponentAt(reachedIndex));
+		tabbedPane.remove(dragged);
+		tabbedPane.insertTab(null,null,dragged,null,reachedIndex);
+		tabbedPane.remove(reached);
+		tabbedPane.insertTab(null,null,reached,null,draggedIndex);
+		this.updateTabName(dragged);
+		this.updateTabName(reached);
+		this.setSelectedComponent(dragged);
 	}
 }

@@ -38,7 +38,15 @@ public final class UISetter implements Resources
 		defaults.put("PopupMenu.background", Color.WHITE);
 		defaults.put("ToolTip.border", bord1);
 		defaults.put("ToolTip.background", Color.WHITE);
+		defaults.put("TabbedPane.focus", new Color(0,0,0,0));
 		ToolTipManager.sharedInstance().setInitialDelay(100);
 		ToolTipManager.sharedInstance().setDismissDelay(6500);
+	}
+	
+	public static int getLookAndFeelTabHeight()
+	{
+		if (isWindows) return 14;
+		else if (isNimbus) return 18;
+		else return 18;
 	}
 }

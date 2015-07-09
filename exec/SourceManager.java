@@ -26,9 +26,9 @@ public final class SourceManager
 				PrintWriter writer = new PrintWriter(settingFile, "UTF-8");
 				writer.close();
 				setConfig("Size.x", "550");
-				setConfig("Size.y", "500");
-				setConfig("Location.x", "0");
-				setConfig("Location.y", "0");
+				setConfig("Size.y", "540");
+				setConfig("Location.x", "10");
+				setConfig("Location.y", "10");
 				setConfig("isEditable", "true");
 				setConfig("LineWrap", "true");
 				setConfig("WrapStyleWord", "true");
@@ -40,21 +40,21 @@ public final class SourceManager
 				setConfig("SelectionColor.g", "223");
 				setConfig("SelectionColor.b", "255");
 				setConfig("LAF", "Default");
-				setConfig("isPanel", "true");
+				setConfig("isPanel", "no");
 				setConfig("ToolBar.new", "true");
 				setConfig("ToolBar.open", "true");
 				setConfig("ToolBar.save", "true");
+				setConfig("ToolBar.export", "false");
 				setConfig("ToolBar.print", "true");
 				setConfig("ToolBar.undo", "true");
-				setConfig("ToolBar.undo", "true");
+				setConfig("ToolBar.redo", "false");
 				setConfig("ToolBar.cut", "true");
 				setConfig("ToolBar.copy", "true");
 				setConfig("ToolBar.paste", "true");
 				setConfig("ToolBar.selectAll", "true");
 				setConfig("ToolBar.selectAllAndCopy", "false");
-				setConfig("ToolBar.delete", "true");
+				setConfig("ToolBar.delete", "false");
 				setConfig("ToolBar.search", "true");
-				setConfig("ToolBar.replace", "true");
 				setConfig("TextAreaFont.fontName", "Microsoft Jhenghei");
 				setConfig("TextAreaFont.fontStyle", "0");
 				setConfig("TextAreaFont.fontSize", "15");
@@ -66,20 +66,28 @@ public final class SourceManager
 				setConfig("autoIndent", "true");
 				setConfig("showUmbrella", "false");
 				setConfig("Umbrella.alpha", "60");
-				setConfig("Compile.command", "javac %f");
-				setConfig("Compile.runCommand", "java -classpath %p %s%nPAUSE");
-				setConfig("Compile.runCommandFileName","CMD.BAT");
+				setConfig("Compile.command", "javac -classpath \"%p\" %f");
+				setConfig("Compile.runCommand", "cd %p%njava -classpath %p %a%nPAUSE%ndel \"%~f0\"");
+				setConfig("Compile.runCommandFileName","run.bat");
 				setConfig("Compile.removeOriginal", "false");
 				setConfig("Compile.regex", ".*\\.class");
-				setConfig("Compile.useGlobal", "true");
+				setConfig("Compile.useGlobal", "false");
+				setConfig("Compile.command.default.c", "gcc -o %a %f");
+				setConfig("Compile.command.default.cpp", "g++ -o %a %f");
+				setConfig("Compile.command.default.java", "javac -classpath %p %f");
+				setConfig("Compile.runCommand.default.c", "cd %p%n%a%nPAUSE%ndel \"%~f0\"");
+				setConfig("Compile.runCommand.default.cpp", "cd %p%n%a%nPAUSE%ndel \"%~f0\"");
+				setConfig("Compile.runCommand.default.java", "cd %p%njava -classpath %p %a%nPAUSE%ndel \"%~f0\"");
+				setConfig("Compile.runCommand.default.pl", "cd %p%nperl %f%nPAUSE%ndel \"%~f0\"");
+				setConfig("Compile.runCommand.default.plx", "cd %p%nperl %f%nPAUSE%ndel \"%~f0\"");
+				setConfig("Compile.runCommand.default.py", "cd %p%npython %f%nPAUSE%ndel \"%~f0\"");
 				setConfig("Caret.save", "true");
 				setConfig("CheckUpdate", "true");
-				setConfig("ConfirmDrag", "true");
+				setConfig("ConfirmDrag", "false");
 				setConfig("useTray", "true");
 				setConfig("CloseToTray", "false");
 				setConfig("showHint", "false");
-				setConfig("FirstTime.welcome", "true");
-				setConfig("FirstTime.clipboardListener", "true");
+				setConfig("showLineCounter", "false");
 				saveConfig();
 			}
 			catch (IOException ex)
@@ -147,7 +155,7 @@ public final class SourceManager
 		{
 			if (!isUpToDate)
 			{
-				prop.load(new FileInputStream(settingFile));
+				prop.load(new BufferedInputStream(new FileInputStream(settingFile)));
 				isUpToDate = true;
 			}
 		}
@@ -182,7 +190,7 @@ public final class SourceManager
 	{
 		try
 		{
-			prop.store(new FileOutputStream(settingFile), null);
+			prop.store(new BufferedOutputStream(new FileOutputStream(settingFile)), null);
 			isUpToDate = true;
 		}
 		catch (Exception ex)
@@ -228,5 +236,10 @@ public final class SourceManager
 	public static ArrayList<String> propertyNames()
 	{
 		return (ArrayList<String>)Collections.list(prop.propertyNames());
+	}
+	
+	public static Set<String> keys()
+	{
+		return prop.stringPropertyNames();
 	}
 }

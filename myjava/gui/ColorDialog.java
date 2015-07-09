@@ -89,6 +89,10 @@ public class ColorDialog extends JDialog implements ActionListener
 			{
 				buffer += (getHEXString(c) + " ");
 			}
+			if (buffer.endsWith(" "))
+			{
+				buffer = buffer.substring(0, buffer.length()-1);
+			}
 			return buffer;
 		}
 		else return "";

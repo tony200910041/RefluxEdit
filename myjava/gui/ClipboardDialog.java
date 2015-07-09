@@ -126,22 +126,17 @@ public class ClipboardDialog extends JDialog
 	@Override
 	public void setVisible(boolean isVisible)
 	{
-		if (isVisible)
+		if (isVisible&&isFirstLaunch) //first launch per start
 		{
-			if (isFirstLaunch) //first launch per start
+			isFirstLaunch = false;
+			JFrame parent = RefluxEdit.getInstance();
+			if (parent.getExtendedState() == JFrame.NORMAL)
 			{
-				isFirstLaunch = false;
-				Point p = RefluxEdit.getInstance().getLocation();
-				this.setLocation(p.x-255, p.y);
+				Point p = parent.getLocation();
+				this.setLocation(Math.max(0,p.x-255), p.y);
 			}
 		}
 		super.setVisible(isVisible);
-		if (getBoolean("FirstTime.clipboardListener"))
-		{
-			Point p = this.list.getLocationOnScreen();
-			ToolTipMessage.showMessage(p.x+5, p.y+5, "Clipboard listener", "This listens to text changes in system\nclipboard when RefluxEdit is launched.");
-			writeConfig("FirstTime.clipboardListener", "false");
-		}
 	}
 	
 	public static void initialize()

@@ -14,6 +14,37 @@ RefluxEdit is provided "AS IS" and WITHOUT warranties. RefluxEdit does not conta
 
 ----------
 Version History:
+RefluxEdit 5.0 2015-07-09
+-New function: show asterisk (*) for unsaved files
+-New function: drag tab to swap
+-New function: line counter
+-New function: convenient file browser dialog
+-New function: delete blank lines options
+-New function: open recent files
+-New function: custom file format
+-Changed: option dialog
+-Changed: tab width
+-Changed: multi-line regex matcher
+-Changed: enhanced tab popup detection
+-Changed: enhanced class creator
+-Changed: enhanced toolbar look
+-Changed: more compile options
+-Changed: hide toolbars by default
+-Changed: not confirm drag by default
+-Changed: default frame location
+-Changed: undo and redo icons
+-Removed: visit SourceForge
+-Fixed bug #00034: open files which are previously closed
+-Fixed bug #00035: wrong compile command
+-Fixed bug #00036: wrong search selection
+-Fixed bug #00037: wrong word and character count in selection
+-Fixed bug #00038: dialog location out of visible area
+-Fixed bug #00039: blocking GUI during compilation
+-Fixed bug #00040: not showing toolbar in Nimbus Look and Feel
+
+RefluxEdit 5.0beta2
+-Internal testing version
+
 RefluxEdit 5.0beta1 2015-06-10
 -New function: system tray
 -New function: create new tab using clipboard text
@@ -48,7 +79,7 @@ RefluxEdit 5.0alpha 2015-05-10
 -Changed: JFileChooser
 -Changed: integrated color chooser
 -Changed: right-click menu items for indentation
--Removed explicit Sstem.gc() call
+-Removed: explicit Sstem.gc() call
 -Fixed bug #00030: remove caret position table
 
 RefluxEdit 4.1
@@ -136,7 +167,7 @@ RefluxEdit 3.0beta1 2014-09-30
 -Changed: line separator dialog
 -Changed: default text area font size (changed from 13 to 15)
 -Changed: tooltip text font in Nimbus Look and Feel
--Fixed bug #00014: still editable after disabling editint the text
+-Fixed bug #00014: still editable after disabling editing the text
 -Fixed bug #00015: not updating saved state after using specific tools
 -Fixed bug #00016: not saving image correctly
 
@@ -241,4 +272,4 @@ RefluxEdit 1.0 2014-02-03
 -First release version
 ----------
 
-Please feel free to contact tony200910041 by email, tony200910041@gmail.com or in my blog, http://tony200910041.wordpress.com, if you have further enquiries, problems or suggestions. Your advice would be highly appreciated.
+Please feel free to contact tony200910041 by email, tony200910041@gmail.com, or at GitHub page, http://tony200910041.github.io/RefluxEdit/, if you have further enquiries, problems or suggestions. Your advice would be highly appreciated.

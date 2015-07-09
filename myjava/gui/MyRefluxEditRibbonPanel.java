@@ -58,6 +58,7 @@ public class MyRefluxEditRibbonPanel extends MyRibbonPanel
 		tab3.add(new MyRibbonButton("<html><center>Always<br>On top</center></html>", "ONTOP", "<html><font size=\"4\"><b>Enable/disable always on top</b></font><br>Click here to enable/disable RefluxEdit always staying on top.</html>", false, 21));
 		tab3.add(new MyRibbonButton("<html><center><font color=\"green\">Undo</font><br>dialog</center></htnml>", "UNDODIALOG32", "<html><font size=\"4\"><b>Undo record dialog</b></font><br>Show the undo record dialog.</html>", false, 52));
 		tab3.add(new MyRibbonButton("<html><center>Clipboard<br>listener</center></html>", "PASTE32", "<html><font size=\"4\"><b>Clipboard listener</b></font><br>Show the clipboard listener dialog, which monitors clipboard changes.</html>", false, 29));
+		tab3.add(new MyRibbonButton("<html><center>File<br>browser</center></html>", "FILEBROWSER32", "<html><font size=\"4\"><b>File browser</b></font><br>Convenient dialog to browse and open files.</html>", false, 59));
 		tab3.add(createSeparator());
 		tab3.add(new MyRibbonButton("<html><center>Goto<br>line</center></html>", "GOTOLINE32", "<html><font size=\"4\"><b>Goto line</b></font><br>Goto specific line immediately.</html>", false, 47));
 		MyPanel panel1 = new MyPanel(MyPanel.CENTER);
@@ -99,7 +100,7 @@ public class MyRefluxEditRibbonPanel extends MyRibbonPanel
 		tab5_1.setOpaque(false);
 		tab5_1.add(new MyRibbonButton("10 \"=\"", null, "<html><font size=\"4\"><b>Insert 10 \"=\"</b></font><br>Insert ten equal signs</html>", true, 30));
 		tab5_1.add(new MyRibbonButton("Four \" \"", null, "<html><font size=\"4\"><b>Insert four spaces</b></font><br>Insert four spaces. Useful for programmers.</html>", true, 31));
-		tab5_1.add(new MyRibbonButton("Spaces!", null, "<html><font size=\"4\"><b>Spaces!</b></font><br>Insert spaces between characters!</html>", true, 49));
+		tab5_1.add(new MyRibbonButton("Spaces", null, "<html><font size=\"4\"><b>Spaces</b></font><br>Insert spaces between characters!</html>", true, 49));
 		tab5.add(tab5_1);
 		tab5.add(createSeparator());
 		tab5.add(new MyRibbonButton("<html><center>Random<br>words</center></html>", "RANDOM", "<html><font size=\"4\"><b>Generate random words</b></font><br>Generate specified number of \"words\" randomly.<br>The words will be between 1 and 10 character(s) long.<br>Note that performing this action may take a long time.</html>", false, 32));
@@ -113,7 +114,7 @@ public class MyRefluxEditRibbonPanel extends MyRibbonPanel
 		tab6.add(panel2);
 		tab6.add(new MyRibbonButton("<html><center>About<br>RefluxEdit</center></html>", "APPICON32", "<html><font size=\"4\"><b>About RefluxEdit&nbsp;&nbsp;&nbsp;Ctrl+F1</b></font><br>RefluxEdit is a lightweight plain text editor written in Java by tony200910041.<br>SourceForge page: http://refluxedit.sourceforge.net</html>", false, 16));
 		tab6.add(new MyRibbonButton("<html><center>About<br>MPL 2.0</center></html>", "LICENSE32", "<html><font size=\"4\"><b>About Mozilla Public License 2.0</b></font><br>RefluxEdit is released under MPL 2.0. You are welcome to learn more about this license.</html>", false, 58));
-		tab6.add(new MyRibbonButton("<html><center>Visit<br>SourceForge</center></html>", "VISIT32", "<html><font size=\"4\"><b>Visit SourceForge homepage</b></font><br>http://refluxedit.sourceforge.net/</html>", false, 48));
+		tab6.add(new MyRibbonButton("<html><center>Visit<br>GitHub</center></html>", "VISIT32", "<html><font size=\"4\"><b>Visit GitHub homepage</b></font><br>https://github.com/tony200910041/RefluxEdit/releases</html>", false, 48));
 		tab6.add(createSeparator());
 		tab6.add(new MyRibbonButton("<html>Options</html>", "OPTIONS32", "<html><font size=\"4\"><b>Options</b></font><br>Miscellaneous options</html>", false, 39));
 		//"<html><font size=\"4\"><b></b></font><br></html>"

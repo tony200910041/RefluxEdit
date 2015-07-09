@@ -1,3 +1,8 @@
+/** This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 package myjava.gui;
 
 import java.awt.*;
@@ -93,7 +98,7 @@ public class MPLDialog extends JDialog
 			}
 		});
 		this.add(bottomPanel, BorderLayout.PAGE_END);
-		this.setSize(450,278);
+		this.setSize(450,285);
 		this.setLocationRelativeTo(parent);
 	}
 	

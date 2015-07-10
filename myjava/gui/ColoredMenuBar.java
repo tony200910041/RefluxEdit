@@ -67,8 +67,8 @@ public class ColoredMenuBar extends JMenuBar
 		menu1_2.add(new MyMenuItem("Open file", "OPEN", 2, KeyEvent.VK_O));
 		menu1_2.add(new MyMenuItem("Open file (quick)", null, 3));
 		menu1_2.add(new MyMenuItem("Open file (charset)",null, 51));
-		menu1_2.add(new JSeparator());
-		menu1_2.add(RecentMenu.getInstance());
+		//menu1_2.add(new JSeparator());
+		//menu1_2.add(RecentMenu.getInstance());
 		menu1.add(new JSeparator());
 		menu1.add(new MyMenuItem("Save as", "SAVE", 4, KeyEvent.VK_S));
 		menu1.add(new MyMenuItem("Save", null, 5));

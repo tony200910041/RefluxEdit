@@ -20,7 +20,6 @@ RefluxEdit 5.0 2015-07-09
 -New function: line counter
 -New function: convenient file browser dialog
 -New function: delete blank lines options
--New function: open recent files
 -New function: custom file format
 -Changed: option dialog
 -Changed: tab width

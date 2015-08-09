@@ -15,19 +15,17 @@ import javax.swing.*;
 import myjava.gui.common.Resources;
 
 public class MyRadioButton extends JRadioButton implements Resources
-{
-	private int x;
-	public MyRadioButton(String str, boolean isSelected, int x)
+{	
+	public MyRadioButton(String str, boolean isSelected)
 	{
 		super(str, isSelected);
 		this.setFont(f13);
 		this.setOpaque(false);
 		this.setFocusPainted(false);
-		this.x = x;
 	}
 	
-	public int getIndex()
+	public MyRadioButton(String str)
 	{
-		return this.x;
+		this(str,false);
 	}
 }

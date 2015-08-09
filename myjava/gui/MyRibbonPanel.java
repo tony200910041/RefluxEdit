@@ -108,7 +108,7 @@ public class MyRibbonPanel extends JPanel implements MouseListener
 		buttonPanel.add(firstButton,0);*/
 	}
 	
-	private class ButtonPanel extends JPanel
+	private static class ButtonPanel extends JPanel
 	{
 		ButtonPanel()
 		{
@@ -126,7 +126,7 @@ public class MyRibbonPanel extends JPanel implements MouseListener
 		}
 	}
 	
-	private class LinePanel extends JPanel
+	private static class LinePanel extends JPanel
 	{
 		LinePanel()
 		{

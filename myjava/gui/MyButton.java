@@ -16,40 +16,39 @@ import javax.swing.border.*;
 import myjava.gui.common.*;
 
 public class MyButton extends JButton implements ActionListener, MouseListener, Resources
-{	
-	private static Color background = Color.WHITE;
-	private static Color foreground = Color.BLACK;
-	private static Dimension dimension = new Dimension(50,28);	
-	public MyButton(String text)
+{
+	public MyButton()
 	{
-		super(text);
 		this.setFont(Resources.f13);
-		if ((!isWindows)&&(!isNimbus))
+		if (isMetal)
 		{
 			this.setBorder(bord1);
 			this.setFocusPainted(false);
+			this.setBackground(Color.WHITE);
+			this.setPreferredSize(new Dimension(50,28));
 		}
 		else if (isNimbus)
 		{
-			this.setBorder(null);
+			this.setBackground(Color.WHITE);
 		}
-		if (!isWindows)
-		{
-			this.setBackground(background);
-			this.setForeground(foreground);
-			this.setPreferredSize(dimension);			
-		}
-		else
+		else if (isWindows)
 		{
 			this.setOpaque(false);
 		}
 		this.addMouseListener(this);
-		this.addActionListener(this);		
+		this.addActionListener(this);
 	}
 	
-	public MyButton()
+	public MyButton(String text)
 	{
-		this("");
+		this();
+		this.setText(text);
+	}
+	
+	public MyButton(Icon icon)
+	{
+		this();
+		this.setIcon(icon);
 	}
 	
 	@Override

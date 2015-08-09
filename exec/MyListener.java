@@ -32,6 +32,7 @@ import exec.*;
 import myjava.gui.*;
 import myjava.util.*;
 import myjava.gui.common.*;
+import myjava.gui.option.*;
 import static exec.SourceManager.*;
 import static myjava.gui.ExceptionDialog.*;
 import static myjava.util.StaticUtilities.*;
@@ -57,7 +58,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 	}
 	
 	@Override
-	public void mouseReleased(MouseEvent ev)		
+	public void mouseReleased(MouseEvent ev)
 	{
 		update(ev);
 	}
@@ -73,8 +74,8 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 		final File file = tab.getFile();
 		final UndoManager undoManager = textArea.getUndoManager();
 		/*
-		 * next one: 60, 48
-		 * free: 36, 37
+		 * next one: 60
+		 * free: 36, 37, 42, 48
 		 * 
 		 * 
 		 * 
@@ -100,12 +101,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 				{
 					if (src.exists())
 					{
-						Tab _tab = Tab.getNewTab();
-						if (!MainPanel.getAllTab().contains(_tab))
-						{
-							MainPanel.add(_tab);
-						}
-						_tab.open(src);
+						MainPanel.openFile(src);
 					}
 					else
 					{
@@ -127,6 +123,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 							/*
 							 * must run on non-Event Dispatch Thread
 							 * great care should be taken
+							 * intentionally hidden
 							 */
 							(new Thread()
 							{
@@ -176,9 +173,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 							File src = new File(input);
 							if (src.exists())
 							{
-								Tab _tab = Tab.getNewTab();
-								MainPanel.add(_tab);
-								_tab.open(src);								
+								MainPanel.openFile(src);
 							}
 							else
 							{
@@ -363,13 +358,13 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			((Component)(ev.getSource())).requestFocusInWindow(); //must be invoked, bug #00032
 			if (textArea.isEditable())
 			{
-				MyTextArea.setGlobalProperties(false);
+				MyTextArea.setTextEditable(false);
 				textArea.setBackground(new Color(245,245,245));
 				writeConfig("isEditable", "false");
 			}
 			else
 			{
-				MyTextArea.setGlobalProperties(true);
+				MyTextArea.setTextEditable(true);
 				textArea.setBackground(Color.WHITE);
 				writeConfig("isEditable", "true");
 				textArea.requestFocusInWindow();
@@ -385,6 +380,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 				int j = textArea.getSelectionEnd();
 				int start = Math.min(i,j);
 				int end = Math.max(i,j);
+				String indentString = MyIndentFilter.getIndentString();
 				try
 				{
 					int start_line = textArea.getLineOfOffset(start);
@@ -393,11 +389,11 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 					{
 						int offset = textArea.getLineStartOffset(x);
 						if (this.x == 18)
-							textArea.insert("\t",offset);
+							textArea.insert(indentString,offset);
 						else
 						{
 							String _char = textArea.getText(offset,1);
-							if (_char.equals("\t")||_char.equals(" "))
+							if (_char.equals(indentString)||_char.equals(" "))
 							{
 								textArea.replaceRange(null,offset,offset+1);
 							}
@@ -432,25 +428,20 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			{
 				String selected = textArea.getSelectedText();
 				String buffer;
+				int lineCount;
 				if (selected == null)
 				{
 					buffer = textArea.getText();
+					lineCount = textArea.getLineCount();
 				}
 				else
 				{
 					buffer = selected;
+					lineCount = buffer.split("\n").length;
 				}
 				if (buffer != null)
 				{
-					int count = wordCount(buffer);
-					if (count == 0)
-					{
-						JOptionPane.showMessageDialog(w, "Number of words (separated by space): 0\nNumber of characters: 0\nNumber of rows: " + textArea.getLineCount(), "Word count", JOptionPane.INFORMATION_MESSAGE);
-					}
-					else
-					{
-						JOptionPane.showMessageDialog(w, "Number of words (separated by space): " + count + "\nNumber of characters: " + charCount(buffer) + "\nNumber of rows: " + textArea.getLineCount(), "Word count", JOptionPane.INFORMATION_MESSAGE);
-					}
+					JOptionPane.showMessageDialog(w, "Number of words (separated by space): " + wordCount(buffer) + "\nNumber of characters: " + charCount(buffer) + "\nNumber of rows: " + lineCount, "Word count", JOptionPane.INFORMATION_MESSAGE);
 				}
 			}
 			break;
@@ -466,10 +457,6 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 				if ((text != null)&&(!text.isEmpty()))
 				{
 					SearchDialog.showDialog(w,textArea);
-				}
-				else
-				{
-					cannotEdit();
 				}
 			}
 			break;
@@ -559,8 +546,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 						@Override
 						public String doInBackground()
 						{
-							String text = "";
-							String buffer;
+							StringBuilder text = new StringBuilder(1000);
 							/*
 							 * modify textArea consecutively, disable auto backup first
 							 */
@@ -570,25 +556,25 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 							{
 								if (this.isCancelled())
 								{
-									return text;
+									return text.toString();
 								}
 								else
 								{
 									int random = (int)(Math.random()*9+1);
-									buffer = "";
+									StringBuilder buffer = new StringBuilder(100);
 									for (int i=1; i<=random; i++)
 									{
-										buffer = buffer + toLetter((int)(Math.random()*26+1));
+										buffer.append(toLetter((int)(Math.random()*26+1)));
 									}
-									text = text + buffer + " ";
+									text.append(buffer.toString()+" ");
 									if (currentProcess%50==0)
 									{
-										this.publish(text);
-										text = "";
+										this.publish(text.toString());
+										text = new StringBuilder();
 									}
 								}
 							}
-							return text;
+							return text.toString();
 						}
 						
 						@Override
@@ -642,6 +628,8 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 							}
 							catch (Exception ex)
 							{
+								//misuse of reflection
+								throw new InternalError();
 							}
 							textArea.getUndoManager().backup();
 							textArea.setAutoBackup(true);
@@ -741,9 +729,9 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			}
 			break;
 			
-			case 41: //number conversion
+			case 41: //base converter
 			{
-				String value = BaseConverter.showBaseConverter(w);
+				String value = BaseConverter.showDialog(w);
 				if (!value.isEmpty())
 				{
 					textArea.insert(value, textArea.getCaretPosition());
@@ -759,7 +747,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 				 * choose file:
 				 */
 				MyPanel exportP1 = new MyPanel(MyPanel.LEFT);
-				final MyTextField exportTF = new MyTextField(38,0);
+				final MyTextField exportTF = new MyTextField(38);
 				exportP1.add(new MyLabel("Export to: "));
 				exportP1.add(exportTF);
 				MyButton exportB1 = new MyButton("?");
@@ -812,36 +800,13 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 				/*
 				 * fast/stable radio buttons
 				 */
-				final MyRadioButton fast = new MyRadioButton("Fast",true,1);
-				final MyRadioButton stable = new MyRadioButton("Stable",false,2);
+				final MyRadioButton fast = new MyRadioButton("Fast",true);
+				final MyRadioButton stable = new MyRadioButton("Stable",false);
+				MyButtonGroup group = new MyButtonGroup(fast,stable);
 				exportP2.add(fast);
 				exportP2.add(stable);
 				fast.setToolTipText("<html><font size=\"4\"><b>Fast export</b></font><br>Very fast, but may cause out-of-memory error. No extra gap.</html>");
 				stable.setToolTipText("<html><font size=\"4\"><b>Stable export</b></font><br>Stable exportation, but is significantly slower.</html>");
-				ActionListener modeListener = new ActionListener()
-				{
-					@Override
-					public void actionPerformed(ActionEvent ev)
-					{
-						MyRadioButton button = (MyRadioButton)(ev.getSource());
-						switch (button.getIndex())
-						{
-							case 1:
-							fast.setSelected(true);
-							stable.setSelected(false);
-							exportSpin.setEnabled(false);
-							break;
-							
-							case 2:
-							fast.setSelected(false);
-							stable.setSelected(true);
-							exportSpin.setEnabled(true);
-							break;
-						}
-					}
-				};
-				fast.addActionListener(modeListener);
-				stable.addActionListener(modeListener);
 				/*
 				 * buttons
 				 */
@@ -1049,23 +1014,23 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 				MyPanel unicodeP0 = new MyPanel(MyPanel.LEFT);
 				unicodeP0.setLayout(new GridLayout(2,1,0,0));
 				MyPanel unicodeP1 = new MyPanel(MyPanel.LEFT);
-				unicodeP1.add(new MyLabel("Please enter the unicode e.g. 2190, 00F7 etc."));
+				unicodeP1.add(new MyLabel("Enter the unicode e.g. 2190, 00F7 etc."));
 				unicodeP0.add(unicodeP1);
 				MyPanel unicodeP2 = new MyPanel(MyPanel.CENTER);
-				final MyTextField unicodeField = new MyTextField(25, 0);
+				final MyTextField unicodeField = new MyTextField(25);
 				unicodeP2.add(unicodeField);
 				unicodeP0.add(unicodeP2);
 				unicodeDialog.add(unicodeP0, BorderLayout.PAGE_START);
 				MyPanel unicodeP3 = new MyPanel(MyPanel.CENTER);
 				final JLabel unicodeLbl = new JLabel("N/A");
-				unicodeLbl.setFont(new Font(textArea.getFont().getName(), Font.PLAIN, 50));
+				unicodeLbl.setFont(textArea.getFont().deriveFont(50f));
 				unicodeP3.add(unicodeLbl);
 				unicodeDialog.add(unicodeP3, BorderLayout.CENTER);
 				MyPanel unicodeP4 = new MyPanel(MyPanel.CENTER);
 				MyButton unicodeB1 = new MyButton("Add")
 				{
 					@Override
-					public void mouseReleased(MouseEvent ev)
+					public void actionPerformed(ActionEvent ev)
 					{
 						unicodeDialog.setVisible(false);
 						try
@@ -1119,7 +1084,6 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 				unicodeDialog.setLocationRelativeTo(w);
 				unicodeDialog.setMinimumSize(new Dimension(315,205));
 				unicodeDialog.setVisible(true);
-				tab.setSaved(false);
 			}
 			break;
 			
@@ -1130,23 +1094,23 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 				MyPanel charP0 = new MyPanel(MyPanel.LEFT);
 				charP0.setLayout(new GridLayout(2,1,0,0));
 				MyPanel charP1 = new MyPanel(MyPanel.LEFT);
-				charP1.add(new MyLabel("Please paste the character here: e.g. \u2190, \u00F7"));
+				charP1.add(new MyLabel("Paste the character here: e.g. \u2190, \u00F7"));
 				charP0.add(charP1);
 				MyPanel charP2 = new MyPanel(MyPanel.CENTER);
-				final MyTextField charField = new MyTextField(25, 0);
+				final MyTextField charField = new MyTextField(25);
 				charP2.add(charField);
 				charP0.add(charP2);
 				charDialog.add(charP0, BorderLayout.PAGE_START);
 				MyPanel charP3 = new MyPanel(MyPanel.CENTER);
 				final JLabel charLbl = new JLabel("N/A");
-				charLbl.setFont(new Font("Microsoft Jhenghei", Font.PLAIN, 50));
+				charLbl.setFont(f13.deriveFont(50f));
 				charP3.add(charLbl);
 				charDialog.add(charP3, BorderLayout.CENTER);
 				MyPanel charP4 = new MyPanel(MyPanel.CENTER);
 				MyButton charB1 = new MyButton("Add")
 				{
 					@Override
-					public void mouseReleased(MouseEvent ev)
+					public void actionPerformed(ActionEvent ev)
 					{
 						charDialog.setVisible(false);
 						try
@@ -1255,7 +1219,18 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			case 49: //insert space between character
 			if (textArea.isEditable())
 			{
-				textArea.setText(insertSpaces(textArea.getText()));
+				String selected = textArea.getSelectedText();
+				if (selected != null)
+				{
+					int start = textArea.getSelectionStart();
+					String inserted = insertSpaces(selected);
+					textArea.replaceSelection(inserted);
+					textArea.select(start, start+inserted.length());
+				}
+				else
+				{					
+					textArea.setText(insertSpaces(textArea.getText()));
+				}
 			}
 			else
 			{
@@ -1381,8 +1356,10 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			break;
 			
 			case 59: //file browser
-			FileBrowserDialog dialog = FileBrowserDialog.getInstance();
-			dialog.setVisible(!dialog.isVisible());
+			{
+				FileBrowserDialog dialog = FileBrowserDialog.getInstance();
+				dialog.setVisible(!dialog.isVisible());
+			}
 			break;
 			
 			default:

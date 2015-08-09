@@ -6,32 +6,15 @@
 package myjava.gui;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.image.*;
 import javax.swing.*;
-import javax.swing.plaf.basic.*;
+import java.util.*;
+import java.text.*;
 import exec.*;
 import static exec.SourceManager.*;
 
 public class MyToolBar extends JToolBar
 {
-	//section 1:
-	private MyToolBarButton buttonNew = new MyToolBarButton("NEW32", "New file", 1);
-	private MyToolBarButton buttonOpen = new MyToolBarButton("OPEN32", "Open file", 2);
-	private MyToolBarButton buttonSave = new MyToolBarButton("SAVE32", "Save as", 4);
-	private MyToolBarButton buttonExport = new MyToolBarButton("EXPORT32", "Export", 43);
-	private MyToolBarButton buttonPrint = new MyToolBarButton("PRINT32", "Print", 38);
-	//section 2:
-	private MyToolBarButton buttonUndo = new MyToolBarButton("UNDO32", "Undo", 7);
-	private MyToolBarButton buttonRedo = new MyToolBarButton("REDO32", "Redo", 8);
-	private MyToolBarButton buttonCut = new MyToolBarButton("CUT32", "Cut selection", 11);
-	private MyToolBarButton buttonCopy = new MyToolBarButton("COPY32", "Copy selection", 12);
-	private MyToolBarButton buttonPaste = new MyToolBarButton("PASTE32", "Paste", 13);
-	private MyToolBarButton buttonDelete = new MyToolBarButton("DELETE32", "Delete selection", 15);
-	private MyToolBarButton buttonSelectAll = new MyToolBarButton("SELECT32", "Select all", 9);
-	private MyToolBarButton buttonSelectAllCopy = new MyToolBarButton("SELECT32", "Select all and copy", 10);
-	//section 3:
-	private MyToolBarButton buttonReplace = new MyToolBarButton("REPLACE32", "Search/Replace", 24);
-	private MyToolBarButton buttonOptions = new MyToolBarButton("OPTIONS32", "Toolbar options", 0);
 	private static final MyToolBar INSTANCE = new MyToolBar();
 	private MyToolBar()
 	{
@@ -46,191 +29,173 @@ public class MyToolBar extends JToolBar
 	
 	public void update()
 	{
-		loadConfig();
-		// setup toolbar
-		this.removeAll();
-		// section 1
-		boolean b1 = getBoolean0("ToolBar.new");
-		boolean b2 = b1;
-		if (b1) this.add(buttonNew);
-		b1 = getBoolean0("ToolBar.open");
-		b2 = b2||b1;
-		if (b1) this.add(buttonOpen);
-		b1 = getBoolean0("ToolBar.save");
-		b2 = b2||b1;
-		if (b1) this.add(buttonSave);
-		b1 = getBoolean0("ToolBar.export");
-		b2 = b2||b1;
-		if (b1) this.add(buttonExport);
-		b1 = getBoolean0("ToolBar.print");
-		b2 = b2||b1;
-		if (b1) this.add(buttonPrint);
-		if (b2) this.addSeparator();
-		// section 2
-		b1 = getBoolean0("ToolBar.undo");
-		b2 = b1;
-		if (b1) this.add(buttonUndo);
-		b1 = getBoolean0("ToolBar.redo");
-		b2 = b1;
-		if (b1) this.add(buttonRedo);
-		b1 = getBoolean0("ToolBar.cut");
-		b2 = b1;
-		if (b1) this.add(buttonCut);
-		b1 = getBoolean0("ToolBar.copy");
-		b2 = b1||b2;
-		if (b1) this.add(buttonCopy);
-		b1 = getBoolean0("ToolBar.paste");
-		b2 = b1||b2;
-		if (b1) this.add(buttonPaste);
-		b1 = getBoolean0("ToolBar.selectAll");
-		b2 = b1||b2;
-		if (b1) this.add(buttonSelectAll);
-		b1 = getBoolean0("ToolBar.selectAllAndCopy");
-		b2 = b1||b2;
-		if (b1) this.add(buttonSelectAllCopy);
-		b1 = getBoolean0("ToolBar.delete");
-		b2 = b1||b2;
-		if (b1) this.add(buttonDelete);
-		if (b2) this.addSeparator();
-		// section 3
-		if (getBoolean0("ToolBar.replace")) this.add(buttonReplace);
-		this.add(buttonOptions);
-		// finally:
+		this.loadButtons();
 		this.revalidate();
 		this.repaint();
 	}
 	
-	static class MyToolBarButton extends JButton implements MouseListener
+	public void loadButtons()
 	{
-		//MyToolBarButton: buttons on JToolBar
+		try
+		{
+			this.removeAll();
+		}
+		catch (Exception ex)
+		{
+		}
+		String data = getConfig0("ToolBar.buttons");
+		if (data != null)
+		{
+			for (Indexable indexable: toComponents(tokenize(data)))
+			{
+				this.add((JComponent)indexable);
+			}
+		}
+	}
+	
+	static java.util.List<String> tokenize(String data)
+	{
+		java.util.List<String> list = new ArrayList<>();
+		int i=0;
+		while (i<data.length())
+		{
+			list.add(data.substring(i,Math.min(i+3, data.length())));
+			i += 3;
+		}
+		return list;
+	}
+	
+	static java.util.List<Indexable> toComponents(java.util.List<String> tokens)
+	{
+		java.util.List<Indexable> c = new ArrayList<>(tokens.size());
+		for (String s: tokens)
+		{
+			if (s.equals("000")) c.add(new MySeparator());
+			else
+			{
+				while (s.startsWith("0")) s = s.substring(1,s.length());
+				try
+				{
+					c.add(MyToolBarButton.fromIndex(Integer.parseInt(s)));
+				}
+				catch (Exception ex)
+				{
+					//pass
+				}
+			}
+		}
+		return c;
+	}
+	
+	public static interface Indexable
+	{
+		String getIndexString();
+		int getIndex();
+		Icon getIcon();
+		String toString();
+	}
+	
+	public static class MyToolBarButton extends JButton implements Indexable
+	{
+		private static final NumberFormat stringFormatter = new DecimalFormat("000");
+		private static final Set<MyToolBarButton> buttonSet = new LinkedHashSet<>();
+		static
+		{
+			buttonSet.add(new MyToolBarButton("NEW32", "New file", 1));
+			buttonSet.add(new MyToolBarButton("OPEN32", "Open file", 2));
+			buttonSet.add(new MyToolBarButton("SAVE32", "Save as", 4));
+			buttonSet.add(new MyToolBarButton("EXPORT32", "Export", 43));
+			buttonSet.add(new MyToolBarButton("PRINT32", "Print", 38));
+			buttonSet.add(new MyToolBarButton("UNDO32", "Undo", 7));
+			buttonSet.add(new MyToolBarButton("REDO32", "Redo", 8));
+			buttonSet.add(new MyToolBarButton("CUT32", "Cut selection", 11));
+			buttonSet.add(new MyToolBarButton("COPY32", "Copy selection", 12));
+			buttonSet.add(new MyToolBarButton("PASTE32", "Paste", 13));
+			buttonSet.add(new MyToolBarButton("DELETE32", "Delete selection", 15));
+			buttonSet.add(new MyToolBarButton("INDENT+32", "Increase indentation", 18));
+			buttonSet.add(new MyToolBarButton("INDENT-32", "Decrease indentation", 19));
+			buttonSet.add(new MyToolBarButton("SELECT32", "Select all", 9));
+			buttonSet.add(new MyToolBarButton("SELECT32", "Select all and copy", 10));
+			buttonSet.add(new MyToolBarButton("REPLACE32", "Search/Replace", 24));
+			buttonSet.add(new MyToolBarButton("BASE32", "Base converter", 41));
+			buttonSet.add(new MyToolBarButton("COLORCHOOSER32", "Color chooser", 40));
+		}
+		private String des;
 		private int x;
-		MyToolBarButton(String icon, String tooltip, int x)
+		private MyToolBarButton(String icon, String tooltip, int x)
 		{
 			super();
 			this.setToolTipText(tooltip);
 			this.setFocusPainted(false);
 			this.setBackground(new Color(224,223,227));
-			if (x != 0)
-			{
-				/*
-				 * add the general listener
-				 */
-				this.addMouseListener(new MyListener(x));
-			}
-			else
-			{
-				/*
-				 * add this as listener (Option dialog)
-				 */
-				this.addMouseListener(this);
-			}
-			try
-			{
-				this.setIcon(icon(icon));
-			}
-			catch (Exception ex)
-			{
-			}
+			this.setIcon(icon(icon));
+			this.addActionListener(new MyListener(x));
 			this.x = x;
+			this.des = tooltip;
+		}
+		
+		public static MyToolBarButton fromIndex(int index)
+		{
+			for (MyToolBarButton button: buttonSet)
+			{
+				if (button.x == index) return button;
+			}
+			return null;
+		}
+		
+		public static Set<MyToolBarButton> all()
+		{
+			return buttonSet;
 		}
 		
 		@Override
-		public void mouseReleased(MouseEvent ev)
+		public int getIndex()
 		{
-			if (this.x == 0)
-			{
-				loadConfig();
-				/*
-				 * option dialog:
-				 * create dialog:
-				 */
-				JFrame w = RefluxEdit.getInstance();
-				JDialog dialog = new JDialog(w, "Button selection", true);				
-				MyCheckBox _new = new MyCheckBox("New", getBoolean0("ToolBar.new"));
-				MyCheckBox open = new MyCheckBox("Open", getBoolean0("ToolBar.open"));
-				MyCheckBox save = new MyCheckBox("Save", getBoolean0("ToolBar.save"));
-				MyCheckBox export = new MyCheckBox("Export to image", getBoolean0("ToolBar.export"));
-				MyCheckBox print = new MyCheckBox("Print", getBoolean0("ToolBar.print"));
-				MyCheckBox undo = new MyCheckBox("Undo", getBoolean0("ToolBar.undo"));
-				MyCheckBox redo = new MyCheckBox("Redo", getBoolean0("ToolBar.redo"));
-				MyCheckBox cut = new MyCheckBox("Cut", getBoolean0("ToolBar.cut"));
-				MyCheckBox copy = new MyCheckBox("Copy", getBoolean0("ToolBar.copy"));
-				MyCheckBox paste = new MyCheckBox("Paste", getBoolean0("ToolBar.paste"));
-				MyCheckBox delete = new MyCheckBox("Delete", getBoolean0("ToolBar.delete"));
-				MyCheckBox selectAll = new MyCheckBox("Select all", getBoolean0("ToolBar.selectAll"));
-				MyCheckBox selectAllCopy = new MyCheckBox("Select all and copy", getBoolean0("ToolBar.selectAllAndCopy"));
-				MyCheckBox search = new MyCheckBox("Search/Replace", getBoolean0("ToolBar.search"));
-				/*
-				 * add checkboxes to dialog
-				 */
-				dialog.setLayout(new GridLayout(7,2,1,5));
-				dialog.add(_new);
-				dialog.add(open);
-				dialog.add(save);
-				dialog.add(export);
-				dialog.add(print);
-				dialog.add(undo);
-				dialog.add(redo);
-				dialog.add(cut);
-				dialog.add(copy);
-				dialog.add(paste);
-				dialog.add(delete);
-				dialog.add(selectAll);
-				dialog.add(selectAllCopy);
-				dialog.add(search);
-				/*
-				 * show the dialog
-				 */
-				dialog.pack();
-				dialog.setLocationRelativeTo(w);
-				dialog.setVisible(true);
-				/*
-				 * done:
-				 */
-				boolean isNew = _new.isSelected();
-				boolean isOpen = open.isSelected();
-				boolean isSave = save.isSelected();
-				boolean isExport = export.isSelected();
-				boolean isPrint = print.isSelected();
-				boolean isUndo = undo.isSelected();
-				boolean isRedo = redo.isSelected();
-				boolean isCut = cut.isSelected();
-				boolean isCopy = copy.isSelected();
-				boolean isPaste = paste.isSelected();
-				boolean isDelete = delete.isSelected();
-				boolean isSelectAll = selectAll.isSelected();
-				boolean isSelectAllCopy = selectAllCopy.isSelected();
-				boolean isSearch = search.isSelected();
-				dialog.dispose();
-				setConfig("ToolBar.new", isNew + "");
-				setConfig("ToolBar.open", isOpen + "");
-				setConfig("ToolBar.save", isSave + "");
-				setConfig("ToolBar.export", isExport + "");
-				setConfig("ToolBar.print", isPrint + "");
-				setConfig("ToolBar.undo", isUndo + "");
-				setConfig("ToolBar.redo", isRedo + "");
-				setConfig("ToolBar.cut", isCut + "");
-				setConfig("ToolBar.copy", isCopy + "");
-				setConfig("ToolBar.paste", isPaste + "");
-				setConfig("ToolBar.delete", isDelete + "");
-				setConfig("ToolBar.selectAll", isSelectAll + "");
-				setConfig("ToolBar.selectAllAndCopy", isSelectAllCopy + "");
-				setConfig("ToolBar.search", isSearch + "");
-				saveConfig();
-				MyToolBar.getInstance().removeAll();
-				MyToolBar.getInstance().update();
-			}
-		}		
-		@Override
-		public void mouseEntered(MouseEvent ev) {}
+			return this.x;
+		}
 		
 		@Override
-		public void mouseExited(MouseEvent ev) {}
+		public String getIndexString()
+		{
+			return stringFormatter.format(this.x);
+		}
 		
 		@Override
-		public void mousePressed(MouseEvent ev) {}
+		public String toString()
+		{
+			return this.des;
+		}
+	}
+	
+	public static class MySeparator extends JToolBar.Separator implements Indexable
+	{
+		public MySeparator()
+		{
+			super();
+		}
 		
 		@Override
-		public void mouseClicked(MouseEvent ev) {}
+		public int getIndex()
+		{
+			return 0;
+		}
+		
+		@Override
+		public String getIndexString()
+		{
+			return "000";
+		}
+		
+		@Override
+		public Icon getIcon()
+		{
+			return icon("SEPARATOR32");
+		}
+		
+		@Override
+		public String toString()
+		{
+			return "Separator";
+		}
 	}
 }

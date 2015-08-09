@@ -42,7 +42,6 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 	/*
 	 * important settings:
 	 */
-	public static boolean isCrossPlatformLAF = false;
 	public static boolean isRibbon = false;
 	/*
 	 * component instances:
@@ -93,10 +92,8 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 				}
 			}
 		}
-	};	
-	/*
-	 * main method:
-	 */
+	};
+		
 	protected static void launch(final String[] args)
 	{
 		final double initialTime = System.currentTimeMillis();
@@ -143,17 +140,6 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 				}
 				w.setVisible(true);
 				setConfig("LastStartupTimeTaken", System.currentTimeMillis()-initialTime + "ms");
-				if (getBoolean0("CheckUpdate"))
-				{
-					(new Thread()
-					{
-						@Override
-						public void run()
-						{
-							VersionChecker.showUpdateDialog(w,false);
-						}
-					}).start();
-				}
 				detector.setInstance(true);
 				ClipboardDialog.initialize();
 				if (getBoolean0("showHint"))
@@ -188,34 +174,19 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 	
 	protected static void setLAF()
 	{
-		JComponent.setDefaultLocale(Locale.ENGLISH);
+		JComponent.setDefaultLocale(Locale.ENGLISH);		
+		String laf = getConfig0("LAF");
+		if (laf == null)
+		{
+			laf = UIManager.getCrossPlatformLookAndFeelClassName();
+		}
 		try
 		{
-			switch (getConfig0("LAF"))
-			{
-				case "System":
-				UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
-				break;
-				
-				case "Nimbus":
-				UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-				UIDefaults defaults = UIManager.getLookAndFeelDefaults();
-				defaults.put("ToolTip.font", Resources.f13);
-				defaults.put("Button.background", Color.WHITE);
-				defaults.put("nimbusInfoBlue", new Color(255,186,0));
-				defaults.put("OptionPane.sameSizeButtons", true);
-				break;
-				
-				default:
-				UIManager.put("ToolTip.font", new Font("Microsoft Jhenghei", Font.PLAIN, 13));
-				UIManager.put("Button.background", Color.WHITE);
-				break;
-			}
+			UIManager.setLookAndFeel(laf);
 		}
 		catch (Exception ex)
 		{
 		}
-		
 	}
 	
 	public RefluxEdit()
@@ -347,30 +318,16 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 		 */
 		if (getBoolean0("isRibbon"))
 		{
-			this.add(MyRefluxEditRibbonPanel.getInstance(), BorderLayout.PAGE_START);
 			isRibbon = true;
+			this.add(MyRefluxEditRibbonPanel.getInstance(), BorderLayout.PAGE_START);			
 		}
 		else
 		{
-			/*
-			 * menubar
-			 */
-			isRibbon = false; //further confirm
+			isRibbon = false;
 			ColoredMenuBar menubar = ColoredMenuBar.getInstance();
-			String LAF = getConfig0("LAF");
-			if (LAF == null)
-			{
-				LAF = "default";
-			}
-			switch (LAF)
-			{
-				case "System":
-				case "Nimbus":
-				break;			
-				
-				case "default":
-				default:
-				isCrossPlatformLAF = true;
+			this.setJMenuBar(menubar);
+			if (Resources.isMetal)
+			{			
 				if (getBoolean0("isUseNewMenuBar"))
 				{
 					menubar.setStyle(ColoredMenuBar.MODERN);
@@ -379,9 +336,7 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 				{
 					menubar.setStyle(ColoredMenuBar.BLUE);
 				}
-				break;
 			}
-			this.setJMenuBar(menubar);
 			/*
 			 * top panel
 			 */
@@ -458,72 +413,7 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 	public void confirmClose()
 	{
 		this.setVisible(true);
-		//load confirm dialog
-		int option;
-		boolean isSaved = true;
-		outFor:
-		for (Tab tab: MainPanel.getAllTab())
-		{
-			if (!tab.isSaved())
-			{
-				isSaved = false;
-				break outFor;
-			}
-		}
-		if (isSaved)
-		{
-			option = JOptionPane.showConfirmDialog(this, "Do you really want to close RefluxEdit?", "Confirm close", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, questionIcon);
-		}
-		else
-		{
-			String[] options = new String[]{"<html><center>Close<br>RefluxEdit</center></html>","Cancel","<html><center>Save all and Close<br>(use system encoding)</center></html>"};
-			option = JOptionPane.showOptionDialog(this, "NOT YET SAVED!\nDo you really want to close RefluxEdit?", "Confirm close", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, questionIcon, options, options[1]);
-		}
-		if (option == JOptionPane.YES_OPTION)
-		{
-			this.close();
-		}
-		else if ((option == JOptionPane.CANCEL_OPTION)&&(!isSaved))
-		{
-			//save and close
-			try
-			{
-				/*
-				 * iterate through tab list to save file
-				 */
-				for (Tab tab: new ArrayList<Tab>(MainPanel.getAllTab()))
-				{
-					if (!tab.isSaved())
-					{
-						File tabFile = tab.getFile();
-						if (tabFile!=null)
-						{
-							tab.save(tabFile,false); //not using encoding
-							MainPanel.close(tab);
-						}
-						else
-						{
-							File dest = FileChooser.showPreferredFileDialog(this, FileChooser.SAVE, new String[0]);
-							if (dest != null)
-							{
-								tab.save(dest,false);
-								MainPanel.close(tab);
-							}
-							else return; //don't close RefluxEdit
-						}
-					}
-					else
-					{
-						MainPanel.close(tab);
-					}
-				}
-				this.close();
-			}
-			catch (IOException ex)
-			{
-				exception(ex);
-			}
-		}
+		SaveDialog.showDialog(this);
 	}
 	
 	/*

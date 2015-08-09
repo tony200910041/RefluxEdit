@@ -28,13 +28,13 @@ public class SearchDialog extends JDialog
 		final MyTextField wd1 = new MyTextField(20);
 		c.gridx=0;
 		c.gridy=0;
-		c.weightx=0.2;
+		c.weightx=0;
 		c.insets=new Insets(5,5,5,5);
 		c.fill=GridBagConstraints.NONE;
 		this.add(la1,c);
 		c.gridx=1;
 		c.gridy=0;
-		c.weightx=0.8;
+		c.weightx=1;
 		c.fill=GridBagConstraints.HORIZONTAL;
 		this.add(wd1,c);
 		/*
@@ -44,12 +44,12 @@ public class SearchDialog extends JDialog
 		final MyTextField wd2 = new MyTextField(20);
 		c.gridx=0;
 		c.gridy=1;
-		c.weightx=0.2;
+		c.weightx=0;
 		c.fill=GridBagConstraints.NONE;
 		this.add(la2,c);
 		c.gridx=1;
 		c.gridy=1;
-		c.weightx=0.8;
+		c.weightx=1;
 		c.fill=GridBagConstraints.HORIZONTAL;
 		this.add(wd2,c);
 		/*
@@ -98,7 +98,7 @@ public class SearchDialog extends JDialog
 							textArea.setText(result);
 						}
 					}
-					JOptionPane.showMessageDialog(parent, count + " time(s) thisd", "Replace", JOptionPane.INFORMATION_MESSAGE);
+					JOptionPane.showMessageDialog(parent, count + " time(s) replaced.", "Replace", JOptionPane.INFORMATION_MESSAGE);
 				}
 				else
 				{

@@ -10,55 +10,70 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.text.*;
 import javax.swing.event.*;
+import java.text.*;
+import java.math.*;
 import myjava.gui.*;
+import myjava.gui.common.*;
 
-public class BaseConverter extends JDialog implements DocumentListener, ActionListener, ChangeListener, Runnable
+public class BaseConverter extends JDialog implements DocumentListener, ChangeListener, Runnable, Resources
 {
-	private static final Font f15 = new Font("Microsoft Jhenghei",Font.PLAIN,15);
+	private static final Font f15 = f13.deriveFont(15f);
 	private static final Color RED = new Color(255,133,133);
-	private JTextField denary = new JTextField();
-	private JTextField otherBase = new JTextField();
-	private JSpinner base = new JSpinner(new SpinnerNumberModel(2,2,36,1));
-	private MyRadioButton from10 = new MyRadioButton("Convert from denary",true,1);
-	private MyRadioButton to10 = new MyRadioButton("Convert to denary",false,2);
-	private MyCheckBox insertDenary = new MyCheckBox("",false);
-	private MyCheckBox insertOtherBase = new MyCheckBox("",false);
+	private MyCheckBox checkBox1 = new MyCheckBox("From base:",false);
+	private MyCheckBox checkBox2 = new MyCheckBox("To base:",false);
+	private JSpinner base1 = new JSpinner(new SpinnerNumberModel(10,2,36,1));
+	private JSpinner base2 = new JSpinner(new SpinnerNumberModel(2,2,36,1));
+	private JTextField tf1 = new JTextField();
+	private JTextField tf2 = new JTextField();		
 	private BaseConverter(Frame parent)
 	{
 		super(parent,"Base converter",true);
-		this.setLayout(new GridLayout(3,1,0,0));
+		this.setLayout(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
 		//
-		JPanel p0 = new JPanel();
-		from10.addActionListener(this);
-		to10.addActionListener(this);
-		p0.add(from10);
-		p0.add(to10);
-		this.add(p0);
+		c.gridx = 0;
+		c.gridy = 0;
+		c.weightx = 0;
+		c.weighty = 0;
+		c.insets = new Insets(2,2,2,2);
+		c.anchor = GridBagConstraints.LINE_START;
+		this.add(checkBox1,c);
 		//
-		JPanel p1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		denary.setFont(f15);
-		denary.setBackground(Color.WHITE);
-		denary.setPreferredSize(new Dimension(300,26));
-		denary.getDocument().addDocumentListener(this);
-		insertDenary.setToolTipText("Insert this result");
-		p1.add(insertDenary);
-		p1.add(denary);
-		p1.add(new MyLabel("Base 10"));
-		this.add(p1);
+		c.gridx = 1;
+		base1.setFont(f15);
+		base1.addChangeListener(this);
+		this.add(base1,c);
 		//
-		JPanel p2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		otherBase.setFont(f15);
-		otherBase.setBackground(Color.WHITE);
-		otherBase.setPreferredSize(new Dimension(232,26));
-		otherBase.getDocument().addDocumentListener(this);
-		otherBase.setEditable(false);
-		insertOtherBase.setToolTipText("Insert this result");
-		p2.add(insertOtherBase);
-		p2.add(otherBase);
-		base.setFont(f15);
-		base.addChangeListener(this);
-		p2.add(base);
-		this.add(p2);
+		c.gridx = 2;
+		c.weightx = 1;
+		c.fill = GridBagConstraints.HORIZONTAL;
+		tf1.setFont(f15);
+		tf1.setPreferredSize(new Dimension(300,26));
+		tf1.setBackground(Color.WHITE);
+		tf1.getDocument().addDocumentListener(this);
+		tf1.setDragEnabled(true);
+		this.add(tf1,c);
+		//
+		c.gridx = 0;
+		c.gridy = 1;
+		c.weightx = 0;
+		c.fill = GridBagConstraints.NONE;
+		this.add(checkBox2,c);
+		//
+		c.gridx = 1;
+		base2.setFont(f15);
+		base2.addChangeListener(this);
+		this.add(base2,c);
+		//
+		c.gridx = 2;
+		c.weightx = 1;
+		c.fill = GridBagConstraints.HORIZONTAL;
+		tf2.setFont(f15);
+		tf2.setPreferredSize(new Dimension(300,26));
+		tf2.setBackground(Color.WHITE);
+		tf2.setEditable(false);
+		tf2.setDragEnabled(true);
+		this.add(tf2,c);
 	}
 	
 	@Override
@@ -85,27 +100,6 @@ public class BaseConverter extends JDialog implements DocumentListener, ActionLi
 		update();
 	}
 	
-	@Override
-	public void actionPerformed(ActionEvent ev)
-	{
-		if (((MyRadioButton)(ev.getSource())).getIndex() == 1)
-		{
-			//from10
-			from10.setSelected(true);
-			to10.setSelected(false);
-			denary.setEditable(true);
-			otherBase.setEditable(false);
-		}
-		else
-		{
-			//to10
-			from10.setSelected(false);
-			to10.setSelected(true);
-			denary.setEditable(false);
-			otherBase.setEditable(true);
-		}
-	}
-	
 	void update()
 	{
 		Thread thread = new Thread(this);
@@ -116,84 +110,79 @@ public class BaseConverter extends JDialog implements DocumentListener, ActionLi
 	public void run()
 	{
 		/*
-		 * not EDT
+		 * not EDT, so invokeLater
 		 */
 		SwingUtilities.invokeLater(new Runnable()
 		{
 			@Override
 			public void run()
 			{
-				try
+				String input = tf1.getText();
+				if ((input != null)&&(!input.isEmpty()))
 				{
-					base.commitEdit();
-				}
-				catch (Exception ex)
-				{
-				}
-				denary.getDocument().removeDocumentListener(BaseConverter.this);
-				otherBase.getDocument().removeDocumentListener(BaseConverter.this);
-				try
-				{
-					int baseno = Integer.parseInt(base.getValue().toString());
-					if (from10.isSelected())
+					try
 					{
-						String s1 = denary.getText();
-						if (s1.isEmpty())
-						{
-							otherBase.setText("");
-							denary.setBackground(Color.WHITE);
-							otherBase.setBackground(Color.WHITE);
-						}
-						else
-						{
-							otherBase.setText(toBase(Long.parseLong(s1),baseno));
-							denary.setBackground(Color.WHITE);
-							otherBase.setBackground(Color.WHITE);
-						}
+						base1.commitEdit();
 					}
-					else
+					catch (ParseException ex)
 					{
-						String s2 = otherBase.getText();
-						if (s2.isEmpty())
-						{
-							denary.setText("");
-							denary.setBackground(Color.WHITE);
-							otherBase.setBackground(Color.WHITE);
-						}
-						else
-						{
-							denary.setText(toDenary(s2,baseno)+"");
-							denary.setBackground(Color.WHITE);
-							otherBase.setBackground(Color.WHITE);
-						}
+					}
+					try
+					{
+						base2.commitEdit();
+					}
+					catch (ParseException ex)
+					{
+					}
+					tf1.getDocument().removeDocumentListener(BaseConverter.this);
+					try
+					{
+						int from = Integer.parseInt(base1.getValue().toString());
+						int to = Integer.parseInt(base2.getValue().toString());
+						tf2.setText(convert(input,from,to));
+						tf1.setBackground(Color.WHITE);
+						tf2.setBackground(Color.WHITE);
+					}
+					catch (Exception ex)
+					{
+						tf1.setBackground(RED);
+					}
+					finally
+					{
+						tf1.getDocument().addDocumentListener(BaseConverter.this);
 					}
 				}
-				catch (Exception ex)
+				else
 				{
-					ex.printStackTrace();
-					denary.setBackground(RED);
-					otherBase.setBackground(RED);
-				}
-				finally
-				{
-					denary.getDocument().addDocumentListener(BaseConverter.this);
-					otherBase.getDocument().addDocumentListener(BaseConverter.this);
+					tf1.setBackground(Color.WHITE);
+					tf2.setText("");
 				}
 			}
 		});
 	}
 	
-	private long toDenary(String number, int base)
+	private BigInteger toDenary(String number, int base)
 	{
-		return Long.valueOf(number,base);
+		return new BigInteger(number, base);
 	}
 	
-	private String toBase(long denary, int base)
+	private String toBase(BigInteger denary, int base)
 	{
-		return Long.toString(denary,base).toUpperCase();
+		return denary.toString(base).toUpperCase();
 	}
 	
-	public static String showBaseConverter(Frame parent)
+	private String convert(String number, int from, int to)
+	{
+		
+		return toBase(toDenary(number, from), to);
+	}
+	
+	private void checkRange(int x)
+	{
+		if ((x < 2)||(x > 36)) throw new IllegalArgumentException();
+	}
+	
+	public static String showDialog(Frame parent)
 	{
 		BaseConverter converter = new BaseConverter(parent);
 		converter.pack();
@@ -203,26 +192,22 @@ public class BaseConverter extends JDialog implements DocumentListener, ActionLi
 		 * closed
 		 */
 		String result = "";
-		if (converter.insertDenary.isSelected())
+		if (converter.checkBox1.isSelected())
 		{
-			String denary = converter.denary.getText();
+			String denary = converter.tf1.getText();
 			if (!denary.isEmpty())
 			{
 				result += denary + " ";
 			}
 		}
-		if (converter.insertOtherBase.isSelected())
+		if (converter.checkBox2.isSelected())
 		{
-			String otherBase = converter.otherBase.getText();
+			String otherBase = converter.tf2.getText();
 			if (!otherBase.isEmpty())
 			{
 				result += otherBase + " ";
 			}
 		}
-		if (result.endsWith(" "))
-		{
-			return result.substring(0, result.length()-1);
-		}
-		return result;
+		return result.trim();
 	}
 }

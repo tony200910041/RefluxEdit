@@ -304,10 +304,12 @@ public final class StaticUtilities
 				case "py":
 				return "";
 						
-				default:
-				case "":
 				case "java":
 				return "javac -classpath %p %f";
+				
+				default:
+				case "":
+				return "";
 			}
 		}
 	}
@@ -334,10 +336,12 @@ public final class StaticUtilities
 				case "py":
 				return "cd %p%npython %f%nPAUSE%ndel \"%~f0\"";
 				
-				default:
-				case "":
 				case "java":
 				return "cd %p%njava -classpath %p %a%nPAUSE%ndel \"%~f0\"";
+				
+				default:
+				case "":
+				return "";
 			}
 		}
 	}

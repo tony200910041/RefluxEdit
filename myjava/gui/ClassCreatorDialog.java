@@ -16,12 +16,12 @@ import myjava.gui.common.*;
 
 public class ClassCreatorDialog extends JDialog
 {
-	private MyRadioButton _default = new MyRadioButton("Default",false,1);
-	private MyRadioButton _public = new MyRadioButton("Public",true,1);
-	private MyRadioButton _protected = new MyRadioButton("Protected",false,1);
-	private MyRadioButton _private = new MyRadioButton("Private",false,1);
-	private MyRadioButton _allman = new MyRadioButton("Allman",true,1);
-	private MyRadioButton _1tbs = new MyRadioButton("1TBS",false,2);
+	private MyRadioButton _default = new MyRadioButton("Default",false);
+	private MyRadioButton _public = new MyRadioButton("Public",true);
+	private MyRadioButton _protected = new MyRadioButton("Protected",false);
+	private MyRadioButton _private = new MyRadioButton("Private",false);
+	private MyRadioButton _allman = new MyRadioButton("Allman",true);
+	private MyRadioButton _1tbs = new MyRadioButton("1TBS",false);
 	private MyCheckBox _static = new MyCheckBox("Static",false);
 	private MyCheckBox createMain = new MyCheckBox("Create main method",true);
 	private MyCheckBox isGUI = new MyCheckBox("Swing class",false);
@@ -94,46 +94,8 @@ public class ClassCreatorDialog extends JDialog
 		});
 		this.add(p5);
 		//
-		ActionListener l1 = new ActionListener()
-		{
-			@Override
-			public void actionPerformed(ActionEvent ev)
-			{
-				MyRadioButton button = (MyRadioButton)(ev.getSource());
-				_default.setSelected(false);
-				_public.setSelected(false);
-				_protected.setSelected(false);
-				_private.setSelected(false);
-				button.setSelected(true);
-			}
-		};
-		_default.addActionListener(l1);
-		_public.addActionListener(l1);
-		_protected.addActionListener(l1);
-		_private.addActionListener(l1);
-		//
-		ActionListener l2 = new ActionListener()
-		{
-			@Override
-			public void actionPerformed(ActionEvent ev)
-			{
-				MyRadioButton button = (MyRadioButton)(ev.getSource());
-				switch (button.getIndex())
-				{
-					case 1:
-					_allman.setSelected(true);
-					_1tbs.setSelected(false);
-					break;
-					
-					case 2:
-					_allman.setSelected(false);
-					_1tbs.setSelected(true);
-					break;
-				}
-			}
-		};
-		_allman.addActionListener(l2);
-		_1tbs.addActionListener(l2);
+		MyButtonGroup group1 = new MyButtonGroup(_default,_public,_protected,_private);
+		MyButtonGroup group2 = new MyButtonGroup(_allman, _1tbs);
 	}
 	
 	static class MyDocumentListener implements DocumentListener, Runnable, ColorConstants

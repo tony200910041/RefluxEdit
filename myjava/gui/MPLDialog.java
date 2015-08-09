@@ -88,7 +88,7 @@ public class MPLDialog extends JDialog
 				}
 			}
 		});
-		bottomPanel.add(new MyButton("Done")
+		JButton done = new MyButton("Done")
 		{
 			@Override
 			public void actionPerformed(ActionEvent ev)
@@ -96,7 +96,9 @@ public class MPLDialog extends JDialog
 				MPLDialog.this.setVisible(false);
 				MPLDialog.this.dispose();
 			}
-		});
+		};
+		bottomPanel.add(done);
+		this.getRootPane().setDefaultButton(done);
 		this.add(bottomPanel, BorderLayout.PAGE_END);
 		this.setSize(450,285);
 		this.setLocationRelativeTo(parent);

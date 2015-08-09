@@ -22,6 +22,7 @@ public interface Resources
 	 * laf:
 	 */
 	String LAF = UIManager.getLookAndFeel().getName().toLowerCase();
+	boolean isMetal = LAF.contains("metal");
 	boolean isWindows = LAF.contains("windows");
 	boolean isNimbus = LAF.contains("nimbus");
 	/*

@@ -127,21 +127,39 @@ public class MyTextArea extends JTextArea implements MouseListener
 		this.popup.add(new MyMenuItem("Word count", null, 22, KeyEvent.VK_F2));
 	}
 	
-	public static void setGlobalProperties(boolean isEditable, boolean isLineWrap, boolean isWrapStyleWord, int tabSize, Color selectionColor, Font font, boolean autoIndent, boolean showLineCounter)
+	public static void setTextEditable(boolean isEditable)
 	{
 		MyTextArea.isEditable = isEditable;
-		MyTextArea.isLineWrap = isLineWrap;
-		MyTextArea.isWrapStyleWord = isWrapStyleWord;
-		MyTextArea.tabSize = tabSize;
-		MyTextArea.selectionColor = selectionColor;
-		MyTextArea.font = font;
-		MyTextArea.showLineCounter = showLineCounter;
-		MyIndentFilter.setAutoIndent(autoIndent);
 	}
 	
-	public static void setGlobalProperties(boolean isEditable)
+	public static void setTextLineWrap(boolean isLineWrap)
 	{
-		MyTextArea.isEditable = isEditable;
+		MyTextArea.isLineWrap = isLineWrap;
+	}
+	
+	public static void setTextWrapStyleWord(boolean isWrapStyleWord)
+	{
+		MyTextArea.isWrapStyleWord = isWrapStyleWord;
+	}
+	
+	public static void setTab(int tabSize)
+	{
+		MyTextArea.tabSize = tabSize;
+	}
+	
+	public static void setTextSelectionColor(Color c)
+	{
+		MyTextArea.selectionColor = c;
+	}
+	
+	public static void setTextFont(Font font)
+	{
+		MyTextArea.font = font;
+	}
+	
+	public static void setEnableLineCounter(boolean enable)
+	{
+		MyTextArea.showLineCounter = enable;
 	}
 	
 	public void update()

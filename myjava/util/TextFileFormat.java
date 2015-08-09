@@ -5,13 +5,14 @@
 
 package myjava.util;
 
+import java.io.*;
 import java.util.*;
 import exec.*;
 
 public final class TextFileFormat
 {
-	public static final String[] TEXT_FILE = new String[]{"txt", "properties", "xml", "ini", "reg", "mf"};
-	public static final String[] PROGRAMMING = new String[]{"java", "c", "cpp", "h", "m", "pl", "plx", "pm", "py", "rb", "f90", "f95", "f03", "f", "for", "js", "bat", "cmd", "cs", "pas"};
+	public static final String[] TEXT_FILE = new String[]{"txt", "properties", "xml", "ini", "reg", "mf", "log"};
+	public static final String[] PROGRAMMING = new String[]{"java", "c", "cpp", "h", "m", "pl", "plx", "pm", "py", "rb", "f90", "f95", "f03", "f", "for", "lua", "groovy", "js", "bat", "cmd", "nsh", "cs", "pas", "hs", "lhs", "ahk"};
 	public static final String[] NETWORK = new String[]{"htm", "html", "php", "css"};
 	public static final Set<String> PRE_DEFINED = new TreeSet<>();
 	public static final Set<String> USER_DEFINED = new TreeSet<>();
@@ -22,10 +23,6 @@ public final class TextFileFormat
 		Collections.addAll(PRE_DEFINED, PROGRAMMING);
 		Collections.addAll(PRE_DEFINED, NETWORK);
 		reloadUserDefinedFormat();
-	}
-	private TextFileFormat()
-	{
-		throw new InternalError();
 	}
 	
 	public static String[] getFormats()
@@ -38,6 +35,31 @@ public final class TextFileFormat
 		Set<String> formats = new TreeSet<>(PRE_DEFINED);
 		formats.addAll(USER_DEFINED);
 		return formats;
+	}
+	
+	public static FileFilter getFormatFilter()
+	{
+		return new FileFilter()
+		{
+			@Override
+			public boolean accept(File file)
+			{
+				if (file.isDirectory())
+				{
+					return true;
+				}
+				else
+				{
+					Set<String> formats = getFormatList();
+					String path = file.getPath().toLowerCase();
+					for (String format: formats)
+					{
+						if (path.endsWith("."+format)) return true;
+					}
+					return false;
+				}
+			}
+		};
 	}
 	
 	public static void reloadUserDefinedFormat()
@@ -62,5 +84,10 @@ public final class TextFileFormat
 			builder.append(ext+" ");
 		}
 		return builder.toString().trim();
+	}
+	
+	private TextFileFormat()
+	{
+		throw new InternalError();
 	}
 }

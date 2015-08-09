@@ -109,7 +109,10 @@ public class MyRibbonFirst extends MyPureButton implements MouseListener, Resour
 			menuDialog.setVisible(false);
 			if (x == -2)
 			{
-				LargeOpenDialog.showOpenDialog();
+				if (getBoolean("rememberRecentFiles"))
+					LargeOpenRecentDialog.showOpenDialog(RefluxEdit.getInstance());
+				else
+					LargeOpenDialog.showOpenDialog(RefluxEdit.getInstance());
 			}
 			if (x == -3)
 			{

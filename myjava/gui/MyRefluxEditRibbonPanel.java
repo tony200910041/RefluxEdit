@@ -55,7 +55,7 @@ public class MyRefluxEditRibbonPanel extends MyRibbonPanel
 		tab2.add(tab2_3);
 		// View
 		tab3.add(new MyRibbonButton("<html><center>Editing/<br>viewing</center></html>", "EDIT32", "<html><font size=\"4\"><b>Enable/disable editing</b></font><br>Click here to disable/re-enable editing.<br></html>", false, 17));
-		tab3.add(new MyRibbonButton("<html><center>Always<br>On top</center></html>", "ONTOP", "<html><font size=\"4\"><b>Enable/disable always on top</b></font><br>Click here to enable/disable RefluxEdit always staying on top.</html>", false, 21));
+		tab3.add(new MyRibbonButton("<html><center>Always<br>on top</center></html>", "ONTOP", "<html><font size=\"4\"><b>Enable/disable always on top</b></font><br>Click here to enable/disable RefluxEdit always staying on top.</html>", false, 21));
 		tab3.add(new MyRibbonButton("<html><center><font color=\"green\">Undo</font><br>dialog</center></htnml>", "UNDODIALOG32", "<html><font size=\"4\"><b>Undo record dialog</b></font><br>Show the undo record dialog.</html>", false, 52));
 		tab3.add(new MyRibbonButton("<html><center>Clipboard<br>listener</center></html>", "PASTE32", "<html><font size=\"4\"><b>Clipboard listener</b></font><br>Show the clipboard listener dialog, which monitors clipboard changes.</html>", false, 29));
 		tab3.add(new MyRibbonButton("<html><center>File<br>browser</center></html>", "FILEBROWSER32", "<html><font size=\"4\"><b>File browser</b></font><br>Convenient dialog to browse and open files.</html>", false, 59));
@@ -79,7 +79,7 @@ public class MyRefluxEditRibbonPanel extends MyRibbonPanel
 		tab4_2.setOpaque(false);
 		tab4_2.add(new MyRibbonButton("Uppercase", "UPPERCASE", "<html><font size=\"4\"><b>Convert to uppercase</b></font><br>Convert the selected text to uppercase,<br>or all characters if no text is selected.</html>", true, 26));
 		tab4_2.add(new MyRibbonButton("Lowercase", "LOWERCASE", "<html><font size=\"4\"><b>Convert to lowercase</b></font><br>Convert the selected text to lowercase,<br>or all characters if no text is selected.</html>", true, 27));
-		tab4_2.add(new MyRibbonButton("Invert case", "INVERTCASE", "<html><font size=\"4\"><b>Convert to invert case</b></font><br>Convert the selected text to invert case<br>(uppercase to lowercase, and lowercase to uppercase),<br>or all characters if no text is selected.</html>", true, 28));
+		tab4_2.add(new MyRibbonButton("Invert case", "REVERSECASE", "<html><font size=\"4\"><b>Convert to invert case</b></font><br>Convert the selected text to invert case<br>(uppercase to lowercase, and lowercase to uppercase),<br>or all characters if no text is selected.</html>", true, 28));
 		tab4.add(tab4_2);
 		tab4.add(createSeparator());
 		JPanel tab4_3 = new JPanel(new GridLayout(3,1,3,3));
@@ -100,7 +100,7 @@ public class MyRefluxEditRibbonPanel extends MyRibbonPanel
 		tab5_1.setOpaque(false);
 		tab5_1.add(new MyRibbonButton("10 \"=\"", null, "<html><font size=\"4\"><b>Insert 10 \"=\"</b></font><br>Insert ten equal signs</html>", true, 30));
 		tab5_1.add(new MyRibbonButton("Four \" \"", null, "<html><font size=\"4\"><b>Insert four spaces</b></font><br>Insert four spaces. Useful for programmers.</html>", true, 31));
-		tab5_1.add(new MyRibbonButton("Spaces", null, "<html><font size=\"4\"><b>Spaces</b></font><br>Insert spaces between characters!</html>", true, 49));
+		tab5_1.add(new MyRibbonButton("Spaces", null, "<html><font size=\"4\"><b>Spaces</b></font><br>Insert spaces between characters.</html>", true, 49));
 		tab5.add(tab5_1);
 		tab5.add(createSeparator());
 		tab5.add(new MyRibbonButton("<html><center>Random<br>words</center></html>", "RANDOM", "<html><font size=\"4\"><b>Generate random words</b></font><br>Generate specified number of \"words\" randomly.<br>The words will be between 1 and 10 character(s) long.<br>Note that performing this action may take a long time.</html>", false, 32));

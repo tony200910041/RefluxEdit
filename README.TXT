@@ -14,6 +14,19 @@ RefluxEdit is provided "AS IS" and WITHOUT warranties. RefluxEdit does not conta
 
 ----------
 Version History:
+RefluxEdit 5.1
+-New function: open recent files
+-New function: enhanced saving dialog
+-New function: indentation mode
+-Changed: enhanced toolbar
+-Changed: enhanced base converter
+-Changed: option dialog
+-Changed: enhanced icons
+-Fixed bug #00041: appending ".txt" in system file chooser
+-Fixed bug #00042: counting whitespaces
+-Fixed bug #00043: popup menu style
+-Removed: update checker
+
 RefluxEdit 5.0 2015-07-09
 -New function: show asterisk (*) for unsaved files
 -New function: drag tab to swap
@@ -229,7 +242,7 @@ RefluxEdit 2.0beta2 2014-06-28
 RefluxEdit 2.0beta1 2014-06-25
 -beta release of major rewrite
 -Speed improvement
--Changed: lighter background (R=245, G=245, B=245) when text area is disabled
+-Changed: lighter background for disabled background
 -Changed: much faster search/replace
 -New function: add keybord shortcut
 -New function: add menu item icons
@@ -259,13 +272,13 @@ RefluxEdit 1.3
 RefluxEdit 1.2 2014-03-06
 -New function: file association support (Windows executable)
 -New function: save settings
--New function: automatically add .txt file extension to file name
--Changed: Bigger JFileChooser size
+-New function: appending ".txt"
+-Changed: file chooser size
 
 RefluxEdit 1.1 2014-02-06
 -Fixed bug #00001: Not cancelling the "Find" dialog
 -New functions: Open File (quick), Invert case, Insert key words, Generate random words
--Changed: JMenuBar amendment: added a new JLabel
+-Changed: JMenuBar spaces
 
 RefluxEdit 1.0 2014-02-03
 -First release version

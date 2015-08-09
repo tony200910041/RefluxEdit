@@ -27,6 +27,7 @@ public class FileBrowserDialog extends JDialog implements PopupMenuListener, Act
 	private ComboBoxLayerUI comboBoxLayerUI = new ComboBoxLayerUI();
 	private DefaultMutableTreeNode root = new DefaultMutableTreeNode(RootFile.getInstance());
 	private JTree tree = new JTree(root);
+	private JCheckBox useFilter = new MyCheckBox("Filter", true);
 	//first launch: set location
 	private boolean firstLaunch = true;
 	@SuppressWarnings("unchecked")
@@ -39,7 +40,7 @@ public class FileBrowserDialog extends JDialog implements PopupMenuListener, Act
 		JPanel top = new JPanel();
 		top.setLayout(new GridLayout()); //one element->expand
 		top.setBorder(new EmptyBorder(5,5,5,5));
-		top.add(new JLayer<JComboBox>(openedBox,comboBoxLayerUI));
+		top.add(new JLayer<JComboBox<?>>(openedBox,comboBoxLayerUI));
 		openedBox.setBackground(Color.WHITE);
 		openedBox.setRenderer(new BasicComboBoxRenderer()
 		{
@@ -82,68 +83,72 @@ public class FileBrowserDialog extends JDialog implements PopupMenuListener, Act
 						{
 							if (selected.isDirectory())
 							{
-								lastNode.removeAllChildren();
-								File[] files = selected.listFiles();
-								if (files != null)
-								{
-									Arrays.sort(files, new FileComparator());
-									for (File file: files)
-									{
-										DefaultMutableTreeNode added = new DefaultMutableTreeNode(file);
-										lastNode.add(added);
-									}
-									((DefaultTreeModel)(tree.getModel())).reload(lastNode);
-									tree.expandPath(tree.getSelectionPath());
-								}
+								updateNode(lastNode);
 							}
 							else if (selected.isFile())
 							{
-								boolean open;
-								if (TextFileFormat.getFormatList().contains(StaticUtilities.getFileExtension(selected).toLowerCase()))
-								{
-									open = true;
-								}
-								else
-								{
-									int option = JOptionPane.showConfirmDialog(FileBrowserDialog.this, selected.getPath() + " does not look like a text file.\nWould you like to continue?", "Warning", JOptionPane.YES_NO_OPTION);
-									open = (option == JOptionPane.YES_OPTION);
-								}
-								if (open)
-								{
-									for (Tab tab: MainPanel.getAllTab())
-									{
-										if (selected.equals(tab.getFile()))
-										{
-											MainPanel.setSelectedComponent(tab);
-											return;
-										}
-									}
-									Tab newTab = Tab.getNewTab();
-									try
-									{
-										if (!MainPanel.getAllTab().contains(newTab))
-										{
-											MainPanel.getInstance().addTab(newTab);
-										}
-										newTab.openAndWait(selected);
-									}
-									catch (Exception ex)
-									{
-										ExceptionDialog.exception(ex);
-									}
-								}
+								openFile(selected);
 							}
 						}
 					}
 				}
 			}
 		});
+		this.updateNode(root);
 		this.add(new JScrollPane(tree), BorderLayout.CENTER);
+		//
+		JPanel bottom = new JPanel(new FlowLayout(FlowLayout.LEFT,0,0));
+		bottom.add(useFilter);
+		this.add(bottom, BorderLayout.PAGE_END);
+		useFilter.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent ev)
+			{
+				updateNode(root);
+			}
+		});
 		//
 		this.pack();
 	}
 	
-	static class FileComparator implements Comparator<File>
+	void updateNode(DefaultMutableTreeNode lastNode)
+	{
+		lastNode.removeAllChildren();
+		File selected = (File)(lastNode.getUserObject());
+		if (selected != null)
+		{
+			File[] files = selected.listFiles(useFilter.isSelected()?TextFileFormat.getFormatFilter():null);
+			if (files != null)
+			{
+				Arrays.sort(files, new FileComparator());
+				for (File file: files)
+				{
+					DefaultMutableTreeNode added = new DefaultMutableTreeNode(file);
+					lastNode.add(added);
+				}
+				((DefaultTreeModel)(tree.getModel())).reload(lastNode);
+				tree.expandPath(tree.getSelectionPath());
+			}
+		}
+	}
+	
+	void openFile(File selected)
+	{
+		boolean open;
+		if (TextFileFormat.getFormatList().contains(StaticUtilities.getFileExtension(selected).toLowerCase()))
+		{
+			open = true;
+		}
+		else
+		{
+			int option = JOptionPane.showConfirmDialog(FileBrowserDialog.this, selected.getPath() + " does not look like a text file.\nWould you like to continue?", "Warning", JOptionPane.YES_NO_OPTION);
+			open = (option == JOptionPane.YES_OPTION);
+		}
+		if (open) MainPanel.openFile(selected);
+	}
+	
+	static class FileComparator implements Comparator<File>, Serializable
 	{
 		FileComparator()
 		{
@@ -177,6 +182,12 @@ public class FileBrowserDialog extends JDialog implements PopupMenuListener, Act
 		public File[] listFiles()
 		{
 			return File.listRoots();
+		}
+		
+		@Override
+		public File[] listFiles(FileFilter filter)
+		{
+			return listFiles();
 		}
 		
 		@Override
@@ -238,7 +249,7 @@ public class FileBrowserDialog extends JDialog implements PopupMenuListener, Act
 		}
 	}
 	
-	static class ComboBoxLayerUI extends LayerUI<JComboBox>
+	static class ComboBoxLayerUI extends LayerUI<JComboBox<?>>
 	{
 		private static final String PAINT_STRING = "Select:";
 		private boolean paint = true;
@@ -270,7 +281,7 @@ public class FileBrowserDialog extends JDialog implements PopupMenuListener, Act
 		}
 	}
 	
-	DefaultComboBoxModel getComboBoxModel()
+	DefaultComboBoxModel<Tab> getComboBoxModel()
 	{
 		return this.comboBoxModel;
 	}
@@ -295,7 +306,7 @@ public class FileBrowserDialog extends JDialog implements PopupMenuListener, Act
 	public void popupMenuWillBecomeVisible(PopupMenuEvent ev)
 	{
 		comboBoxModel.removeAllElements();
-		for (Component tab: MainPanel.getInstance().getAllTab())
+		for (Component tab: MainPanel.getAllTab())
 		{
 			comboBoxModel.addElement((Tab)tab);
 		}

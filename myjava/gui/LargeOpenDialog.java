@@ -18,7 +18,7 @@ public class LargeOpenDialog extends JDialog implements Resources, ColorConstant
 	private LargeOpenDialog(Frame parent)
 	{
 		//open window in ribbon UI: open(2), open_quick(3), open_charset(51)
-		super(parent,"Open file...",true);
+		super(parent,"",true);
 		this.setUndecorated(true);
 		this.setLayout(new FlowLayout(FlowLayout.CENTER));
 		this.getContentPane().setBackground(gray);
@@ -35,11 +35,11 @@ public class LargeOpenDialog extends JDialog implements Resources, ColorConstant
 		quick.setToolTipText("Load text from a file path or a URL");
 	}
 	
-	public static void showOpenDialog()
+	public static void showOpenDialog(Frame parent)
 	{
-		LargeOpenDialog dialog = new LargeOpenDialog(RefluxEdit.getInstance());
+		LargeOpenDialog dialog = new LargeOpenDialog(parent);
 		dialog.pack();
-		dialog.setLocationRelativeTo(RefluxEdit.getInstance());
+		dialog.setLocationRelativeTo(parent);
 		//
 		GrayGlassPane.getInstance().setTransparent(false);
 		dialog.setVisible(true);

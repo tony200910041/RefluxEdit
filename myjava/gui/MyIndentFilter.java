@@ -12,6 +12,14 @@ import exec.*;
 public class MyIndentFilter extends DocumentFilter
 {
 	private static boolean autoIndent = SourceManager.getBoolean0("autoIndent");
+	private static String indentString = SourceManager.getConfig0("autoIndentString");
+	static
+	{
+		if ((indentString==null)||((!indentString.equals("\t"))&&(!indentString.equals("    "))))
+		{
+			indentString = "\t";
+		}
+	}
 	private MyTextArea textArea;
 	public MyIndentFilter(MyTextArea textArea)
 	{
@@ -24,9 +32,19 @@ public class MyIndentFilter extends DocumentFilter
 		MyIndentFilter.autoIndent = autoIndent;
 	}
 	
-	public boolean isAutoIndent()
+	public static boolean isAutoIndent()
 	{
-		return this.autoIndent;
+		return MyIndentFilter.autoIndent;
+	}
+	
+	public static void setIndentString(String indentString)
+	{
+		MyIndentFilter.indentString = indentString;
+	}
+	
+	public static String getIndentString()
+	{
+		return MyIndentFilter.indentString;
 	}
 	
 	@Override
@@ -50,7 +68,7 @@ public class MyIndentFilter extends DocumentFilter
 				String _char = getLastCharacter(fb, offset);
 				if (_char.equals("{"))
 				{
-					string = string + "\t" + getIndentOfLastLine(fb, offset); //increase indentation
+					string = string + indentString + getIndentOfLastLine(fb, offset); //increase indentation
 				}
 				else
 				{
@@ -87,7 +105,7 @@ public class MyIndentFilter extends DocumentFilter
 				String _char = getLastCharacter(fb, offset);
 				if (_char.equals("{"))
 				{
-					string = string + "\t" + getIndentOfLastLine(fb, offset);
+					string = string + indentString + getIndentOfLastLine(fb, offset);
 				}
 				else
 				{
@@ -142,8 +160,8 @@ public class MyIndentFilter extends DocumentFilter
 			for (int i=start; i<end; i++)
 			{
 				String character = doc.getText(i,1);
-				if (character.equals("\t")) str = str + "\t";
-				else if (character.equals(" ")) str = str + " ";
+				if (character.equals("\t")) str += "\t";
+				else if (character.equals(" ")) str += " ";
 				else break;
 			}
 			return str;
@@ -157,7 +175,7 @@ public class MyIndentFilter extends DocumentFilter
 		 * return the "last" character (not \n or " ")
 		 */
 		Document doc = fb.getDocument();
-		for (int i=offset; i>0; i--)
+		for (int i=offset; i>textArea.getLineStartOffset(textArea.getLineOfOffset(offset)); i--)
 		{
 			String _char = doc.getText(i-1,1);
 			if ((!_char.equals("\n"))&&(!_char.equals(" "))) return _char;
@@ -167,10 +185,10 @@ public class MyIndentFilter extends DocumentFilter
 	
 	private String removeOneTab(String text)
 	{
-		if (text.contains("\t"))
+		if (text.contains(indentString))
 		{
-			int index = text.lastIndexOf("\t");
-			text = text.substring(0,index)+text.substring(index+1,text.length());
+			int index = text.lastIndexOf(indentString);
+			text = text.substring(0,index)+text.substring(index+indentString.length(),text.length());
 		}
 		return text;
 	}

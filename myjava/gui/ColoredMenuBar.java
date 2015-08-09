@@ -8,6 +8,7 @@ package myjava.gui;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.event.*;
 import exec.*;
 import myjava.gui.common.*;
 
@@ -24,6 +25,19 @@ public class ColoredMenuBar extends JMenuBar
 	public static final int WHITE = 0;
 	public static final int BLUE = 1;
 	public static final int MODERN = 2;
+	/*
+	 * menus
+	 */
+	private MyMenu menu1 = new MyMenu("File");
+	private MyMenu menu2 = new MyMenu("Edit");
+	private MyMenu menu3 = new MyMenu("View");
+	private MyMenu menu4 = new MyMenu("Tools");
+	private MyMenu menu5 = new MyMenu("Insert");
+	private MyMenu menu6 = new MyMenu("Help");
+	/*
+	 * submenus
+	 */
+	private MyMenu menu1_2 = new MyMenu("Open");
 	private int mode;
 	private ColoredMenuBar(int mode)
 	{
@@ -34,12 +48,6 @@ public class ColoredMenuBar extends JMenuBar
 		/*
 		 * JMenus
 		 */
-		MyMenu menu1 = new MyMenu("File");
-		MyMenu menu2 = new MyMenu("Edit");
-		MyMenu menu3 = new MyMenu("View");
-		MyMenu menu4 = new MyMenu("Tools");
-		MyMenu menu5 = new MyMenu("Insert");
-		MyMenu menu6 = new MyMenu("Help");
 		this.add(new JLabel(" "));
 		this.add(menu1);
 		this.add(new JLabel(" "));
@@ -61,14 +69,34 @@ public class ColoredMenuBar extends JMenuBar
 		menu1_1.add(new MyMenuItem("New file", "NEW", 1));
 		menu1_1.add(new MyMenuItem("New file from clipboard", "NEWCLIPBOARD16", 56));
 		menu1_1.add(new MyMenuItem("New Java class", "NEWJAVA16", 57));
-		MyMenu menu1_2 = new MyMenu("Open");
 		menu1_2.setIcon(SourceManager.icon("OPEN"));
 		menu1.add(menu1_2);
-		menu1_2.add(new MyMenuItem("Open file", "OPEN", 2, KeyEvent.VK_O));
-		menu1_2.add(new MyMenuItem("Open file (quick)", null, 3));
-		menu1_2.add(new MyMenuItem("Open file (charset)",null, 51));
-		//menu1_2.add(new JSeparator());
-		//menu1_2.add(RecentMenu.getInstance());
+		menu1_2.addMenuListener(new MenuListener()
+		{
+			@Override
+			public void menuSelected(MenuEvent ev)
+			{
+				menu1_2.removeAll();
+				menu1_2.add(new MyMenuItem("Open file", "OPEN", 2, KeyEvent.VK_O));
+				menu1_2.add(new MyMenuItem("Open file (quick)", null, 3));
+				menu1_2.add(new MyMenuItem("Open file (charset)",null, 51));
+				if (SourceManager.getBoolean0("rememberRecentFiles"))
+				{
+					menu1_2.add(new JSeparator());
+					menu1_2.add(RecentMenu.getInstance());
+				}
+			}
+			
+			@Override
+			public void menuDeselected(MenuEvent ev)
+			{
+			}
+			
+			@Override
+			public void menuCanceled(MenuEvent ev)
+			{
+			}
+		});
 		menu1.add(new JSeparator());
 		menu1.add(new MyMenuItem("Save as", "SAVE", 4, KeyEvent.VK_S));
 		menu1.add(new MyMenuItem("Save", null, 5));
@@ -112,7 +140,7 @@ public class ColoredMenuBar extends JMenuBar
 		menu4.add(menu4_1);
 		menu4_1.add(new MyMenuItem("Convert to upper case", "UPPERCASE", 26));
 		menu4_1.add(new MyMenuItem("Convert to lower case", "LOWERCASE", 27));
-		menu4_1.add(new MyMenuItem("Convert to invert case", "INVERTCASE", 28));
+		menu4_1.add(new MyMenuItem("Convert to invert case", "REVERSECASE", 28));
 		//
 		MyMenu menu4_2 = new MyMenu("Escape character");
 		menu4.add(menu4_2);
@@ -121,7 +149,7 @@ public class ColoredMenuBar extends JMenuBar
 		//
 		menu4.add(new JSeparator());
 		menu4.add(new MyMenuItem("Search and replace", "SEARCH16", 24, KeyEvent.VK_F));
-		menu4.add(new MyMenuItem("Show JColorChooser", "COLORCHOOSER16", 40));
+		menu4.add(new MyMenuItem("Color chooser", "COLORCHOOSER16", 40));
 		menu4.add(new MyMenuItem("Base converter (2-36)", "BASE16", 41));
 		menu4.add(new MyMenuItem("Regex matcher", "REGEX16", 23));
 		//

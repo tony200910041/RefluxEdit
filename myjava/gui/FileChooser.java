@@ -16,10 +16,9 @@ import static exec.SourceManager.*;
 public final class FileChooser
 {
 	//defaults
-	private static final MyWhiteFileChooser JavaChooser = MyWhiteFileChooser.getInstance();
+	private static MyWhiteFileChooser JavaChooser = MyWhiteFileChooser.getInstance();
 	private static FileDialog systemChooser;
-	private static final FileNameExtensionFilter textFilter = new FileNameExtensionFilter("Text file", TextFileFormat.getFormats());
-	//
+	//mode
 	public static final int OPEN = 0;
 	public static final int SAVE = 1;
 	//
@@ -41,7 +40,7 @@ public final class FileChooser
 				JavaChooser.resetChoosableFileFilters();
 				if (filterFormat.length == 0)
 				{
-					JavaChooser.addChoosableFileFilter(textFilter);
+					JavaChooser.addChoosableFileFilter(FileChooser.getTextFilter());
 				}
 				else
 				{
@@ -112,11 +111,11 @@ public final class FileChooser
 					{
 						if (filterFormat.length == 0)
 						{
-							f = new File(child + ".txt");
+							child += ".txt";
 						}
 						else
 						{
-							f = new File(child + "."+filterFormat[0]);
+							child += ("."+filterFormat[0]);
 						}
 					}
 					f = new File(systemChooser.getDirectory(), child);	
@@ -135,5 +134,10 @@ public final class FileChooser
 	public static int isOverride(Frame parent)
 	{
 		return JOptionPane.showConfirmDialog(parent, "Override old file?", "Warning", JOptionPane.WARNING_MESSAGE);
+	}
+	
+	private static FileNameExtensionFilter getTextFilter()
+	{
+		return new FileNameExtensionFilter("Text file", TextFileFormat.getFormats());
 	}
 }

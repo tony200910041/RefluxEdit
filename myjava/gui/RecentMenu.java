@@ -5,12 +5,14 @@
 
 package myjava.gui;
 
+import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import java.util.*;
 import java.io.*;
 import myjava.gui.*;
+import myjava.gui.common.*;
 import static exec.SourceManager.*;
 
 public class RecentMenu extends MyMenu implements MenuListener
@@ -45,13 +47,17 @@ public class RecentMenu extends MyMenu implements MenuListener
 					count++;
 					JMenuItem item = RecentMenu.this.add(new FileAction(file));
 					item.setText(count + ": " + file.getPath());
+					item.setBackground(Color.WHITE);
+					item.setFont(Resources.f13);
 					if (count == 10) break;
 				}
 			}
-			RecentMenu.this.addSeparator();
-		}		
+			if (count != 0) RecentMenu.this.addSeparator();
+		}
 		JMenuItem clear = RecentMenu.this.add(new ClearAction());
 		clear.setText("Clear");
+		clear.setBackground(Color.WHITE);
+		clear.setFont(Resources.f13);
 	}
 	
 	private static class FileAction extends AbstractAction
@@ -66,12 +72,7 @@ public class RecentMenu extends MyMenu implements MenuListener
 		@Override
 		public void actionPerformed(ActionEvent ev)
 		{
-			Tab tab = Tab.getNewTab();
-			if (!MainPanel.getAllTab().contains(tab))
-			{
-				MainPanel.add(tab);
-			}
-			tab.open(this.file);
+			MainPanel.openFile(this.file);
 		}
 	}
 	

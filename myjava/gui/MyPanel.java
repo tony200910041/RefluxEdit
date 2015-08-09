@@ -22,7 +22,12 @@ public class MyPanel extends JPanel
 	
 	public static MyPanel wrap(Component... c)
 	{
-		MyPanel panel = new MyPanel(LEFT);
+		return wrap(LEFT, c);
+	}
+	
+	public static MyPanel wrap(int mode, Component... c)
+	{
+		MyPanel panel = new MyPanel(mode);
 		for (Component component: c)
 		{
 			panel.add(component);

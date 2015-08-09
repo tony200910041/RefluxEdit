@@ -15,6 +15,7 @@ import myjava.gui.common.*;
 
 public class RegexDialog extends JDialog implements DocumentListener, ColorConstants
 {
+	private static final Font f15 = Resources.f13.deriveFont(15f);
 	private static final Font f20 = Resources.f13.deriveFont(20f);
 	private JTextArea string = new JTextArea();
 	private JTextField regex = new JTextField();
@@ -33,7 +34,7 @@ public class RegexDialog extends JDialog implements DocumentListener, ColorConst
 		super(parent,"Regex matcher",false);
 		this.setLayout(new BorderLayout());
 		//
-		string.setFont(f20);
+		string.setFont(f15);
 		string.setDragEnabled(true);
 		string.setLineWrap(true);
 		string.setWrapStyleWord(true);
@@ -41,7 +42,7 @@ public class RegexDialog extends JDialog implements DocumentListener, ColorConst
 		JScrollPane scrollPane = new JScrollPane(string);
 		this.add(scrollPane, BorderLayout.CENTER);
 		//
-		regex.setFont(f20);
+		regex.setFont(f15);
 		regex.setPreferredSize(new Dimension(350,33));
 		regex.getDocument().addDocumentListener(this);
 		regex.setDragEnabled(true);

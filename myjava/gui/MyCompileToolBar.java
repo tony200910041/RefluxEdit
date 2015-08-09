@@ -35,7 +35,7 @@ public class MyCompileToolBar extends JToolBar implements Resources
 		super("Compile dialog");
 		this.add(panel);
 		JScrollPane scrollPane = new JScrollPane(compileList);
-		scrollPane.setPreferredSize(new Dimension(500,130));
+		scrollPane.setPreferredSize(new Dimension(440,130));
 		panel.add(scrollPane, BorderLayout.CENTER);
 		JPanel bottom = new JPanel(new BorderLayout(10,10));
 		panel.add(bottom, BorderLayout.LINE_END);
@@ -140,51 +140,59 @@ public class MyCompileToolBar extends JToolBar implements Resources
 					public void run()
 					{
 						loadConfig();
-						currentTab = MainPanel.getSelectedTab();						
-						boolean isGlobal = getBoolean0("Compile.useGlobal");
-						String command = null;
+						currentTab = MainPanel.getSelectedTab();
 						File currentFile = currentTab.getFile();
-						if ((!isGlobal)&&(currentFile != null))
+						if (currentFile != null)
 						{
-							command = getConfig0("Compile.runCommand."+currentFile.getPath());
-						}
-						else if (isGlobal)
-						{
-							command = getConfig0("Compile.runCommand");
-						}
-						if ((command == null)||command.isEmpty())
-						{
-							//still null, use default
-							command = getRunCommand(getFileExtension(currentFile));
-						}
-						command = command.replace("%f", "\""+currentFile.getPath()+"\"");
-						command = command.replace("%p", "\""+currentFile.getParent()+"\"");
-						command = command.replace("%s", currentFile.getName());
-						command = command.replace("%a", getFileName(currentFile));
-						command = command.replace("%n", System.getProperty("line.separator"));
-						String cmdFileName = null;
-						if ((!isGlobal)&&(currentFile!=null))
-						{
-							cmdFileName = getConfig0("Compile.runCommandFileName."+currentFile.getPath());
-						}
-						else if (isGlobal)
-						{
-							cmdFileName = getConfig0("Compile.runCommandFileName");
-						}
-						if ((cmdFileName == null)||cmdFileName.isEmpty())
-						{
-							cmdFileName = "run.bat";
-						}
-						File cmdfile = new File(currentFile.getParent(),cmdFileName);
-						cmdfile.delete();
-						try (PrintWriter writer = new PrintWriter(cmdfile,"UTF-8"))
-						{
-							writer.println(command);
-							writer.close();
-							Desktop.getDesktop().open(cmdfile);
-						}
-						catch (Exception ex)
-						{
+							boolean isGlobal = getBoolean0("Compile.useGlobal");
+							String command = null;
+							if ((!isGlobal)&&(currentFile != null))
+							{
+								command = getConfig0("Compile.runCommand."+currentFile.getPath());
+							}
+							else if (isGlobal)
+							{
+								command = getConfig0("Compile.runCommand");
+							}
+							if ((command == null)||command.isEmpty())
+							{
+								//still null, use default
+								command = getRunCommand(getFileExtension(currentFile));
+							}
+							command = command.replace("%f", "\""+currentFile.getPath()+"\"");
+							command = command.replace("%p", "\""+currentFile.getParent()+"\"");
+							command = command.replace("%s", currentFile.getName());
+							command = command.replace("%a", getFileName(currentFile));
+							command = command.replace("%n", System.getProperty("line.separator"));
+							String cmdFileName = null;
+							if ((!isGlobal)&&(currentFile!=null))
+							{
+								cmdFileName = getConfig0("Compile.runCommandFileName."+currentFile.getPath());
+							}
+							else if (isGlobal)
+							{
+								cmdFileName = getConfig0("Compile.runCommandFileName");
+							}
+							if ((cmdFileName == null)||cmdFileName.isEmpty())
+							{
+								cmdFileName = "run.bat";
+							}
+							File cmdfile = new File(currentFile.getParent(),cmdFileName);
+							boolean success = cmdfile.delete();
+							try (PrintWriter writer = new PrintWriter(cmdfile,"UTF-8"))
+							{
+								writer.println(command);
+							}
+							catch (Exception ex)
+							{							
+							}
+							try
+							{
+								Desktop.getDesktop().open(cmdfile);
+							}
+							catch (Exception ex)
+							{
+							}
 						}
 					}
 				}).start();
@@ -347,36 +355,35 @@ public class MyCompileToolBar extends JToolBar implements Resources
 		}
 	}
 	
-	private File makeNextOldDir(File f)
+	private File makeNextOldDir(File f) throws IOException
 	{
 		int i=0;
 		while (true)
 		{
 			i++;
-			File _f = new File(f, "old_currentTab.getFile()_backup_" + i);
+			File _f = new File(f, "old_" + currentTab.getFile().getName() + "_backup_" + i);
 			if (!_f.exists())
 			{
-				_f.mkdir();
-				return _f;
+				boolean success = _f.mkdir();
+				if (success) return _f;
+				else throw new IOException("cannot make dir: " + _f.getPath());
 			}
 		}
 	}
 	
 	private void cut(File src, File dir)
 	{
-		try
+		try (FileInputStream input = new FileInputStream(src);
+			 FileOutputStream output = new FileOutputStream(new File(dir,src.getName())))
 		{
-			FileInputStream input = new FileInputStream(src);
-			FileOutputStream output = new FileOutputStream(new File(dir,src.getName()));
 			byte[] buffer = new byte[4096];
 			int read;
 			while ((read = input.read(buffer))>0)
 			{
 				output.write(buffer,0,read);
 			}
-			input.close();
-			output.close();
-			src.delete();
+			boolean success = src.delete();
+			if (!success) throw new IOException("cannot delete " + src.getPath());
 		}
 		catch (Exception ex)
 		{

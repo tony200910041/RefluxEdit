@@ -19,7 +19,7 @@ public class ColorDialog extends JDialog implements ActionListener
 	private boolean isInsert = false;
 	private ColorDialog(Frame parent)
 	{
-		super(parent,"Color chooser (JColorChooser)",true);
+		super(parent,"Color chooser",true);
 		this.setLayout(new BorderLayout());
 		this.add(chooser, BorderLayout.CENTER);
 		JPanel bottom = new JPanel(new GridLayout(2,1,0,0));

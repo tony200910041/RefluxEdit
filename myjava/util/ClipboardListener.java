@@ -28,7 +28,7 @@ public abstract class ClipboardListener extends Thread implements ClipboardOwner
 		{
 			try
 			{
-				this.sleep(Integer.MAX_VALUE);
+				Thread.sleep(Integer.MAX_VALUE);
 			}
 			catch (InterruptedException ex)
 			{

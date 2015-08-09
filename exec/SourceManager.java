@@ -10,6 +10,7 @@ import javax.swing.*;
 import java.io.*;
 import java.util.*;
 import java.net.*;
+import myjava.util.*;
 
 public final class SourceManager
 {
@@ -39,22 +40,9 @@ public final class SourceManager
 				setConfig("SelectionColor.r", "244");
 				setConfig("SelectionColor.g", "223");
 				setConfig("SelectionColor.b", "255");
-				setConfig("LAF", "Default");
+				setConfig("LAF", UIManager.getCrossPlatformLookAndFeelClassName());
 				setConfig("isPanel", "no");
-				setConfig("ToolBar.new", "true");
-				setConfig("ToolBar.open", "true");
-				setConfig("ToolBar.save", "true");
-				setConfig("ToolBar.export", "false");
-				setConfig("ToolBar.print", "true");
-				setConfig("ToolBar.undo", "true");
-				setConfig("ToolBar.redo", "false");
-				setConfig("ToolBar.cut", "true");
-				setConfig("ToolBar.copy", "true");
-				setConfig("ToolBar.paste", "true");
-				setConfig("ToolBar.selectAll", "true");
-				setConfig("ToolBar.selectAllAndCopy", "false");
-				setConfig("ToolBar.delete", "false");
-				setConfig("ToolBar.search", "true");
+				setConfig("ToolBar.buttons", "001002004038000007008012013015024");
 				setConfig("TextAreaFont.fontName", "Microsoft Jhenghei");
 				setConfig("TextAreaFont.fontStyle", "0");
 				setConfig("TextAreaFont.fontSize", "15");
@@ -64,10 +52,9 @@ public final class SourceManager
 				setConfig("isRibbon", "true");
 				setConfig("showCount", "false");
 				setConfig("autoIndent", "true");
+				setConfig("autoIndentString", "\t");
 				setConfig("showUmbrella", "false");
 				setConfig("Umbrella.alpha", "60");
-				setConfig("Compile.command", "javac -classpath \"%p\" %f");
-				setConfig("Compile.runCommand", "cd %p%njava -classpath %p %a%nPAUSE%ndel \"%~f0\"");
 				setConfig("Compile.runCommandFileName","run.bat");
 				setConfig("Compile.removeOriginal", "false");
 				setConfig("Compile.regex", ".*\\.class");
@@ -88,6 +75,7 @@ public final class SourceManager
 				setConfig("CloseToTray", "false");
 				setConfig("showHint", "false");
 				setConfig("showLineCounter", "false");
+				setConfig("rememberRecentFiles", "true");
 				saveConfig();
 			}
 			catch (IOException ex)

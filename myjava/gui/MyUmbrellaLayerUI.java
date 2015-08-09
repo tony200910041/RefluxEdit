@@ -107,7 +107,7 @@ public class MyUmbrellaLayerUI extends LayerUI<MyTextArea>
 			 */
 			g2d.drawString(text,rect.x+(width-stringWidth)/2,rect.y+(height+stringHeight)/2);
 		}
-		else if (this.paintUmbrella)
+		else if (paintUmbrella)
 		{
 			/*
 			 * paint umbrella

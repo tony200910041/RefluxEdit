@@ -178,6 +178,34 @@ public class MainPanel extends JPanel
 		tabbedPane.insertTab(null,null,reached,null,draggedIndex);
 		this.updateTabName(dragged);
 		this.updateTabName(reached);
-		this.setSelectedComponent(dragged);
+		tabbedPane.setSelectedComponent(dragged);
+	}
+	
+	public static void openFile(File file)
+	{
+		for (Tab tab: MainPanel.getAllTab())
+		{
+			if (file.equals(tab.getFile()))
+			{
+				MainPanel.setSelectedComponent(tab);
+				return;
+			}
+		}
+		Tab _tab = Tab.getNewTab();
+		_tab.open(file);
+	}
+	
+	public static void openFileAndWait(File file) throws Exception
+	{
+		for (Tab tab: MainPanel.getAllTab())
+		{
+			if (file.equals(tab.getFile()))
+			{
+				MainPanel.setSelectedComponent(tab);
+				return;
+			}
+		}
+		Tab _tab = Tab.getNewTab();
+		_tab.openAndWait(file);
 	}
 }

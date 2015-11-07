@@ -59,7 +59,7 @@ public class MyRibbonFirst extends MyPureButton implements MouseListener, Resour
 		menuDialog.add(new MyItemButton("Open File", "OPEN80", -2));
 		menuDialog.add(new MyItemButton("Save As", "SAVEAS80", 4));
 		menuDialog.add(new MyItemButton("Save", "SAVE80", 5));
-		menuDialog.add(new MyItemButton("Export to Image", "EXPORT80", 43));
+		menuDialog.add(new MyItemButton("Export as Image", "EXPORT80", 43));
 		menuDialog.add(new MyItemButton("Print", "PRINT80", 38));
 		menuDialog.add(new MyItemButton("Close", "CLOSE80", 6));
 		menuDialog.add(new MyItemButton("Cancel", "TRANSPARENT80", -10));

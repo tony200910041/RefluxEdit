@@ -18,7 +18,7 @@ import myjava.gui.common.*;
 
 public class MyFontChooser extends JPanel implements ActionListener, ChangeListener, Resources
 {
-	private static final Font[] usableFonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
+	private static final Font[] usableFonts = loadUsableFonts();
 	protected Font selectedFont;	
 	protected JComboBox<String> comboBox = new JComboBox<>();
 	protected JSpinner spinner = new JSpinner(new SpinnerNumberModel(12, 1, 200, 1));
@@ -151,5 +151,19 @@ public class MyFontChooser extends JPanel implements ActionListener, ChangeListe
 	public JSpinner getSpinner()
 	{
 		return this.spinner;
+	}
+	
+	public static Font[] loadUsableFonts()
+	{
+		Font[] f = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
+		Arrays.sort(f, new Comparator<Font>()
+		{
+			@Override
+			public int compare(Font f1, Font f2)
+			{
+				return f1.getFontName().compareTo(f2.getFontName());
+			}
+		});
+		return f;
 	}
 }

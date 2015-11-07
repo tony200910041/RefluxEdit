@@ -27,7 +27,7 @@ public class MyTrayIcon extends TrayIcon implements MouseListener, WindowFocusLi
 	@Override
 	public void mouseReleased(MouseEvent ev)
 	{
-		if (ev.isPopupTrigger())
+		if (ev.isPopupTrigger()||ev.isControlDown())
 		{
 			popup.setInvoker(hiddenDialog);
 			hiddenDialog.setVisible(true);

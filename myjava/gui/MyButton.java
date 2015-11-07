@@ -74,7 +74,7 @@ public class MyButton extends JButton implements ActionListener, MouseListener, 
 	@Override
 	public void mouseEntered(MouseEvent ev)
 	{
-		if (this.isEnabled()&&(!isWindows)&&(!isNimbus))
+		if (this.isEnabled()&&isMetal)
 		{
 			this.setBorder(bord2);
 		}
@@ -83,7 +83,7 @@ public class MyButton extends JButton implements ActionListener, MouseListener, 
 	@Override
 	public void mouseExited(MouseEvent ev)
 	{
-		if (this.isEnabled()&&(!isWindows)&&(!isNimbus))
+		if (this.isEnabled()&&isMetal)
 		{
 			this.setBorder(bord1);
 		}

@@ -17,6 +17,7 @@ public final class SourceManager
 	private static final File settingFile = new File(getSettingFilePath(), "REFLUXEDITPREF.PROPERTIES");
 	private static final Properties prop = new Properties();
 	private static boolean isUpToDate = false;
+	private static final boolean IS_MAC = System.getProperty("os.name").toLowerCase().contains("mac");
 	public static void initialize()
 	{
 		//size
@@ -26,7 +27,7 @@ public final class SourceManager
 			{
 				PrintWriter writer = new PrintWriter(settingFile, "UTF-8");
 				writer.close();
-				setConfig("Size.x", "550");
+				setConfig("Size.x", "560");
 				setConfig("Size.y", "540");
 				setConfig("Location.x", "10");
 				setConfig("Location.y", "10");
@@ -55,19 +56,22 @@ public final class SourceManager
 				setConfig("autoIndentString", "\t");
 				setConfig("showUmbrella", "false");
 				setConfig("Umbrella.alpha", "60");
-				setConfig("Compile.runCommandFileName","run.bat");
+				setConfig("Compile.runCommandFileName", IS_MAC?"run.command":"run.bat");
 				setConfig("Compile.removeOriginal", "false");
 				setConfig("Compile.regex", ".*\\.class");
 				setConfig("Compile.useGlobal", "false");
-				setConfig("Compile.command.default.c", "gcc -o %a %f");
-				setConfig("Compile.command.default.cpp", "g++ -o %a %f");
+				setConfig("Compile.command.default.c", IS_MAC?"":"gcc -o %a %f");
+				setConfig("Compile.command.default.cpp", IS_MAC?"":"g++ -o %a %f");
 				setConfig("Compile.command.default.java", "javac -classpath %p %f");
-				setConfig("Compile.runCommand.default.c", "cd %p%n%a%nPAUSE%ndel \"%~f0\"");
-				setConfig("Compile.runCommand.default.cpp", "cd %p%n%a%nPAUSE%ndel \"%~f0\"");
-				setConfig("Compile.runCommand.default.java", "cd %p%njava -classpath %p %a%nPAUSE%ndel \"%~f0\"");
-				setConfig("Compile.runCommand.default.pl", "cd %p%nperl %f%nPAUSE%ndel \"%~f0\"");
-				setConfig("Compile.runCommand.default.plx", "cd %p%nperl %f%nPAUSE%ndel \"%~f0\"");
-				setConfig("Compile.runCommand.default.py", "cd %p%npython %f%nPAUSE%ndel \"%~f0\"");
+				setConfig("Compile.runCommand.default.c", IS_MAC?"":"cd %p%n%a%nPAUSE%ndel \"%~f0\"");
+				setConfig("Compile.runCommand.default.cpp", IS_MAC?"":"cd %p%n%a%nPAUSE%ndel \"%~f0\"");
+				setConfig("Compile.runCommand.default.java", IS_MAC?"cd %p%njava -classpath %p %a":"cd %p%njava -classpath %p %a%nPAUSE%ndel \"%~f0\"");
+				setConfig("Compile.runCommand.default.pl", IS_MAC?"":"cd %p%nperl %f%nPAUSE%ndel \"%~f0\"");
+				setConfig("Compile.runCommand.default.plx", IS_MAC?"":"cd %p%nperl %f%nPAUSE%ndel \"%~f0\"");
+				setConfig("Compile.runCommand.default.py", IS_MAC?"":"cd %p%npython %f%nPAUSE%ndel \"%~f0\"");
+				setConfig("Compile.end.beep", "false");
+				setConfig("Compile.pathQuote", IS_MAC?"no":"straight");
+				setConfig("Compile.escapeSpace", IS_MAC+"");
 				setConfig("Caret.save", "true");
 				setConfig("CheckUpdate", "true");
 				setConfig("ConfirmDrag", "false");
@@ -76,6 +80,7 @@ public final class SourceManager
 				setConfig("showHint", "false");
 				setConfig("showLineCounter", "false");
 				setConfig("rememberRecentFiles", "true");
+				setConfig("apple.laf.useScreenMenuBar", "true");
 				saveConfig();
 			}
 			catch (IOException ex)

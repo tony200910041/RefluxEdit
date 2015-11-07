@@ -87,7 +87,7 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 			@Override
 			public void mouseReleased(MouseEvent ev)
 			{
-				if (ev.isPopupTrigger())
+				if (ev.isPopupTrigger()||ev.isControlDown()||(ev.getClickCount()==2))
 				{					
 					tabPopup.show(tabLabel,ev.getX(),ev.getY());					
 				}
@@ -99,9 +99,10 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 					 */
 					if (ev.getClickCount() == 1)
 					{
-						JTabbedPane tabbedPane = MainPanel.getInstance().getTabbedPane();
+						/*JTabbedPane tabbedPane = MainPanel.getInstance().getTabbedPane();
 						MouseEvent me = SwingUtilities.convertMouseEvent(tabLabel,ev,tabbedPane);
-						tabbedPane.getMouseListeners()[0].mousePressed(me);
+						tabbedPane.getMouseListeners()[0].mousePressed(me);*/
+						MainPanel.setSelectedComponent(Tab.this);
 					}
 				}
 			}
@@ -111,7 +112,10 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 			{
 				JTabbedPane tabbedPane = MainPanel.getInstance().getTabbedPane();
 				MouseEvent me = SwingUtilities.convertMouseEvent(tabLabel,ev,tabbedPane);
-				tabbedPane.getMouseListeners()[0].mouseEntered(me);
+				for (MouseListener listener: tabbedPane.getMouseListeners())
+				{
+					listener.mouseEntered(me);
+				}
 			}
 			
 			@Override 
@@ -402,14 +406,15 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 		private volatile boolean complete;
 		private FileInputStream input;
 		private BufferedReader br1;
-		private RandomProgress prog;
+		private JDialog prog;
 		private File f;
 		private String encoding;
-		MyWorker(RandomProgress dialogToClose, File fileToLoad, String encoding)
+		MyWorker(JDialog dialogToClose, File fileToLoad, String encoding)
 		{
 			this.prog = dialogToClose;
 			this.f = fileToLoad;
 			this.encoding = encoding;
+			this.prog.setVisible(true);
 		}
 		
 		@Override
@@ -631,7 +636,8 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 		/*
 		 * show "loading"
 		 */
-		RandomProgress prog = new RandomProgress(parent);
+		ProgressDialog prog = new ProgressDialog(parent,"Please wait...");
+		prog.setIndeterminate(true);
 		this.textArea.setText("");
 		int lineno = 0;
 		String encoding = getEncoding(src);		
@@ -695,7 +701,8 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 		/*
 		 * show "loading"
 		 */
-		final RandomProgress prog = new RandomProgress(parent);		
+		final ProgressDialog prog = new ProgressDialog(parent,"Please wait");
+		prog.setIndeterminate(true);		
 		final Thread thread = new Thread()
 		{
 			@Override
@@ -762,6 +769,7 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 						/*
 						 * remove old watcher, and create a new one
 						 */
+						prog.setVisible(false);
 						prog.dispose();
 					}
 				});
@@ -1194,23 +1202,27 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 		private int x;
 		MyPopupMenuItem(String text, int x)
 		{
+			this(text,null,x);		
+		}
+		
+		MyPopupMenuItem(String text, String icon, int x)
+		{
 			super(text);
 			this.setFont(f13);
 			this.setBackground(Color.WHITE);
 			this.addActionListener(this);
 			this.x = x;
-		}
-		
-		MyPopupMenuItem(String text, String icon, int x)
-		{
-			this(text,x);
 			try
 			{
 				this.setIcon(icon(icon));
 			}
 			catch (Exception ex)
 			{
-				//fail sliently
+				icon = null;
+			}
+			if (icon == null)
+			{
+				this.setIcon(EmptyIcon.getInstance());
 			}
 		}
 		

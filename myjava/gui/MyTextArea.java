@@ -8,8 +8,10 @@ package myjava.gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.dnd.*;
+import java.awt.print.*;
 import javax.swing.*;
 import javax.swing.text.*;
+import javax.print.attribute.*;
 import java.io.*;
 import exec.*;
 import myjava.gui.*;
@@ -218,9 +220,9 @@ public class MyTextArea extends JTextArea implements MouseListener
 		 */
 		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_E, Resources.OS_CTRL_MASK), "export");
 		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, Resources.OS_CTRL_MASK), "search");
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F1, Resources.OS_CTRL_MASK), "about");		
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, Resources.OS_CTRL_MASK), "wordcount");
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F3, Resources.OS_CTRL_MASK), "charcount");
+		inputMap.put(KeyStroke.getKeyStroke(Resources.isMac?KeyEvent.VK_1:KeyEvent.VK_F1, Resources.OS_CTRL_MASK), "about");		
+		inputMap.put(KeyStroke.getKeyStroke(Resources.isMac?KeyEvent.VK_2:KeyEvent.VK_F2, Resources.OS_CTRL_MASK), "wordcount");
+		inputMap.put(KeyStroke.getKeyStroke(Resources.isMac?KeyEvent.VK_3:KeyEvent.VK_F3, Resources.OS_CTRL_MASK), "charcount");
 		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_I, Resources.OS_CTRL_MASK), "indent+");
 		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_O, Resources.OS_CTRL_MASK), "open");
 		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_P, Resources.OS_CTRL_MASK), "print");
@@ -228,7 +230,7 @@ public class MyTextArea extends JTextArea implements MouseListener
 		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_U, Resources.OS_CTRL_MASK), "indent-");
 		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, Resources.OS_CTRL_MASK), "redo");
 		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, Resources.OS_CTRL_MASK), "undo");
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0), "compile");
+		inputMap.put(KeyStroke.getKeyStroke(Resources.isMac?KeyEvent.VK_8:KeyEvent.VK_F8, Resources.isMac?InputEvent.META_MASK:0), "compile");
 		/*
 		 * ActionMap
 		 */
@@ -260,7 +262,7 @@ public class MyTextArea extends JTextArea implements MouseListener
 	@Override
 	public void mouseReleased(MouseEvent ev)
 	{
-		if (ev.isPopupTrigger())
+		if (ev.isPopupTrigger()||ev.isControlDown())
 		{
 			popup.show(MyTextArea.this, ev.getX(), ev.getY());
 		}

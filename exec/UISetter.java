@@ -34,6 +34,7 @@ public final class UISetter implements Resources
 		defaults.put("PopupMenu.font", f13);
 		defaults.put("RadioButtonMenuItem.font", f13);
 		defaults.put("TabbedPane.font", f13);
+		defaults.put("TableHeader.font", f13);
 		defaults.put("TextField.font", f13);
 		defaults.put("TitledBorder.font", f13);
 		defaults.put("RadioButton.font", f13);
@@ -61,6 +62,10 @@ public final class UISetter implements Resources
 		{
 			defaults.put("ToolTip.font", f13);
 			defaults.put("Button.background", Color.WHITE);
+		}
+		if (isMac&&SourceManager.getBoolean0("apple.laf.useScreenMenuBar"))
+		{
+			System.setProperty("apple.laf.useScreenMenuBar", "true");
 		}
 		ToolTipManager.sharedInstance().setInitialDelay(100);
 		ToolTipManager.sharedInstance().setDismissDelay(6500);

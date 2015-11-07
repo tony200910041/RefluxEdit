@@ -272,7 +272,7 @@ public final class StaticUtilities
 	
 	public static String getFileExtension(File file)
 	{
-		String name = file.getName();
+		String name = file.getName(); //use getName to exclude dot inside path directories
 		int lastIndex = name.lastIndexOf(".");
 		if (lastIndex > -1)
 		{

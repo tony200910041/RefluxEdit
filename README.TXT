@@ -14,7 +14,13 @@ RefluxEdit is provided "AS IS" and WITHOUT warranties. RefluxEdit does not conta
 
 ----------
 Version History:
-RefluxEdit 5.1
+RefluxEdit 5.2 2015-11-07
+-New function: Mac OS X integration
+-Changed: enhanced file chooser
+-Changed: enhanced color chooser
+-Changed: enhanced image exporter
+
+RefluxEdit 5.1 2015-08-09
 -New function: open recent files
 -New function: enhanced saving dialog
 -New function: indentation mode

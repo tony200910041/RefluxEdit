@@ -538,11 +538,13 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 						int option = JOptionPane.showConfirmDialog(w, "Generating 1,000,000 words or more may take very long time.\nContinue?", "Confirm", JOptionPane.YES_NO_OPTION);
 						if (option != JOptionPane.YES_OPTION) break outswitch;
 					}
-					final RandomProgress prog = new RandomProgress(w,1,number[0]);
+					final ProgressDialog prog = new ProgressDialog(w);
+					prog.setMax(number[0]);
+					prog.setVisible(true);
 					//now start to generate
 					final SwingWorker<String, String> worker = new SwingWorker<String, String>()
 					{
-						int currentProcess;
+						volatile int currentProcess;
 						@Override
 						public String doInBackground()
 						{
@@ -740,247 +742,7 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			break;
 						
 			case 43: //export as image
-			{
-				final JDialog exportImage = new JDialog(w, "Export to image", true);
-				exportImage.setLayout(new GridLayout(2,1,0,0));
-				/*
-				 * choose file:
-				 */
-				MyPanel exportP1 = new MyPanel(MyPanel.LEFT);
-				final MyTextField exportTF = new MyTextField(38);
-				exportP1.add(new MyLabel("Export to: "));
-				exportP1.add(exportTF);
-				MyButton exportB1 = new MyButton("?");
-				exportB1.setPreferredSize(new Dimension(20,20));
-				exportP1.add(exportB1);
-				/*
-				 * "Extra gap" spinner:
-				 */
-				MyPanel exportP2 = new MyPanel(MyPanel.CENTER);
-				exportP2.add(new MyLabel("Extra gap (in pixels):"));
-				final JSpinner exportSpin = new JSpinner(new SpinnerNumberModel(5,0,100,1));
-				exportSpin.setFont(new Font(f13.getName(),Font.PLAIN,14));
-				exportSpin.setEnabled(false);
-				exportP2.add(exportSpin);
-				exportP2.add(new MyLabel("Format:"));
-				/*
-				 * format:
-				 */
-				String[] formatList = ImageIO.getWriterFormatNames();
-				Set<String> formatSet = new LinkedHashSet<String>();
-				for (String name: formatList)
-				{
-					formatSet.add(name.toLowerCase());
-				}
-				final JComboBox<String> exportFormat = new JComboBox<>(new Vector<String>(formatSet));
-				formatList = null;
-				formatSet = null;
-				exportFormat.setFont(new Font(f13.getName(), Font.PLAIN, 12));
-				exportFormat.setBackground(Color.WHITE);
-				exportFormat.setSelectedItem("png");
-				exportFormat.addActionListener(new ActionListener()
-				{
-					@Override
-					public void actionPerformed(ActionEvent ev)
-					{
-						String path = exportTF.getText();
-						String filename = (new File(path)).getName().toLowerCase();
-						String format = exportFormat.getSelectedItem().toString();
-						if (path.contains(".")&&(!filename.endsWith(format)))
-						{
-							exportTF.setText(path.substring(0, path.lastIndexOf(".")) + "." + format);
-						}
-						else if (!filename.endsWith(format))
-						{
-							exportTF.setText(path + "." + format);
-						}
-					}
-				});
-				exportP2.add(exportFormat);
-				/*
-				 * fast/stable radio buttons
-				 */
-				final MyRadioButton fast = new MyRadioButton("Fast",true);
-				final MyRadioButton stable = new MyRadioButton("Stable",false);
-				MyButtonGroup group = new MyButtonGroup(fast,stable);
-				exportP2.add(fast);
-				exportP2.add(stable);
-				fast.setToolTipText("<html><font size=\"4\"><b>Fast export</b></font><br>Very fast, but may cause out-of-memory error. No extra gap.</html>");
-				stable.setToolTipText("<html><font size=\"4\"><b>Stable export</b></font><br>Stable exportation, but is significantly slower.</html>");
-				/*
-				 * buttons
-				 */
-				MyButton exportB2 = new MyButton("Export");
-				exportP2.add(exportB2);
-				MyButton exportB3 = new MyButton("Cancel");
-				exportP2.add(exportB3);
-				/*
-				 * build dialog
-				 */
-				exportImage.add(exportP1);
-				exportImage.add(exportP2);
-				exportImage.pack();
-				exportImage.setLocationRelativeTo(w);
-				ActionListener exportListener = new ActionListener()
-				{					
-					@Override
-					public void actionPerformed(ActionEvent ev)
-					{
-						final String formatName = exportFormat.getSelectedItem().toString();
-						switch (((JButton)(ev.getSource())).getText())
-						{
-							case "?":
-							File f1 = FileChooser.showPreferredFileDialog(w, FileChooser.SAVE, formatName);
-							if (f1 != null)
-							{
-								exportTF.setText(f1.getPath());
-							}
-							break;
-							
-							case "Export":
-							final String dest = exportTF.getText();
-							try
-							{
-								exportSpin.commitEdit();
-							}
-							catch (Exception ex)
-							{
-							}
-							final int size = Short.parseShort(exportSpin.getValue().toString());
-							exportImage.dispose();
-							if (dest == null) return;
-							if (dest.isEmpty()) return;
-							/*
-							 * export start
-							 * two ways: fast and stable
-							 */
-							if (fast.isSelected())
-							{
-								/*
-								 * fast way: may not succeed due to memory restriction
-								 */
-								try
-								{
-									BufferedImage image = new BufferedImage(textArea.getWidth(),textArea.getHeight(),BufferedImage.TYPE_INT_ARGB);
-									Graphics2D g2d = image.createGraphics();
-									textArea.paintAll(g2d);
-									g2d.dispose();
-									ImageIO.write(image,"png",new File(dest));
-									JOptionPane.showMessageDialog(w,"Done.","Done",JOptionPane.INFORMATION_MESSAGE);
-								}
-								catch (Throwable ex)
-								{
-									//include OutOfMemoryError
-									exception(ex);
-									return;
-								}
-							}
-							else
-							{
-								/*
-								 * stable way: higher chance to succeed, but significantly slower
-								 */
-								// get each line
-								final ArrayList<String> lines = new ArrayList<String>();
-								int start = 0;
-								int end;
-								int length = textArea.getText().length();
-								do
-								{
-									try
-									{
-										end = Utilities.getRowEnd(textArea,start);
-										lines.add(textArea.getText(start,end-start).replace("\n",""));
-									}
-									catch (BadLocationException ex)
-									{
-										exception(ex);
-										return;
-									}
-									start=end+1;
-								}
-								while (start<length);								
-								final RandomProgress exportProg = new RandomProgress(w, 0, lines.size());
-								final Thread exportThr = new Thread()
-								{
-									@Override
-									public void run()
-									{
-										Font font = textArea.getFont();
-										FontMetrics f = new Canvas().getFontMetrics(font);
-										int height = f.getHeight()+size; //default size=5
-										BufferedImage image = new BufferedImage(1,1,BufferedImage.TYPE_INT_RGB);
-										Graphics2D g;
-										//draw each line
-										for (String str: lines)
-										{
-											int width = f.stringWidth(str)+1;
-											//lineImage: single line text
-											BufferedImage lineImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-											g = lineImage.createGraphics();
-											g.setFont(font);
-											g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-											g.setColor(Color.WHITE);
-											g.fillRect(0,0,width,height);
-											g.setColor(Color.BLACK);
-											g.drawString(str,0,height-size);
-											g.dispose();
-											int maxWidth = Math.max(image.getWidth(),width);
-											int actualHeight = image.getHeight()+height;
-											BufferedImage newImage = new BufferedImage(maxWidth,actualHeight,BufferedImage.TYPE_INT_RGB);
-											g = newImage.createGraphics();
-											g.setColor(Color.WHITE);
-											g.fillRect(0,0,maxWidth,actualHeight);
-											g.drawImage(image,0,0,null);
-											g.drawImage(lineImage,0,image.getHeight(),null);
-											g.dispose();
-											image = newImage;
-											lineImage = null;
-											newImage = null;
-											exportProg.setValue(exportProg.getValue()+1);
-											if (this.isInterrupted()) return;
-										}
-										try
-										{
-											exportProg.setString("Writing image...");
-											ImageIO.write(image, formatName, new File(dest));
-										}
-										catch (IOException ex)
-										{
-										}
-										finally
-										{
-											//release resources
-											font = null;
-											f = null;
-											exportProg.dispose();
-											image = null;
-										}
-									}
-								};
-								exportThr.start();
-								exportProg.addWindowListener(new WindowAdapter()
-								{
-									@Override
-									public void windowClosing(WindowEvent ev)
-									{
-										exportThr.interrupt();
-									}
-								});
-							}
-							break;
-							
-							case "Cancel":
-							exportImage.dispose();
-							return;
-						}
-					}
-				};
-				exportB1.addActionListener(exportListener);
-				exportB2.addActionListener(exportListener);
-				exportB3.addActionListener(exportListener);
-				exportImage.setVisible(true);
-			}
+			if (textArea.getDocument().getLength() != 0) ImageExportDialog.showDialog(w);
 			break;
 			
 			case 44: //character count
@@ -1326,7 +1088,12 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 				}
 				MainPanel.getInstance().updateTabName(_new);
 				MainPanel.setSelectedComponent(_new);
-				_new.getTextArea().paste();
+				//paste text
+				JTextArea newTextArea = _new.getTextArea();
+				boolean isEditableOriginal = newTextArea.isEditable();
+				newTextArea.setEditable(true);
+				newTextArea.paste();
+				newTextArea.setEditable(isEditableOriginal);
 			}
 			break;
 			
@@ -1340,8 +1107,14 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 					{
 						MainPanel.getInstance().addTab(_new);
 					}
-					_new.getTextArea().setText(text);
 					MainPanel.setSelectedComponent(_new);
+					//set text
+					JTextArea newTextArea = _new.getTextArea();
+					boolean isEditableOriginal = newTextArea.isEditable();
+					newTextArea.setEditable(true);
+					newTextArea.setText(text);
+					newTextArea.setEditable(isEditableOriginal);
+					//ask save
 					int option = JOptionPane.showConfirmDialog(w,"A new class has been created.\nWould you like to save it?","Saving",JOptionPane.YES_NO_OPTION);
 					if (option == JOptionPane.YES_OPTION)
 					{

@@ -12,7 +12,7 @@ import javax.swing.event.*;
 import exec.*;
 import myjava.gui.common.*;
 
-public class ColoredMenuBar extends JMenuBar
+public class ColoredMenuBar extends JMenuBar implements Resources
 {
 	/*
 	 * instance:
@@ -100,7 +100,7 @@ public class ColoredMenuBar extends JMenuBar
 		menu1.add(new JSeparator());
 		menu1.add(new MyMenuItem("Save as", "SAVE", 4, KeyEvent.VK_S));
 		menu1.add(new MyMenuItem("Save", null, 5));
-		menu1.add(new MyMenuItem("Export to image", "EXPORT16", 43, KeyEvent.VK_E));
+		menu1.add(new MyMenuItem("Export as image", "EXPORT16", 43, KeyEvent.VK_E));
 		menu1.add(new JSeparator());
 		menu1.add(new MyMenuItem("Print", "PRINT16", 38, KeyEvent.VK_P));
 		menu1.add(new MyMenuItem("Close", "CLOSE", 6));
@@ -130,20 +130,22 @@ public class ColoredMenuBar extends JMenuBar
 		//
 		menu4.add(new MyMenuItem("Options", "OPTIONS16", 39));
 		menu4.add(new JSeparator());
-		menu4.add(new MyMenuItem("Compile code", "COMPILE16", 53, KeyEvent.VK_F8, 0));
-		menu4.add(new MyMenuItem("Word count", null, 22, KeyEvent.VK_F2));
-		menu4.add(new MyMenuItem("Character count", null, 44, KeyEvent.VK_F3));
+		menu4.add(new MyMenuItem("Compile code", "COMPILE16", 53, isMac?KeyEvent.VK_8:KeyEvent.VK_F8, isMac?InputEvent.META_MASK:0));
+		menu4.add(new MyMenuItem("Word count", null, 22, isMac?KeyEvent.VK_2:KeyEvent.VK_F2));
+		menu4.add(new MyMenuItem("Character count", null, 44, isMac?KeyEvent.VK_3:KeyEvent.VK_F3));
 		menu4.add(new MyMenuItem("Delete blank lines", null, 35));
 		menu4.add(new MyMenuItem("Reverse text", null, 50));
 		//
 		MyMenu menu4_1 = new MyMenu("Case conversion");
 		menu4.add(menu4_1);
+		menu4_1.setIcon(EmptyIcon.getInstance());
 		menu4_1.add(new MyMenuItem("Convert to upper case", "UPPERCASE", 26));
 		menu4_1.add(new MyMenuItem("Convert to lower case", "LOWERCASE", 27));
 		menu4_1.add(new MyMenuItem("Convert to invert case", "REVERSECASE", 28));
 		//
 		MyMenu menu4_2 = new MyMenu("Escape character");
 		menu4.add(menu4_2);
+		menu4_2.setIcon(EmptyIcon.getInstance());
 		menu4_2.add(new MyMenuItem("Escape string", "TRANSPARENT16", 54));
 		menu4_2.add(new MyMenuItem("Unescape string", null, 55));
 		//
@@ -158,12 +160,12 @@ public class ColoredMenuBar extends JMenuBar
 		menu5.add(new MyMenuItem("Insert spaces between characters", null, 49));
 		menu5.add(new MyMenuItem("Generate random words", null, 32));
 		menu5.add(new JSeparator());
-		menu5.add(new MyMenuItem("Insert key words (Java)", "KEYWORDJAVA", 33));
-		menu5.add(new MyMenuItem("Insert key words (html)", "KEYWORDHTML", 34));
+		menu5.add(new MyMenuItem("Insert key words (Java)", "KEYWORDJAVA16", 33));
+		menu5.add(new MyMenuItem("Insert key words (html)", "KEYWORDHTML16", 34));
 		menu5.add(new MyMenuItem("Insert unicode character", null, 45));
 		menu5.add(new MyMenuItem("Insert unicode value", null, 46));
 		//
-		menu6.add(new MyMenuItem("About RefluxEdit", "APPICON16", 16, KeyEvent.VK_F1));
+		menu6.add(new MyMenuItem("About RefluxEdit", "APPICON16", 16, isMac?KeyEvent.VK_1:KeyEvent.VK_F1));
 		menu6.add(new MyMenuItem("About MPL 2.0", null, 58));
 		menu6.add(new MyMenuItem("Visit GitHub page", "VISIT16", 48));
 	}

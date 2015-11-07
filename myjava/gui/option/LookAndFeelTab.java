@@ -21,6 +21,8 @@ public class LookAndFeelTab extends OptionTab
 	//ribbon
 	private JCheckBox ribbon = new MyCheckBox("Use Ribbon UI", RefluxEdit.isRibbon);
 	private boolean originalRibbonSetting = RefluxEdit.isRibbon;
+	private boolean originalMenuBarSetting = getBoolean0("apple.laf.useScreenMenuBar");
+	private JCheckBox nativeMenuBar = new MyCheckBox("Use native menu bar", originalMenuBarSetting);
 	//file chooser
 	private JRadioButton swingFileChooser = new MyRadioButton("Swing",false);
 	private JRadioButton systemFileChooser = new MyRadioButton("System",false);
@@ -31,7 +33,7 @@ public class LookAndFeelTab extends OptionTab
 		super(new FlowLayout(FlowLayout.LEFT), "Look and Feel");
 		//Look and Feel, ribbon
 		JPanel in = new JPanel(new GridLayout(2,1,0,0));
-		JPanel laf = MyPanel.wrap(new MyLabel("Look and Feel: "),lafBox,new MyLabel("   "),ribbon);
+		JPanel laf = MyPanel.wrap(new MyLabel("Look and Feel: "),lafBox,new MyLabel("   "),ribbon,nativeMenuBar);
 		laf.setBorder(new TitledBorder("Look and Feel"));
 		in.add(laf);
 		//iterate through comobobox to select
@@ -97,10 +99,13 @@ public class LookAndFeelTab extends OptionTab
 		//ribbon
 		boolean newRibbon = ribbon.isSelected();
 		setConfig("isRibbon", newRibbon+"");
+		//menubar
+		boolean newMenuBar = nativeMenuBar.isSelected();
+		setConfig("apple.laf.useScreenMenuBar", newMenuBar+"");
 		//file chooser
 		setConfig("ChooserStyle",swingFileChooser.isSelected()?"Java":"System");
 		//finally
-		if ((newRibbon != originalRibbonSetting)||(!lafValue.equals(originalLAFSetting)))
+		if ((newRibbon != originalRibbonSetting)||(!lafValue.equals(originalLAFSetting))||(originalMenuBarSetting != newMenuBar))
 		{
 			JOptionPane.showMessageDialog(parent, "The Look and Feel will be changed after restart.", "Done", JOptionPane.INFORMATION_MESSAGE);
 		}

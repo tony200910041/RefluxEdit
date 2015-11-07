@@ -13,9 +13,11 @@ import myjava.gui.common.*;
 public class ColorDialog extends JDialog implements ActionListener
 {
 	private JColorChooser chooser = new JColorChooser(Color.WHITE);
-	private MyCheckBox insertRGB = new MyCheckBox("Insert RGB",false);
-	private MyCheckBox insertHSB = new MyCheckBox("Insert HSB",false);
-	private MyCheckBox insertHEX = new MyCheckBox("Insert HEX",false);
+	private JCheckBox insertRGB = new MyCheckBox("Insert RGB",false);
+	private JCheckBox insertHSV = new MyCheckBox("Insert HSV",false);
+	private JCheckBox insertHSL = new MyCheckBox("Insert HSL",false);
+	private JCheckBox insertHEX = new MyCheckBox("Insert HEX",false);
+	private JCheckBox insertCMYK = new MyCheckBox("Insert CMYK",false);
 	private boolean isInsert = false;
 	private ColorDialog(Frame parent)
 	{
@@ -25,8 +27,11 @@ public class ColorDialog extends JDialog implements ActionListener
 		JPanel bottom = new JPanel(new GridLayout(2,1,0,0));
 		JPanel bottom1 = new JPanel();
 		bottom1.add(insertRGB);
-		bottom1.add(insertHSB);
+		bottom1.add(insertHSV);
+		bottom1.add(insertHSL);
 		bottom1.add(insertHEX);
+		bottom1.add(insertCMYK);
+		insertCMYK.setToolTipText("***converted without calibration");
 		bottom.add(bottom1);
 		JPanel bottom2 = new JPanel();
 		MyButton ok = new MyButton("OK");
@@ -79,19 +84,27 @@ public class ColorDialog extends JDialog implements ActionListener
 			String buffer = "";
 			if (dialog.insertRGB.isSelected())
 			{
-				buffer += (getRGBString(c) + " ");
+				buffer += (getRGBString(c)+" ");
 			}
-			if (dialog.insertHSB.isSelected())
+			if (dialog.insertHSV.isSelected())
 			{
-				buffer += (getHSBString(c) + " ");
+				buffer += (getHSVString(c)+" ");
+			}
+			if (dialog.insertHSL.isSelected())
+			{
+				buffer += (getHSLString(c)+" ");
 			}
 			if (dialog.insertHEX.isSelected())
 			{
-				buffer += (getHEXString(c) + " ");
+				buffer += (getHEXString(c)+" ");
+			}
+			if (dialog.insertCMYK.isSelected())
+			{
+				buffer += (getCMYKString(c)+" ");
 			}
 			if (buffer.endsWith(" "))
 			{
-				buffer = buffer.substring(0, buffer.length()-1);
+				buffer = buffer.substring(0,buffer.length()-1);
 			}
 			return buffer;
 		}
@@ -103,14 +116,68 @@ public class ColorDialog extends JDialog implements ActionListener
 		return "(" + c.getRed() + ", " + c.getGreen() + ", " + c.getBlue() + ")";
 	}
 	
-	private static String getHSBString(Color c)
+	private static String getHSVString(Color c)
 	{
-		float[] hsbvals = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
-		return "(" + hsbvals[0] + ", " + hsbvals[1] + ", " + hsbvals[2] + ")";
+		//use self-implementation
+		double r1 = c.getRed()/255d;
+		double g1 = c.getGreen()/255d;
+		double b1 = c.getBlue()/255d;
+		double cmax = Math.max(Math.max(r1,g1),b1);
+		double cmin = Math.min(Math.min(r1,g1),b1);
+		double delta = cmax - cmin;
+		//calculate h
+		double h;
+		if (delta == 0) h = 0;
+		else if (cmax == r1) h = 60*(((g1-b1)/delta)%6);
+		else if (cmax == g1) h = 60*((b1-r1)/delta+2);
+		else h = 60*((r1-g1)/delta+4);
+		while (h < 0) h += 360;
+		//calculate s
+		double s = cmax==0?0:delta/cmax;
+		//return String
+		return "(" + Math.round(h) + ", " + Math.round(s*100) + ", " + Math.round(cmax*100) + ")";
+	}
+	
+	private static String getHSLString(Color c)
+	{
+		//use self-implementation
+		double r1 = c.getRed()/255d;
+		double g1 = c.getGreen()/255d;
+		double b1 = c.getBlue()/255d;
+		double cmax = Math.max(Math.max(r1,g1),b1);
+		double cmin = Math.min(Math.min(r1,g1),b1);
+		double delta = cmax - cmin;
+		//calculate h
+		double h;
+		if (delta == 0) h = 0;
+		else if (cmax == r1) h = 60*(((g1-b1)/delta)%6);
+		else if (cmax == g1) h = 60*((b1-r1)/delta+2);
+		else h = 60*((r1-g1)/delta+4);
+		while (h < 0) h += 360;
+		//calculate l
+		double l = (cmax+cmin)/2;
+		//calculate s
+		double s = delta==0?0:(delta/(1-Math.abs(2*l-1)));
+		//return String
+		return "(" + Math.round(h) + ", " + Math.round(s*100) + ", " + Math.round(l*100) + ")";
 	}
 	
 	private static String getHEXString(Color c)
 	{
 		return "#" + Integer.toHexString(c.getRGB()).substring(2);
+	}
+	
+	private static String getCMYKString(Color color)
+	{
+		double r1 = color.getRed()/255d;
+		double g1 = color.getGreen()/255d;
+		double b1 = color.getBlue()/255d;
+		//
+		double k = 1-Math.max(Math.max(r1,g1),b1);
+		double c = (1-r1-k)/(1-k);
+		double m = (1-g1-k)/(1-k);
+		double y = (1-b1-k)/(1-k);
+		//
+		return "(" + Math.round(c*255) + ", " + Math.round(m*255) + ", " + Math.round(y*255) + ", " + Math.round(k*255) + ")";
 	}
 }

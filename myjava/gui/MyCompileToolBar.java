@@ -10,8 +10,9 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.plaf.basic.*;
 import javax.swing.text.*;
-import java.io.*;
 import java.util.regex.*;
+import java.io.*;
+import java.nio.file.*;
 import myjava.gui.common.*;
 import static exec.SourceManager.*;
 import static myjava.gui.ExceptionDialog.*;
@@ -159,11 +160,7 @@ public class MyCompileToolBar extends JToolBar implements Resources
 								//still null, use default
 								command = getRunCommand(getFileExtension(currentFile));
 							}
-							command = command.replace("%f", "\""+currentFile.getPath()+"\"");
-							command = command.replace("%p", "\""+currentFile.getParent()+"\"");
-							command = command.replace("%s", currentFile.getName());
-							command = command.replace("%a", getFileName(currentFile));
-							command = command.replace("%n", System.getProperty("line.separator"));
+							command = replaceCommand(command, currentFile);
 							String cmdFileName = null;
 							if ((!isGlobal)&&(currentFile!=null))
 							{
@@ -175,7 +172,7 @@ public class MyCompileToolBar extends JToolBar implements Resources
 							}
 							if ((cmdFileName == null)||cmdFileName.isEmpty())
 							{
-								cmdFileName = "run.bat";
+								cmdFileName = isMac?"run.command":"run.bat";
 							}
 							File cmdfile = new File(currentFile.getParent(),cmdFileName);
 							boolean success = cmdfile.delete();
@@ -276,15 +273,12 @@ public class MyCompileToolBar extends JToolBar implements Resources
 					//default command
 					command = getCommand(getFileExtension(currentFile));
 				}
-				command = command.replace("%f", "\""+currentFile.getPath()+"\"");
-				command = command.replace("%p", "\""+currentFile.getParent()+"\"");
-				command = command.replace("%s", currentFile.getName());
-				command = command.replace("%a", getFileName(currentFile));				
+				command = replaceCommand(command, currentFile);			
 				if ((command != null)&&(!command.isEmpty()))
 				{
 					lm.addElement(">> Executing " + command);
 					final Process proc = Runtime.getRuntime().exec(command,null,parent);
-					SwingWorker<Void, String> worker = new SwingWorker<Void, String>()
+					final SwingWorker<Void, String> worker = new SwingWorker<Void, String>()
 					{
 						@Override
 						protected Void doInBackground()
@@ -333,6 +327,28 @@ public class MyCompileToolBar extends JToolBar implements Resources
 					};
 					worker.execute();
 					//compiled successfully
+					Thread thread = new Thread(new Runnable()
+					{
+						@Override
+						public void run()
+						{
+							//wait for worker to return
+							try
+							{
+								worker.get();
+							}
+							catch (Exception ex)
+							{
+								throw new InternalError();
+							}
+							//beep
+							if (getBoolean0("Compile.end.beep"))
+							{
+								System.out.println("\007");
+							}
+						}
+					});
+					thread.start();
 				}
 			}
 			catch (Exception ex)
@@ -388,5 +404,35 @@ public class MyCompileToolBar extends JToolBar implements Resources
 		catch (Exception ex)
 		{
 		}
+	}
+	
+	private String replaceCommand(String command, File currentFile)
+	{
+		String currentParentPath = currentFile.getParent();
+		String fileSeparator = FileSystems.getDefault().getSeparator();
+		command = command.replace("%f", formatPath(currentFile.getPath()));
+		command = command.replace("%p", formatPath(currentParentPath.endsWith(fileSeparator)?currentParentPath:(currentParentPath+fileSeparator)));
+		command = command.replace("%s", currentFile.getName());
+		command = command.replace("%a", getFileName(currentFile));
+		return command.replace("%n", System.getProperty("line.separator"));
+	}
+	
+	private String formatPath(String s)
+	{
+		String quoteOption = getConfig0("Compile.pathQuote");
+		boolean escapeSpace = getBoolean0("Compile.escapeSpace");
+		if (("curly").equals(quoteOption))
+		{
+			s = "\u201C" + s + "\u201D";
+		}
+		else if (("straight").equals(quoteOption))
+		{
+			s = "\"" + s + "\"";
+		}
+		if (escapeSpace)
+		{
+			s = s.replace(" ", "\\ ");
+		}
+		return s;
 	}
 }

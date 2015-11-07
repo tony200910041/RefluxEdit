@@ -23,9 +23,18 @@ public class CompileTab extends OptionTab
 	//options
 	private boolean _removeOld = getBoolean0("Compile.removeOriginal");
 	private boolean _isGlobal = getBoolean0("Compile.useGlobal");
+	private boolean _beep = getBoolean0("Compile.end.beep");
 	private JCheckBox removeOld = new MyCheckBox("Remove old file", _removeOld);
 	private JTextField removeRegexTF = new MyTextField(20);
 	private JCheckBox useGlobal = new MyCheckBox("Use global commands", _isGlobal);
+	private JCheckBox endBeep = new MyCheckBox("Emit a beep when compilation ends", _beep);
+	//format path
+	private String quoteOption = getConfig0("Compile.pathQuote");
+	private JRadioButton curlyQuote = new MyRadioButton("Curly", ("curly").equals(quoteOption));
+	private JRadioButton straightQuote = new MyRadioButton("Straight", ("straight").equals(quoteOption));
+	private JRadioButton noQuote = new MyRadioButton("No",false);
+	private MyButtonGroup quoteGroup = new MyButtonGroup(curlyQuote,straightQuote,noQuote);
+	private JCheckBox escapeSpace = new MyCheckBox("Escape whitespaces", getBoolean0("Compile.escapeSpace"));
 	public CompileTab()
 	{
 		super(new BorderLayout(),"Compilation");
@@ -325,6 +334,16 @@ public class CompileTab extends OptionTab
 		//
 		c.gridy = 5;
 		upper.add(MyPanel.wrap(manageCommand), c);
+		//
+		c.gridy = 6;
+		upper.add(MyPanel.wrap(new MyLabel("Quotation: "), curlyQuote, straightQuote, noQuote), c);
+		if (!(curlyQuote.isSelected()||straightQuote.isSelected()||noQuote.isSelected())) noQuote.setSelected(true);
+		//
+		c.gridy = 7;
+		upper.add(MyPanel.wrap(escapeSpace), c);
+		//
+		c.gridy = 8;
+		upper.add(MyPanel.wrap(endBeep), c);
 		this.add(upper, BorderLayout.PAGE_START);
 	}
 	
@@ -387,5 +406,8 @@ public class CompileTab extends OptionTab
 		setConfig("Compile.useGlobal", useGlobal.isSelected()+"");
 		setConfig("Compile.removeOriginal", removeOld.isSelected()+"");
 		setConfig("Compile.regex", removeRegexTF.getText());
+		setConfig("Compile.pathQuote", curlyQuote.isSelected()?"curly":(straightQuote.isSelected()?"straight":"no"));
+		setConfig("Compile.escapeSpace", escapeSpace.isSelected()+"");
+		setConfig("Compile.end.beep", endBeep.isSelected()+"");
 	}
 }

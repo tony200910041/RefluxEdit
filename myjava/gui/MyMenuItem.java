@@ -19,13 +19,18 @@ public class MyMenuItem extends JMenuItem implements Resources
 		this.setFont(f13);
 		this.setBackground(Color.WHITE);
 		this.setForeground(Color.BLACK);
-		this.addMouseListener(new MyListener(x));
+		this.addActionListener(new MyListener(x));
 		try
 		{
 			this.setIcon(SourceManager.icon(icon));
 		}
 		catch (Exception ex)
 		{
+			icon = null;
+		}
+		if (isMac&&(icon==null))
+		{
+			this.setIcon(EmptyIcon.getInstance());
 		}
 	}
 	

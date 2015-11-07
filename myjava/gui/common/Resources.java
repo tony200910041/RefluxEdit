@@ -29,11 +29,12 @@ public interface Resources
 	 * "ctrl"/"meta"(command) key
 	 */
 	String osName = System.getProperty("os.name").toLowerCase();
-	int OS_CTRL_MASK = osName.contains("mac")?ActionEvent.META_MASK:ActionEvent.CTRL_MASK;
+	boolean isMac = osName.contains("mac");
+	int OS_CTRL_MASK = isMac?ActionEvent.META_MASK:ActionEvent.CTRL_MASK;
 	/*
 	 * ui constants
 	 */
-	Font f13 = LAF.contains("windows")?(new JButton().getFont().deriveFont(12f)):(new Font("Microsoft Jhenghei", Font.PLAIN, 13));
+	Font f13 = LAF.contains("windows")?(new JButton().getFont().deriveFont(12f)):(new Font(osName.contains("win")?"Microsoft Jhenghei":(isMac?new JButton().getFont().getName():"Arial"), Font.PLAIN, 13));
 	LineBorder bord1 = new LineBorder(Color.BLACK, 1);
 	LineBorder bord2 = new LineBorder(Color.LIGHT_GRAY, 1);
 	BevelBorder raisedBorder = new BevelBorder(BevelBorder.RAISED);

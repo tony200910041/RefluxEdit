@@ -19,8 +19,9 @@ import myjava.gui.common.*;
 import myjava.util.*;
 import exec.*;
 import myjava.io.*;
-import static myjava.gui.ExceptionDialog.*;
 import static exec.SourceManager.*;
+import static myjava.gui.ExceptionDialog.*;
+import static myjava.gui.common.Resources.*;
 
 public class RefluxEdit extends JFrame implements ColorConstants, VersionConstants
 {
@@ -30,6 +31,7 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 	static
 	{
 		//initialization:
+		SourceManager.initialize();
 		RefluxEdit.setLAF();
 		UISetter.initialize();
 	}
@@ -93,6 +95,11 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 			}
 		}
 	};
+	
+	public static void main(String[] args)
+	{
+		launch(args);
+	}
 		
 	protected static void launch(final String[] args)
 	{
@@ -104,7 +111,7 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 			{
 				if (detector.hasInstance())
 				{
-					boolean response = detector.awaitResponse(5000);
+					boolean response = detector.awaitResponse(isMac?20000:5000);
 					if (response)
 					{
 						if (args.length >= 1)

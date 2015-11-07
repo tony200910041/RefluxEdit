@@ -65,7 +65,7 @@ public class MyRefluxEditRibbonPanel extends MyRibbonPanel
 		panel1.setPreferredSize(new Dimension(1,85));
 		tab3.add(panel1);
 		// Tools
-		tab4.add(new MyRibbonButton("<html><center>Compile<br>code</center></html>", "COMPILE32", "<html><font size=\"4\"><b>Compile code</b></font><br>Compile the code.</html>", false, 53));
+		tab4.add(new MyRibbonButton("<html><center>Compile<br>code</center></html>", "COMPILE32", "<html><font size=\"4\"><b>Compile code&nbsp;&nbsp;&nbsp;F8</b></font><br>Compile the code.</html>", false, 53));
 		tab4.add(createSeparator());
 		JPanel tab4_1 = new JPanel(new GridLayout(3,1,3,3));
 		tab4_1.setOpaque(false);
@@ -104,8 +104,8 @@ public class MyRefluxEditRibbonPanel extends MyRibbonPanel
 		tab5.add(tab5_1);
 		tab5.add(createSeparator());
 		tab5.add(new MyRibbonButton("<html><center>Random<br>words</center></html>", "RANDOM", "<html><font size=\"4\"><b>Generate random words</b></font><br>Generate specified number of \"words\" randomly.<br>The words will be between 1 and 10 character(s) long.<br>Note that performing this action may take a long time.</html>", false, 32));
-		tab5.add(new MyRibbonButton("<html><center>Java<br>keywords</center></html>", "JAVA32", "<html><font size=\"4\"><b>Insert Java keywords</b></font><br>Insert Java keywords. Useful for Java developers.<br>More will be introduced in later versions.</html>", false, 33));
-		tab5.add(new MyRibbonButton("<html><center>HTML<br>keywords</center></html>", "HTML32", "<html><font size=\"4\"><b>Insert HTML keywords</b></font><br>Insert HTML keywords. Useful for web developers.<br>More will be introduced in later versions.</html>", false, 34));
+		tab5.add(new MyRibbonButton("<html><center>Java<br>keywords</center></html>", "KEYWORDJAVA32", "<html><font size=\"4\"><b>Insert Java keywords</b></font><br>Insert Java keywords. Useful for Java developers.<br>More will be introduced in later versions.</html>", false, 33));
+		tab5.add(new MyRibbonButton("<html><center>HTML<br>keywords</center></html>", "KEYWORDHTML32", "<html><font size=\"4\"><b>Insert HTML keywords</b></font><br>Insert HTML keywords. Useful for web developers.<br>More will be introduced in later versions.</html>", false, 34));
 		tab5.add(new MyRibbonButton("<html><center>Unicode<br>character</center></html>", "UNICODE32", "<html><font size=\"4\"><b>Insert unicode character</b></font><br>Insert unicode character by given code value.</html>", false, 45));
 		tab5.add(new MyRibbonButton("<html><center>Unicode<br>value</center></html>", "UNICODE32", "<html><font size=\"4\"><b>Insert unicode value</b></font><br>Insert unicode value by given character.</html>", false, 46));
 		// About

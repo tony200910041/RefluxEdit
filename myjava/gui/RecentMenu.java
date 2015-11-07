@@ -22,6 +22,7 @@ public class RecentMenu extends MyMenu implements MenuListener
 	{
 		super("Recent files");
 		this.addMenuListener(this);
+		this.setIcon(EmptyIcon.getInstance());
 	}
 	
 	public static RecentMenu getInstance()

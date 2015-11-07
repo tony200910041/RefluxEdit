@@ -38,7 +38,8 @@ public class ClassCreator
 	
 	public void setInterfaces(Class<?>[] interfaces)
 	{
-		this.interfaces = interfaces.clone();
+		
+		this.interfaces = interfaces==null?null:(interfaces.clone());
 	}
 	
 	public void setSingleton(boolean isSingleton)

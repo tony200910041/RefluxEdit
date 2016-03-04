@@ -11,8 +11,8 @@ import exec.*;
 
 public class UndoManager
 {
-	public ArrayDeque<String> undoList = new ArrayDeque<>();
-	public ArrayDeque<String> redoList = new ArrayDeque<>();
+	public ArrayDeque<Data> undoList = new ArrayDeque<>();
+	public ArrayDeque<Data> redoList = new ArrayDeque<>();
 	private JTextArea textArea;
 	public UndoManager(JTextArea textArea)
 	{
@@ -20,51 +20,75 @@ public class UndoManager
 		this.textArea = textArea;
 	}
 	
+	private Data getData()
+	{
+		String text = textArea.getText();
+		int selectionStart = textArea.getSelectionStart();
+		int selectionEnd = textArea.getSelectionEnd();
+		return new Data(textArea.getText(),selectionStart,selectionEnd);
+	}
+	
+	private void restore(Data data)
+	{
+		this.textArea.setText(data.getText());
+		int start = data.getSelectionStart();
+		int end = data.getSelectionEnd();
+		if (start != end)
+		{
+			this.textArea.select(start,end);
+		}
+		else
+		{
+			this.textArea.setCaretPosition(end);
+		}
+	}
+	
 	public void backup()
 	{
-		undoList.addFirst(textArea.getText());
+		undoList.addFirst(getData());
 	}
 	
+	@Deprecated
 	public void backup(String str)
 	{
-		undoList.addFirst(str);
+		undoList.addFirst(new Data(str,textArea.getCaretPosition()));
 	}
 	
-	public ArrayDeque<String> getUndoList()
+	public Deque<Data> getUndoList()
 	{
 		return undoList.clone();
 	}
 	
-	public ArrayDeque<String> getRedoList()
+	public Deque<Data> getRedoList()
 	{
 		return redoList.clone();
 	}
 	
 	public void undo()
 	{
-		String s = undoList.peek();
-		if (s == null)
+		Data data = undoList.peek();
+		if (data == null)
 		{
 			JOptionPane.showMessageDialog(SwingUtilities.windowForComponent(textArea),"Reached undo limit!","Error",JOptionPane.ERROR_MESSAGE);
 		}
 		else
 		{
-			redoList.addFirst(textArea.getText());
-			textArea.setText(undoList.pop());
+			redoList.addFirst(getData());
+			restore(undoList.pop());
 		}
 	}
 	
 	public void redo()
 	{
-		String s = redoList.peek();
-		if (s == null)
+		Data data = redoList.peek();
+		if (data == null)
 		{
 			JOptionPane.showMessageDialog(SwingUtilities.windowForComponent(textArea),"Reached redo limit!","Error",JOptionPane.ERROR_MESSAGE);
 		}
 		else
 		{
-			undoList.addFirst(textArea.getText());
-			textArea.setText(redoList.pop());
+			undoList.addFirst(getData());
+			restore(redoList.pop());
 		}
 	}
 	
@@ -76,12 +100,12 @@ public class UndoManager
 		}
 		else
 		{
-			redoList.addFirst(textArea.getText());
+			redoList.addFirst(getData());
 			for (int i=0; i<time-1; i++)
 			{
 				redoList.addFirst(undoList.pop());
 			}
-			textArea.setText(undoList.pop());
+			restore(undoList.pop());
 		}
 	}
 	
@@ -93,17 +117,57 @@ public class UndoManager
 		}
 		else
 		{
-			undoList.addFirst(textArea.getText());
+			undoList.addFirst(getData());
 			for (int i=0; i<time-1; i++)
 			{
 				undoList.addFirst(redoList.pop());
 			}
-			textArea.setText(redoList.pop());
+			restore(redoList.pop());
 		}
 	}
 	
 	public void clearRedoList()
 	{
 		redoList.clear();
+	}
+	
+	public static class Data
+	{
+		private String str;
+		private int selectionStart,selectionEnd;
+		public Data(String str, int selectionStart, int selectionEnd)
+		{
+			super();
+			this.str = str;
+			this.selectionStart = selectionStart;
+			this.selectionEnd = selectionEnd;
+		}
+		
+		Data(String str, int caret)
+		{
+			this(str,caret,caret);
+		}
+		
+		String getText()
+		{
+			return this.str;
+		}
+		
+		int getSelectionStart()
+		{
+			return this.selectionStart;
+		}
+		
+		int getSelectionEnd()
+		{
+			return this.selectionEnd;
+		}
+		
+		@Override
+		public String toString()
+		{
+			int length = str.length();
+			return length>25?(str.substring(0,25)+"..."):(length>1?(str+" ("+length+" characters)"):(str+" ("+length+" character)"));
+		}
 	}
 }

@@ -23,9 +23,9 @@ public class GeneralTab extends OptionTab
 	private JRadioButton noContainer = new MyRadioButton("Hide panel/toolbar", false);
 	private MyButtonGroup toolBarModeGroup = new MyButtonGroup(isPanel,isToolBar,noContainer);
 	//menubar:
-	private JCheckBox useNewMenuBar = new MyCheckBox("Use new colored menu bar", getBoolean0("isUseNewMenuBar"));
+	private JCheckBox useNewMenuBar = new MyCheckBox("Use new colored menu bar", getBoolean0("frame.newMenuBar"));
 	//narrow edge:
-	private JCheckBox useNarrowEdge = new MyCheckBox("Use narrower edge", getBoolean0("isUseNarrowEdge"));
+	private JCheckBox useNarrowEdge = new MyCheckBox("Use narrower edge", getBoolean0("frame.narrowerEdge"));
 	//auto-indent:
 	private JCheckBox useAutoIndent = new MyCheckBox("Use automatic indentation", textArea.getFilter().isAutoIndent());
 	private JRadioButton useTab = new MyRadioButton("Tab", false);
@@ -35,12 +35,12 @@ public class GeneralTab extends OptionTab
 	private JCheckBox useUmbrella = new MyCheckBox("Show umbrella", MyUmbrellaLayerUI.isPaintUmbrella());
 	private JSlider alphaYellow = new JSlider(0,255);
 	//caret:
-	private JCheckBox saveCaret = new MyCheckBox("Remember caret position", getBoolean0("Caret.save"));
+	private JCheckBox saveCaret = new MyCheckBox("Remember caret position", getBoolean0("caret.save"));
 	private JButton manageCaret;
 	//confirm drag:
-	private JCheckBox confirmDrag = new MyCheckBox("Confirm drag", getBoolean0("ConfirmDrag"));
+	private JCheckBox confirmDrag = new MyCheckBox("Confirm drag", getBoolean0("textArea.confirmDrag"));
 	//recent files:
-	private JCheckBox rememberRecentFiles = new MyCheckBox("Remember recent files", getBoolean0("rememberRecentFiles"));
+	private JCheckBox rememberRecentFiles = new MyCheckBox("Remember recent files", getBoolean0("recentFiles.remember"));
 	//constructor:
 	public GeneralTab()
 	{
@@ -239,7 +239,7 @@ public class GeneralTab extends OptionTab
 				{
 					buttonCode.append(((Indexable)indexable).getIndexString());
 				}
-				writeConfig("ToolBar.buttons", buttonCode.toString());
+				writeConfig("toolbar.Buttons", buttonCode.toString());
 			}
 		};
 		if (isMetal)
@@ -248,7 +248,7 @@ public class GeneralTab extends OptionTab
 		}
 		customToolBar.setToolTipText("Toolbar options");
 		this.add(MyPanel.wrap(new MyLabel("Toolbar mode: "),isPanel,isToolBar,noContainer,customToolBar));
-		String toolBarMode = getConfig0("isPanel");
+		String toolBarMode = getConfig0("frame.isPanel");
 		if (toolBarMode != null)
 		{
 			switch (toolBarMode)
@@ -334,7 +334,7 @@ public class GeneralTab extends OptionTab
 				tam.addColumn("Caret position");
 				for (String name: keys())
 				{
-					if (name.startsWith("Caret.")&&(!name.equals("Caret.save")))
+					if (name.startsWith("caret.")&&(!name.equals("caret.save")))
 					{
 						tam.addRow(new String[]{name.substring(6,name.length()),getConfig0(name.toString())});
 					}
@@ -359,7 +359,7 @@ public class GeneralTab extends OptionTab
 								}
 								for (String path: paths)
 								{
-									removeConfig0("Caret." + path);
+									removeConfig0("caret." + path);
 								}
 								for (int i=rows.length-1; i>=0; i--)
 								{
@@ -383,7 +383,7 @@ public class GeneralTab extends OptionTab
 							for (Object n: propertyNames())
 							{
 								String name = n.toString();
-								if ((name.startsWith("Caret."))&&(!name.equals("Caret.save")))
+								if ((name.startsWith("caret."))&&(!name.equals("caret.save")))
 								{
 									removeConfig0(name);
 								}
@@ -443,19 +443,19 @@ public class GeneralTab extends OptionTab
 		JRadioButton selected = toolBarModeGroup.getSelected();
 		if (isPanel == selected)
 		{
-			setConfig("isPanel", "true");
+			setConfig("frame.isPanel", "true");
 			topComponent = FourButtonPanel.getInstance();
 		}
 		else if (isToolBar == selected)
 		{
-			setConfig("isPanel", "false");
+			setConfig("frame.isPanel", "false");
 			MyToolBar toolbar = MyToolBar.getInstance();
 			toolbar.loadButtons();
 			topComponent = toolbar;
 		}
 		else if (noContainer == selected)
 		{
-			setConfig("isPanel", "no");
+			setConfig("frame.isPanel", "no");
 			topComponent = null;
 		}
 		if (!RefluxEdit.isRibbon)
@@ -468,7 +468,7 @@ public class GeneralTab extends OptionTab
 		}
 		//menubar
 		boolean _useNewMenuBar = useNewMenuBar.isSelected();
-		setConfig("isUseNewMenuBar", _useNewMenuBar + "");
+		setConfig("frame.newMenuBar", _useNewMenuBar + "");
 		ColoredMenuBar menubar = ColoredMenuBar.getInstance();
 		if (isMetal)
 		{
@@ -483,31 +483,31 @@ public class GeneralTab extends OptionTab
 		}
 		//narrow edge
 		boolean _narrowEdge = useNarrowEdge.isSelected();
-		setConfig("isUseNarrowEdge", _narrowEdge+"");
+		setConfig("frame.narrowerEdge", _narrowEdge+"");
 		Tab.setEdgeType(_narrowEdge?Edge.NARROW:Edge.WIDE);
 		//auto-indent
 		boolean _autoIndent = useAutoIndent.isSelected();
-		setConfig("autoIndent", _autoIndent+"");
+		setConfig("textArea.autoIndent", _autoIndent+"");
 		String indentString = useTab.isSelected()?"\t":"    ";
-		setConfig("autoIndentString", indentString);
+		setConfig("textArea.autoIndentString", indentString);
 		MyIndentFilter.setAutoIndent(_autoIndent);
 		MyIndentFilter.setIndentString(indentString);
 		//use umbrella
 		//paint?
 		boolean paintTextArea = useUmbrella.isSelected();
-		setConfig("showUmbrella", paintTextArea+"");
+		setConfig("textArea.umbrella.show", paintTextArea+"");
 		MyUmbrellaLayerUI.setPaintUmbrella(paintTextArea);
 		//color
 		int alpha = alphaYellow.getValue();
-		setConfig("Umbrella.alpha", alpha+"");
+		setConfig("textArea.umbrella.alpha", alpha+"");
 		MyUmbrellaLayerUI.setUmbrellaColor(new Color(251,231,51,alpha));
 		//caret
-		setConfig("Caret.save", saveCaret.isSelected()+"");		
+		setConfig("caret.save", saveCaret.isSelected()+"");		
 		//confirm drag
-		setConfig("ConfirmDrag", confirmDrag.isSelected()+"");
+		setConfig("textArea.confirmDrag", confirmDrag.isSelected()+"");
 		//remember recent files
 		boolean remember = rememberRecentFiles.isSelected();
-		setConfig("rememberRecentFiles", remember+"");
+		setConfig("recentFiles.remember", remember+"");
 		if (!remember)
 		{
 			removeConfig0("recentFiles");

@@ -42,6 +42,7 @@ public abstract class OptionTab extends JPanel implements Resources
 		tabSet.add(new EditorTab());
 		tabSet.add(new OutputTab());
 		tabSet.add(new CompileTab());
+		tabSet.add(new SyntaxTab());
 		tabSet.add(new FileFormatTab());
 		tabSet.add(new LookAndFeelTab());
 		tabSet.add(new TrayTab());

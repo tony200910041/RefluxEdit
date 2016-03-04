@@ -44,11 +44,4 @@ public class MyMenuItem extends JMenuItem implements Resources
 		this(str, icon, x);
 		this.setAccelerator(KeyStroke.getKeyStroke(keyEvent, actionEvent));
 	}
-	
-	@Deprecated
-	public MyMenuItem setAccelerator(int keyEvent, int actionEvent)
-	{
-		this.setAccelerator(KeyStroke.getKeyStroke(keyEvent, actionEvent));
-		return this;
-	}
 }

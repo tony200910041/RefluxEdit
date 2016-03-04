@@ -26,31 +26,34 @@ public abstract class FADetector
 	private static final File FILE_RESPONSE = new File(getFAFilePath(),"REFLUXEDIT_DO_NOT_REMOVE_3");
 	static
 	{
-		if (!FILE_INSTANCE.exists())
+		if (!exec.SourceManager.IS_MAC)
 		{
-			try (PrintWriter writer = new PrintWriter(FILE_INSTANCE))
+			if (!FILE_INSTANCE.exists())
 			{
+				try (PrintWriter writer = new PrintWriter(FILE_INSTANCE))
+				{
+				}
+				catch (IOException ex)
+				{
+				}
 			}
-			catch (IOException ex)
+			if (!FILE_PATH.exists())
 			{
+				try (PrintWriter writer = new PrintWriter(FILE_PATH))
+				{
+				}
+				catch (IOException ex)
+				{
+				}
 			}
-		}
-		if (!FILE_PATH.exists())
-		{
-			try (PrintWriter writer = new PrintWriter(FILE_PATH))
+			if (!FILE_RESPONSE.exists())
 			{
-			}
-			catch (IOException ex)
-			{
-			}
-		}
-		if (!FILE_RESPONSE.exists())
-		{
-			try (PrintWriter writer = new PrintWriter(FILE_RESPONSE))
-			{
-			}
-			catch (IOException ex)
-			{
+				try (PrintWriter writer = new PrintWriter(FILE_RESPONSE))
+				{
+				}
+				catch (IOException ex)
+				{
+				}
 			}
 		}
 	}
@@ -173,7 +176,7 @@ public abstract class FADetector
 	{
 		try
 		{
-			Thread.currentThread().sleep(400); //ensure saved
+			Thread.sleep(400); //ensure saved
 		}
 		catch (Exception ex)
 		{
@@ -219,7 +222,7 @@ public abstract class FADetector
 			//wait and try again
 			try
 			{
-				Thread.currentThread().sleep(400);
+				Thread.sleep(400);
 			}
 			catch (InterruptedException ex2)
 			{
@@ -251,7 +254,7 @@ public abstract class FADetector
 			//wait and try again
 			try
 			{
-				Thread.currentThread().sleep(400);
+				Thread.sleep(400);
 			}
 			catch (InterruptedException ex2)
 			{

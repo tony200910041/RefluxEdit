@@ -5,9 +5,13 @@
 
 package myjava.gui;
 
+import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.text.*;
+import java.util.*;
 import exec.*;
+import myjava.gui.syntax.*;
+import myjava.util.*;
 
 public class MyIndentFilter extends DocumentFilter
 {
@@ -21,6 +25,11 @@ public class MyIndentFilter extends DocumentFilter
 		}
 	}
 	private MyTextArea textArea;
+	private Parser parser;
+	private BracketMatcher bracketMatcher;
+	private String[] commentStarts;
+	private String[] commentEnds;
+	private List<String> commentDelimiters = new ArrayList<>();
 	public MyIndentFilter(MyTextArea textArea)
 	{
 		super();
@@ -45,6 +54,34 @@ public class MyIndentFilter extends DocumentFilter
 	public static String getIndentString()
 	{
 		return MyIndentFilter.indentString;
+	}
+	
+	public void setParser(Parser parser)
+	{
+		this.parser = parser;
+		if (parser != null)
+		{
+			commentDelimiters.clear();
+			commentStarts = parser.getLanguage().getCommentStart();
+			commentEnds = parser.getLanguage().getCommentEnd();
+			Collections.addAll(commentDelimiters,commentStarts);
+			Collections.addAll(commentDelimiters,commentEnds);
+		}
+	}
+	
+	public Parser getParser()
+	{
+		return this.parser;
+	}
+	
+	public void updateBracketMatcher()
+	{
+		this.bracketMatcher = this.parser==null?null:new BracketMatcher(this.textArea,this.parser);
+	}
+	
+	public BracketMatcher getBracketMatcher()
+	{
+		return this.bracketMatcher;
 	}
 	
 	@Override
@@ -75,15 +112,23 @@ public class MyIndentFilter extends DocumentFilter
 					string = string + getIndentOfLastLine(fb, offset); //no indentation
 				}
 				super.insertString(fb, offset, string, attr);
+				parse(offset,0,string,fb);
 			}
 			else if (("}").equals(string)&&autoIndent)
 			{
 				super.insertString(fb, offset, string, attr);
+				parse(offset,0,string,fb);
 				AbstractDocument doc = (AbstractDocument)(fb.getDocument());
-				int start = textArea.getLineStartOffset(textArea.getLineOfOffset(offset));				
-				doc.replace(start,offset-start,removeOneTab(doc.getText(start,offset-start)),attr);
+				int start = textArea.getLineStartOffset(textArea.getLineOfOffset(offset));
+				String removedTab = removeOneTab(doc.getText(start,offset-start));
+				doc.replace(start,offset-start,removedTab,attr);
+				parse(start,offset-start,removedTab,fb);
 			}
-			else super.insertString(fb, offset, string, attr);
+			else
+			{
+				super.insertString(fb, offset, string, attr);	
+				parse(offset,0,string,fb);		
+			}
 		}
 		else
 		{
@@ -94,6 +139,7 @@ public class MyIndentFilter extends DocumentFilter
 	@Override
 	public void replace(DocumentFilter.FilterBypass fb, int offset, int length, String string, AttributeSet attr) throws BadLocationException
 	{
+		AbstractDocument doc = (AbstractDocument)(fb.getDocument());
 		if (this.textArea.isEditable())
 		{
 			if (this.textArea.isAutoBackup())
@@ -112,18 +158,26 @@ public class MyIndentFilter extends DocumentFilter
 					string = string + getIndentOfLastLine(fb, offset);
 				}
 				super.replace(fb, offset, length, string, attr);
+				parse(offset,length,string,fb);
 			}
 			else if (("}").equals(string)&&autoIndent)
 			{
 				super.replace(fb, offset, length, string, attr);
+				parse(offset,length,string,fb);
 				if (containsTabAndSpaceOnly(offset))
 				{
-					AbstractDocument doc = (AbstractDocument)(fb.getDocument());
-					int start = textArea.getLineStartOffset(textArea.getLineOfOffset(offset));				
-					doc.replace(start,offset-start,removeOneTab(doc.getText(start,offset-start)),attr);
+					int start = textArea.getLineStartOffset(textArea.getLineOfOffset(offset));
+					String removedTab = removeOneTab(doc.getText(start,offset-start));
+					//doc.replace(start,offset-start,removedTab,attr);
+					//parse(start,offset-start,removedTab,fb);
+					this.replace(fb,start,offset-start,removedTab,attr);
 				}
 			}
-			else super.replace(fb, offset, length, string, attr);
+			else
+			{
+				super.replace(fb, offset, length, string, attr);
+				parse(offset,length,string,fb);
+			}
 		}
 		else
 		{
@@ -134,6 +188,7 @@ public class MyIndentFilter extends DocumentFilter
 	@Override
 	public void remove(DocumentFilter.FilterBypass fb, int offset, int length) throws BadLocationException
 	{
+		Document doc = fb.getDocument();
 		if (this.textArea.isEditable())
 		{
 			if (this.textArea.isAutoBackup())
@@ -141,10 +196,107 @@ public class MyIndentFilter extends DocumentFilter
 				this.textArea.getUndoManager().backup();
 			}
 			super.remove(fb,offset,length);
+			parse(offset,length,"",fb);
 		}
 		else
 		{
 			cannotEdit();
+		}
+	}
+	
+	private void parse(int start, int oldLength, String newString, DocumentFilter.FilterBypass fb)
+	{
+		this.parse(start,oldLength,newString,fb.getDocument());
+	}
+	
+	private synchronized void parse(int start, int oldLength, String newString, Document doc)
+	{
+		if ((parser != null)&&MyUmbrellaLayerUI.isSyntaxHighlightingEnabled())
+		{
+			try
+			{
+				/*
+				 * we now want to replace a section of text so that "start" is at line start and "end" at line end
+				 * called AFTER actual insertion/deletion/replacement
+				 */			
+				int realStart = textArea.getLineStartOffset(textArea.getLineOfOffset(start));
+				int realEnd = textArea.getLineEndOffset(textArea.getLineOfOffset(start+newString.length()));
+				/*
+				 * now find out the smallest off and largest off+len, if comment regions are amended
+				 */
+				for (int i=start; i<=start+oldLength; i++)
+				{
+					Token commentToken = parser.getCommentAt(i);
+					if (commentToken != null)
+					{
+						int commentOff = commentToken.off();
+						int commentLength = commentToken.length();
+						realStart = Math.min(realStart,commentOff);
+						realEnd = Math.max(realEnd,commentOff+commentLength+newString.length()-oldLength);
+					}
+				}
+				/*
+				 * e.g. from ABCD to AXD
+				 * oldLength=2; newString.length()=1
+				 * realStart=0; realEnd=3
+				 * 
+				 * e.g. from ABC to AC
+				 * oldLength=1; newString.length()=0
+				 * realStart=0; realEnd=2
+				 */
+				final int[] par = new int[]{realStart,realEnd,oldLength,newString.length()};
+				/*
+				 * now replace:
+				 */
+				final javax.swing.Timer[] repaintTimer = new javax.swing.Timer[1];
+				parser.addParseListener(new Parser.ParseListener()
+				{
+					@Override
+					public void parseFinished()
+					{
+						repaintTimer[0].stop();
+						MyIndentFilter.this.matchBracket();
+					}
+				});
+				ActionListener actionListener = new ActionListener()
+				{
+					@Override
+					public void actionPerformed(ActionEvent ev)
+					{
+						MainPanel.getSelectedTab().getLayer().repaint();
+					}
+				};
+				repaintTimer[0] = new javax.swing.Timer(1000,actionListener);
+				parser.replaceOnNewThread(realStart,realEnd-realStart+oldLength-newString.length(),realEnd-realStart,new StringView(textArea.getText()));
+				repaintTimer[0].start();
+			}
+			catch (BadLocationException ex)
+			{
+				throw new InternalError(ex.getMessage());
+			}
+		}
+	}
+	
+	public void matchBracket()
+	{
+		if ((parser != null)&&(MyUmbrellaLayerUI.isBracketMatchingEnabled()))
+		{
+			this.bracketMatcher.matchBracketOnNewThread(MyIndentFilter.this.textArea.getCaretPosition());
+			MainPanel.getSelectedTab().getLayer().repaint();
+		}
+	}
+	
+	public void reparse(Document doc)
+	{
+		try
+		{
+			int len = doc.getLength();
+			this.parse(0,len,doc.getText(0,len),doc);
+		}
+		catch (BadLocationException ex)
+		{
+			//cannot happen
+			throw new InternalError();
 		}
 	}
 	

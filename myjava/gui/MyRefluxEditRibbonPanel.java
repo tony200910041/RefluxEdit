@@ -11,10 +11,12 @@ import javax.swing.*;
 import javax.swing.border.*;
 import myjava.gui.*;
 import myjava.gui.common.*;
+import myjava.util.*;
 import exec.*;
 
 public class MyRefluxEditRibbonPanel extends MyRibbonPanel
 {
+	private static final String OS_MASK_STRING = Utilities.getMenuShortcutKeyMaskString();
 	private static final MyRefluxEditRibbonPanel INSTANCE = new MyRefluxEditRibbonPanel();
 	private MyRefluxEditRibbonPanel()
 	{
@@ -31,27 +33,27 @@ public class MyRefluxEditRibbonPanel extends MyRibbonPanel
 		this.addTab(tab5);
 		this.addTab(tab6);
 		// Edit
-		tab2.add(new MyRibbonButton("Undo", "UNDO32", "<html><font size=\"4\"><b>Undo&nbsp;&nbsp;&nbsp;Ctrl+Z</b></font><br>Undo the last amendment.</font></html>", false, 7));
-		tab2.add(new MyRibbonButton("Redo", "REDO32", "<html><font size=\"4\"><b>Redo&nbsp;&nbsp;&nbsp;Ctrl+Y</b></font><br>Redo the undo amendment.</html>", false, 8));
+		tab2.add(new MyRibbonButton("Undo", "UNDO32", "<html><font size=\"4\"><b>Undo&nbsp;&nbsp;&nbsp;"+OS_MASK_STRING+"+Z</b></font><br>Undo the last amendment.</font></html>", false, 7));
+		tab2.add(new MyRibbonButton("Redo", "REDO32", "<html><font size=\"4\"><b>Redo&nbsp;&nbsp;&nbsp;"+OS_MASK_STRING+"+Y</b></font><br>Redo the undo amendment.</html>", false, 8));
 		JPanel tab2_1 = new JPanel(new GridLayout(2,1,10,10));
 		tab2_1.setOpaque(false);
-		tab2_1.add(new MyRibbonButton("Select all", "SELECT", "<html><font size=\"4\"><b>Select all&nbsp;&nbsp;&nbsp;Ctrl+A</b></font><br>Select all text in the text area.</html>", true, 9));
+		tab2_1.add(new MyRibbonButton("Select all", "SELECT", "<html><font size=\"4\"><b>Select all&nbsp;&nbsp;&nbsp;"+OS_MASK_STRING+"+A</b></font><br>Select all text in the text area.</html>", true, 9));
 		tab2_1.add(new MyRibbonButton("Select all and copy", "SELECT", "<html><font size=\"4\"><b>Select all and copy</b></font><br>Select all text in the text area and<br>copy to the system clipboard.</html>", true, 10));
 		tab2.add(tab2_1);
 		tab2.add(createSeparator());
-		tab2.add(new MyRibbonButton("Cut", "CUT32", "<html><font size=\"4\"><b>Cut selected text&nbsp;&nbsp;&nbsp;Ctrl+X</b></font><br>The selected text will be moved<br>to the system clipboard.</html>", false, 11));
-		tab2.add(new MyRibbonButton("Copy", "COPY32", "<html><font size=\"4\"><b>Copy selected text&nbsp;&nbsp;&nbsp;Ctrl+C</b></font><br>The selected text will be copied<br>to the system clipboard.</html>", false, 12));
+		tab2.add(new MyRibbonButton("Cut", "CUT32", "<html><font size=\"4\"><b>Cut selected text&nbsp;&nbsp;&nbsp;"+OS_MASK_STRING+"+X</b></font><br>The selected text will be moved<br>to the system clipboard.</html>", false, 11));
+		tab2.add(new MyRibbonButton("Copy", "COPY32", "<html><font size=\"4\"><b>Copy selected text&nbsp;&nbsp;&nbsp;"+OS_MASK_STRING+"+C</b></font><br>The selected text will be copied<br>to the system clipboard.</html>", false, 12));
 		JPanel tab2_2 = new JPanel(new GridLayout(3,1,3,3));
 		tab2_2.setOpaque(false);
-		tab2_2.add(new MyRibbonButton("Paste", "PASTE", "<html><font size=\"4\"><b>Paste text&nbsp;&nbsp;&nbsp;Ctrl+V</b></font><br>Paste the text in the system clipboard<br>to the text area.</html>", true, 13));
+		tab2_2.add(new MyRibbonButton("Paste", "PASTE", "<html><font size=\"4\"><b>Paste text&nbsp;&nbsp;&nbsp;"+OS_MASK_STRING+"+V</b></font><br>Paste the text in the system clipboard<br>to the text area.</html>", true, 13));
 		tab2_2.add(new MyRibbonButton("Paste on next line", "PASTE", "<html><font size=\"4\"><b>Paste text on next line</b></font><br>Insert the text in the system clipboard<br>on the next line.</html>", true, 14));
 		tab2_2.add(new MyRibbonButton("Delete", "DELETE16", "<html><font size=\"4\"><b>Delete selected text&nbsp;&nbsp;&nbsp;Delete</b></font><br>The selected text will be deleted.</html>", true, 15));
 		tab2.add(tab2_2);
 		tab2.add(createSeparator());
 		JPanel tab2_3 = new JPanel(new GridLayout(2,1,10,10));
 		tab2_3.setOpaque(false);
-		tab2_3.add(new MyRibbonButton("Indent\u2191", "INDENT+", "<html><font size=\"4\"><b>Increase indentation&nbsp;&nbsp;&nbsp;Ctrl+I</b></font><br>Increase the indentation of the selected text by 1</html>", true, 18));
-		tab2_3.add(new MyRibbonButton("Indent\u2193", "INDENT-", "<html><font size=\"4\"><b>Decrease indentation&nbsp;&nbsp;&nbsp;Ctrl+U</b></font><br>Decrease the indentation of the selected text by 1</html>", true, 19));
+		tab2_3.add(new MyRibbonButton("Indent\u2191", "INDENT+", "<html><font size=\"4\"><b>Increase indentation&nbsp;&nbsp;&nbsp;"+OS_MASK_STRING+"+I</b></font><br>Increase the indentation of the selected text by 1</html>", true, 18));
+		tab2_3.add(new MyRibbonButton("Indent\u2193", "INDENT-", "<html><font size=\"4\"><b>Decrease indentation&nbsp;&nbsp;&nbsp;"+OS_MASK_STRING+"+U</b></font><br>Decrease the indentation of the selected text by 1</html>", true, 19));
 		tab2.add(tab2_3);
 		// View
 		tab3.add(new MyRibbonButton("<html><center>Editing/<br>viewing</center></html>", "EDIT32", "<html><font size=\"4\"><b>Enable/disable editing</b></font><br>Click here to disable/re-enable editing.<br></html>", false, 17));
@@ -69,8 +71,8 @@ public class MyRefluxEditRibbonPanel extends MyRibbonPanel
 		tab4.add(createSeparator());
 		JPanel tab4_1 = new JPanel(new GridLayout(3,1,3,3));
 		tab4_1.setOpaque(false);
-		tab4_1.add(new MyRibbonButton("Word count", "WORDCOUNT", "<html><font size=\"4\"><b>Word count&nbsp;&nbsp;&nbsp;Ctrl+F2</b></font><br>Count the number of words that are in the selected text,<br>or all words if no text is selected.</html>", true, 22));
-		tab4_1.add(new MyRibbonButton("Character count", "CHARACTERCOUNT", "<html><font size=\"4\"><b>Character count&nbsp;&nbsp;&nbsp;Ctrl+F3</b></font><br>Count the number of characters that are in the selected text,<br>or all characters if no text is selected.</html>", true, 44));
+		tab4_1.add(new MyRibbonButton("Word count", "WORDCOUNT", "<html><font size=\"4\"><b>Word count&nbsp;&nbsp;&nbsp;"+OS_MASK_STRING+"+F2</b></font><br>Count the number of words that are in the selected text,<br>or all words if no text is selected.</html>", true, 22));
+		tab4_1.add(new MyRibbonButton("Character count", "CHARACTERCOUNT", "<html><font size=\"4\"><b>Character count&nbsp;&nbsp;&nbsp;"+OS_MASK_STRING+"+F3</b></font><br>Count the number of characters that are in the selected text,<br>or all characters if no text is selected.</html>", true, 44));
 		tab4_1.add(new MyRibbonButton("Reverse text", null, "<html><font size=\"4\"><b>Reverse characters</b></font><br>Reverse all characters!</html>", true, 50));			
 		tab4.add(tab4_1);
 		tab4.add(createSeparator());
@@ -84,7 +86,7 @@ public class MyRefluxEditRibbonPanel extends MyRibbonPanel
 		tab4.add(createSeparator());
 		JPanel tab4_3 = new JPanel(new GridLayout(3,1,3,3));
 		tab4_3.setOpaque(false);
-		tab4_3.add(new MyRibbonButton("<html>Search/<br>Replace</html>", "SEARCH16", "<html><font size=\"4\"><b>Search and Replace&nbsp;&nbsp;&nbsp;Ctrl+F</b></font><br>Integrated search and replace functions,<br>supporting regex and case-sensitivity.</html>", true, 24));
+		tab4_3.add(new MyRibbonButton("<html>Search/<br>Replace</html>", "SEARCH16", "<html><font size=\"4\"><b>Search and Replace&nbsp;&nbsp;&nbsp;"+OS_MASK_STRING+"+F</b></font><br>Integrated search and replace functions,<br>supporting regex and case-sensitivity.</html>", true, 24));
 		tab4_3.add(new MyRibbonButton("Escape", null, "<html><font size=\"4\"><b>Escape text</b></font><br>Convert all unescaped characters to escaped characters.<br>For example, a new line break will be converted to \\n.</html>", true, 54));
 		tab4_3.add(new MyRibbonButton("Unescape", null, "<html><font size=\"4\"><b>Unescape text</b></font><br>Convert all escaped characters to unescaped characters.<br>For example, \\t will be converted to a tab.</html>", true, 55));
 		tab4.add(tab4_3);
@@ -112,7 +114,7 @@ public class MyRefluxEditRibbonPanel extends MyRibbonPanel
 		MyPanel panel2 = new MyPanel(MyPanel.CENTER);
 		panel2.setPreferredSize(new Dimension(5,85));
 		tab6.add(panel2);
-		tab6.add(new MyRibbonButton("<html><center>About<br>RefluxEdit</center></html>", "APPICON32", "<html><font size=\"4\"><b>About RefluxEdit&nbsp;&nbsp;&nbsp;Ctrl+F1</b></font><br>RefluxEdit is a lightweight plain text editor written in Java by tony200910041.<br>SourceForge page: http://refluxedit.sourceforge.net</html>", false, 16));
+		tab6.add(new MyRibbonButton("<html><center>About<br>RefluxEdit</center></html>", "APPICON32", "<html><font size=\"4\"><b>About RefluxEdit&nbsp;&nbsp;&nbsp;"+OS_MASK_STRING+"+F1</b></font><br>RefluxEdit is a lightweight plain text editor written in Java by tony200910041.<br>GitHub page: https://github.com/tony200910041/RefluxEdit</html>", false, 16));
 		tab6.add(new MyRibbonButton("<html><center>About<br>MPL 2.0</center></html>", "LICENSE32", "<html><font size=\"4\"><b>About Mozilla Public License 2.0</b></font><br>RefluxEdit is released under MPL 2.0. You are welcome to learn more about this license.</html>", false, 58));
 		tab6.add(new MyRibbonButton("<html><center>Visit<br>GitHub</center></html>", "VISIT32", "<html><font size=\"4\"><b>Visit GitHub homepage</b></font><br>https://github.com/tony200910041/RefluxEdit/releases</html>", false, 48));
 		tab6.add(createSeparator());
@@ -249,7 +251,7 @@ public class MyRefluxEditRibbonPanel extends MyRibbonPanel
 		}
 	}
 	
-	protected static JSeparator createSeparator()
+	private static JSeparator createSeparator()
 	{
 		JSeparator sep = new JSeparator(SwingConstants.VERTICAL);
 		sep.setPreferredSize(new Dimension(2,85));

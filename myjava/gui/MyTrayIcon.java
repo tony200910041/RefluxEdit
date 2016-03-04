@@ -25,26 +25,32 @@ public class MyTrayIcon extends TrayIcon implements MouseListener, WindowFocusLi
 	}
 	
 	@Override
-	public void mouseReleased(MouseEvent ev)
-	{
-		if (ev.isPopupTrigger()||ev.isControlDown())
-		{
-			popup.setInvoker(hiddenDialog);
-			hiddenDialog.setVisible(true);
-			popup.show(hiddenDialog,ev.getXOnScreen(),ev.getYOnScreen()-popup.getPreferredSize().height);
-		}
-	}
-	
-	@Override
 	public void windowLostFocus(WindowEvent ev)
 	{
 		hiddenDialog.setVisible(false);
 		popup.setVisible(false);
 	}
+	
+	@Override
+	public void mouseReleased(MouseEvent ev)
+	{
+		maybeShowPopup(ev);
+	}
 		
 	@Override
 	public void mousePressed(MouseEvent ev)
 	{
+		maybeShowPopup(ev);
+	}
+	
+	private void maybeShowPopup(MouseEvent ev)
+	{
+		if (ev.isPopupTrigger())
+		{
+			popup.setInvoker(hiddenDialog);
+			hiddenDialog.setVisible(true);
+			popup.show(hiddenDialog,ev.getXOnScreen(),ev.getYOnScreen()-popup.getPreferredSize().height);
+		}
 	}
 	
 	@Override

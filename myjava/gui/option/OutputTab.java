@@ -31,7 +31,7 @@ public class OutputTab extends OptionTab
 		//encoding and line separator
 		JPanel in = new JPanel(new GridLayout(2,1,0,0));
 		//encoding
-		String encoding = getConfig("Encoding");
+		String encoding = getConfig("output.encoding");
 		if (encoding != null)
 		{
 			switch (encoding)
@@ -62,17 +62,18 @@ public class OutputTab extends OptionTab
 				charsetBox.setEnabled(specifyEncoding.isSelected());
 			}
 		});
-		printWriter.setToolTipText("Use Java PrintWriter implementation");
-		fileOutputStream.setToolTipText("Use Java default FileOutputStream implementation");
+		printWriter.setToolTipText("Use Java PrintWriter's default implementation");
+		fileOutputStream.setToolTipText("Use Java FileOutputStream's default implementation");
 		specifyEncoding.setToolTipText("Custom encoding");
 		in.add(panel1);
 		//line separator
-		String lineSeparator = getConfig0("lineSeparator");
+		String lineSeparator = getConfig0("output.lineSeparator");
 		if (lineSeparator != null)
 		{
 			switch (lineSeparator)
 			{
 				case "\\n":
+				default:
 				_n.setSelected(true);
 				break;
 				
@@ -102,17 +103,17 @@ public class OutputTab extends OptionTab
 		//encoding
 		if (printWriter.isSelected())
 		{
-			setConfig("Encoding","default1");
+			setConfig("output.encoding","default1");
 		}
 		else if (fileOutputStream.isSelected())
 		{
-			setConfig("Encoding","default2");
+			setConfig("output.encoding","default2");
 		}
 		else
 		{
-			setConfig("Encoding",(String)(charsetBox.getSelectedItem()));
+			setConfig("output.encoding",(String)(charsetBox.getSelectedItem()));
 		}
 		//line separator
-		setConfig("lineSeparator", lineSeparatorGroup.getSelected().getText());
+		setConfig("output.lineSeparator", lineSeparatorGroup.getSelected().getText());
 	}
 }

@@ -2,7 +2,7 @@ RefluxEdit
 
 ----------
 
-RefluxEdit is a small and simple text editor written in Java.
+RefluxEdit is a small and simple text editor written in Java. Being my first project, RefluxEdit aims at being a lightweight but powerful text editor which works on different operating systems.
 
 ----------
 
@@ -14,6 +14,15 @@ RefluxEdit is provided "AS IS" and WITHOUT warranties. RefluxEdit does not conta
 
 ----------
 Version History:
+RefluxEdit 6.0alpha 2016-03-04
+-New function: syntax highlighting
+-New function: brace matching
+	(Supporting C, C++ and Java)
+-New function: line and column indicator
+-New function: integrated status bar
+-Changed: preview text area font
+-Fixed bug #00044: encoding warning dialog
+
 RefluxEdit 5.2 2015-11-07
 -New function: Mac OS X integration
 -Changed: enhanced file chooser
@@ -284,7 +293,7 @@ RefluxEdit 1.2 2014-03-06
 RefluxEdit 1.1 2014-02-06
 -Fixed bug #00001: Not cancelling the "Find" dialog
 -New functions: Open File (quick), Invert case, Insert key words, Generate random words
--Changed: JMenuBar spaces
+-Changed: JMenuBar appearance
 
 RefluxEdit 1.0 2014-02-03
 -First release version

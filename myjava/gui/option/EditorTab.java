@@ -19,11 +19,13 @@ import static exec.SourceManager.*;
 public class EditorTab extends OptionTab
 {
 	//fonts
-	private MyFontChooser fontChooser = new MyFontChooser(loadFont());
+	private MyFontChooser.PreviewPanel fontChooser = new MyFontChooser.PreviewPanel(loadFont());
 	//word and character count
-	private JCheckBox wordCount = new MyCheckBox("Show word and character count", getBoolean0("showCount"));
+	private JCheckBox wordCount = new MyCheckBox("Show word and character count", getBoolean0("statusBar.showCount"));
 	//line counter
-	private JCheckBox lineCount = new MyCheckBox("Show line counter", getBoolean0("showLineCounter"));
+	private JCheckBox lineCount = new MyCheckBox("Show line counter", getBoolean0("textArea.showLineCounter"));
+	//caret location
+	private JCheckBox caretLocation = new MyCheckBox("Show caret location", getBoolean0("statusBar.showCaretLocation"));
 	//wrap
 	private JCheckBox lineWrap = new MyCheckBox("Line Wrap", textArea.getLineWrap());
 	private JCheckBox wrapStyleWord = new MyCheckBox("Wrap by word", textArea.getWrapStyleWord());
@@ -35,13 +37,15 @@ public class EditorTab extends OptionTab
 	public EditorTab()
 	{
 		super(new FlowLayout(FlowLayout.LEFT), "Editor");
-		JPanel in = new JPanel(new GridLayout(5,1,0,0));
+		JPanel in = new JPanel(new GridLayout(6,1,0,0));
 		//fonts
 		in.add(MyPanel.wrap(new MyLabel("Text area font:"),fontChooser));
 		//word and character count
 		in.add(MyPanel.wrap(wordCount));
 		//line counter
 		in.add(MyPanel.wrap(lineCount));
+		//caret location
+		in.add(MyPanel.wrap(caretLocation));
 		//wrap
 		in.add(MyPanel.wrap(lineWrap,wrapStyleWord,new MyLabel("  Tab size:"),tabSize));
 		wrapStyleWord.setEnabled(lineWrap.isSelected());
@@ -94,19 +98,19 @@ public class EditorTab extends OptionTab
 	public void onExit()
 	{
 		//font
-		Font font = fontChooser.getFont();
+		Font font = fontChooser.getSelectedFont();
 		MyTextArea.setTextFont(font);
-		setConfig("TextAreaFont.fontName", font.getFontName());
-		setConfig("TextAreaFont.fontStyle", font.getStyle()+"");
-		setConfig("TextAreaFont.fontSize", font.getSize()+"");
+		setConfig("textArea.font.name", font.getFontName());
+		setConfig("textArea.font.style", font.getStyle()+"");
+		setConfig("textArea.font.size", font.getSize()+"");
 		//word and character count
-		boolean _count = wordCount.isSelected();
-		setConfig("showCount", _count+"");
-		Tab.setEnableCountWords(_count);
+		setConfig("statusBar.showCount",wordCount.isSelected()+"");
 		//line counter
 		boolean _lineCounter = lineCount.isSelected();
-		setConfig("showLineCounter", _lineCounter+"");
+		setConfig("textArea.showLineCounter", _lineCounter+"");
 		MyTextArea.setEnableLineCounter(_lineCounter);
+		//caret location
+		setConfig("statusBar.showCaretLocation", caretLocation.isSelected()+"");
 		//wrap
 		boolean _wrap = lineWrap.isSelected();
 		boolean _wrapStyleWord = wrapStyleWord.isSelected();
@@ -122,54 +126,25 @@ public class EditorTab extends OptionTab
 		MyTextArea.setTextLineWrap(_wrap);
 		MyTextArea.setTextWrapStyleWord(_wrapStyleWord);
 		MyTextArea.setTab(_tabSize);
-		setConfig("LineWrap", _wrap+"");
-		setConfig("WrapStyleWord", _wrapStyleWord+"");
-		setConfig("TabSize", _tabSize+"");
+		setConfig("textArea.isLineWrap", _wrap+"");
+		setConfig("textArea.isWrapStyleWord", _wrapStyleWord+"");
+		setConfig("textArea.tabSize", _tabSize+"");
 		//selection color
 		Color selected = preview.getBackground();
 		MyTextArea.setTextSelectionColor(selected);
-		setConfig("SelectionColor.r", selected.getRed()+"");
-		setConfig("SelectionColor.g", selected.getGreen()+"");
-		setConfig("SelectionColor.b", selected.getBlue()+"");
+		setConfig("textArea.selectionColor", selected.getRGB()+"");
 	}
 	
 	private static Font loadFont()
 	{
-		String fontName = getConfig0("TextAreaFont.fontName");
-		if (fontName == null)
-		{
-			fontName = "Microsoft Jhenghei";
-		}
-		int fontStyle, fontSize;
-		try
-		{
-			fontStyle = Integer.parseInt(getConfig0("TextAreaFont.fontStyle"));
-			if ((fontStyle<0)||(fontStyle>2)) fontStyle = 0;
-		}
-		catch (Exception ex)
-		{
-			fontStyle = 0;
-		}
-		try
-		{
-			fontSize = Integer.parseInt(getConfig0("TextAreaFont.fontSize"));
-			if ((fontSize<1)||(fontSize>200)) fontSize = 15;
-		}
-		catch (Exception ex)
-		{
-			fontSize = 15;
-		}
-		return new Font(fontName, fontStyle, fontSize);
+		return MainPanel.getSelectedTab().getTextArea().getFont();
 	}
 	
 	private static Color loadColor()
 	{
 		try
 		{
-			int r = Integer.parseInt(getConfig0("SelectionColor.r"));
-			int g = Integer.parseInt(getConfig0("SelectionColor.g"));
-			int b = Integer.parseInt(getConfig0("SelectionColor.b"));
-			return new Color(r,g,b);
+			return new Color(Integer.parseInt(getConfig0("textArea.selectionColor")));
 		}
 		catch (Exception ex)
 		{

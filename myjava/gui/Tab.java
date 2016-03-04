@@ -18,12 +18,15 @@ import java.nio.charset.*;
 import java.util.*;
 import java.text.*;
 import java.net.*;
+import java.lang.reflect.*;
 import exec.*;
 import myjava.io.*;
 import myjava.gui.common.*;
+import myjava.gui.statusbar.*;
+import myjava.gui.syntax.*;
 import static exec.SourceManager.*;
 import static myjava.gui.ExceptionDialog.*;
-import static myjava.util.StaticUtilities.*;
+import static myjava.util.Utilities.*;
 
 public class Tab extends JPanel implements DocumentListener, CaretListener, Resources
 {
@@ -38,11 +41,8 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 	private MyUmbrellaLayerUI layerUI = new MyUmbrellaLayerUI();
 	private JLayer<? extends JComponent> layer1 = new JLayer<MyTextArea>(textArea, layerUI);
 	private JPanel bottomPanel = new JPanel(new BorderLayout());
-	private MyBlackLinePanel bottomP1 = new MyBlackLinePanel(0);
-	private MyBlackLinePanel bottomP2 = new MyBlackLinePanel(1);
-	private CountLabel countLabel = new CountLabel(0, true);
-	private FileLabel fileLabel = new FileLabel();
-	private UndoDialog undoDialog;	
+	private StatusBar statusBar;
+	private UndoDialog undoDialog;
 	private File file;
 	private FileWatcher watcher;
 	private BorderLayout layout = new BorderLayout();
@@ -55,28 +55,23 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 	private MyLabel tabLabel = new MyLabel();
 	private JPopupMenu tabPopup = new JPopupMenu();
 	/*
-	 * static properties
+	 * static:
 	 */
 	static
 	{
 		loadConfig();
 	}
-	private static boolean countWords = getBoolean0("showCount"); //count or not
-	private static boolean enableCountWords = true; //enable or disable, changed when opening file
-	private static int edgeType = getBoolean0("isUseNarrowEdge")?Edge.NARROW:Edge.WIDE;
-	
+	private static int edgeType = getBoolean0("frame.narrowerEdge")?Edge.NARROW:Edge.WIDE;
 	public Tab(File file)
 	{
 		super();
 		this.setLayout(layout);
 		this.add(new JScrollPane(this.layer1), BorderLayout.CENTER);
 		this.file = file;
+		this.statusBar = new StatusBar(this);
 		this.undoDialog = new UndoDialog(this);
 		//
-		this.bottomP1.setPreferredSize(new Dimension(160,1));
-		this.bottomP1.add(countLabel);
-		this.bottomP2.add(fileLabel);
-		this.add(bottomPanel, BorderLayout.PAGE_END);
+		this.add(statusBar, BorderLayout.PAGE_END);
 		//
 		this.update();
 		this.textArea.getDocument().addDocumentListener(this);
@@ -85,11 +80,20 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 		MouseAdapter mouseListener = new MouseAdapter()
 		{
 			@Override
+			public void mousePressed(MouseEvent ev)
+			{
+				if (ev.isPopupTrigger())
+				{
+					showPopup(ev);
+				}
+			}
+			
+			@Override
 			public void mouseReleased(MouseEvent ev)
 			{
-				if (ev.isPopupTrigger()||ev.isControlDown()||(ev.getClickCount()==2))
-				{					
-					tabPopup.show(tabLabel,ev.getX(),ev.getY());					
+				if (ev.isPopupTrigger())
+				{
+					showPopup(ev);
 				}
 				else
 				{
@@ -99,12 +103,20 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 					 */
 					if (ev.getClickCount() == 1)
 					{
+						MainPanel.setSelectedComponent(Tab.this);
 						/*JTabbedPane tabbedPane = MainPanel.getInstance().getTabbedPane();
 						MouseEvent me = SwingUtilities.convertMouseEvent(tabLabel,ev,tabbedPane);
-						tabbedPane.getMouseListeners()[0].mousePressed(me);*/
-						MainPanel.setSelectedComponent(Tab.this);
+						for (MouseListener mouseListener: tabbedPane.getMouseListeners())
+						{
+							mouseListener.mousePressed(me);
+						}*/
 					}
 				}
+			}
+			
+			private void showPopup(MouseEvent ev)
+			{
+				Tab.this.tabPopup.show(Tab.this.tabLabel,ev.getX(),ev.getY());
 			}
 			
 			@Override
@@ -183,11 +195,6 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 		Tab.edgeType = edgeType;
 	}
 	
-	public static void setEnableCountWords(boolean countWords)
-	{
-		Tab.countWords = countWords;
-	}
-	
 	public void update()
 	{
 		// edge
@@ -211,14 +218,9 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 		{
 			// fail sliently
 		}
-		bottomPanel.add(bottomP2, BorderLayout.CENTER);
-		if (countWords)
-		{
-			bottomPanel.add(bottomP1, BorderLayout.LINE_START);
-			this.updateCount();
-		}
 		// textArea
 		this.textArea.update();
+		this.statusBar.rearrange();
 		this.revalidate();
 		this.repaint();
 	}
@@ -226,71 +228,47 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 	@Override
 	public void caretUpdate(CaretEvent ev)
 	{
-		this.updateCount();
+		this.statusBar.postCaretUpdate();
+		BracketMatcher bracketMatcher = this.textArea.getFilter().getBracketMatcher();
+		if (bracketMatcher != null)
+		{
+			bracketMatcher.matchBracketOnNewThread(this.textArea.getCaretPosition());
+		}
+		System.out.println(textArea.getCaretPosition());
 	}
 	
 	@Override
 	public void insertUpdate(DocumentEvent ev)
 	{
-		this.isNew = false;
-		this.setSaved(false);
-		this.updateCount();
+		documentChanged();
 	}
 	
 	@Override
 	public void changedUpdate(DocumentEvent ev)
 	{
-		this.isNew = false;
-		this.setSaved(false);
-		this.updateCount();
+		documentChanged();
 	}
 	
 	@Override
 	public void removeUpdate(DocumentEvent ev)
 	{
-		this.isNew = false;
-		this.setSaved(false);
-		this.updateCount();
+		documentChanged();
 	}
 	
-	public void updateCount()
+	private void documentChanged()
 	{
-		//word count
-		if (countWords&&enableCountWords)
-		{		
-			if (SwingUtilities.getAncestorOfClass(JPanel.class, this.bottomP1) != null)
+		if (!this.textArea.isOpening())
+		{
+			SwingUtilities.invokeLater(new Runnable()
 			{
-				String buffer = null;
-				try
+				@Override
+				public void run()
 				{
-					buffer = this.textArea.getSelectedText();
+					Tab.this.isNew = false;
+					Tab.this.setSaved(false);
+					Tab.this.statusBar.postDocumentUpdate();
 				}
-				catch (Exception ex)
-				{
-				}
-				final String text = buffer!=null?buffer:(this.textArea.getText());
-				this.countLabel.setText("Loading...");
-				//
-				Thread thread = new Thread()
-				{
-					@Override
-					public void run()
-					{
-						this.setPriority(Thread.MIN_PRIORITY);
-						final int count = Tab.this.countLabel.isWordCount?wordCount(text):charCount(text);
-						SwingUtilities.invokeLater(new Runnable()
-						{
-							@Override
-							public void run()
-							{
-								Tab.this.countLabel.setCountInfo(count, Tab.this.countLabel.isWordCount);
-							}
-						});
-					}
-				};
-				thread.setDaemon(true);
-				thread.start();
-			}
+			});
 		}
 	}
 	
@@ -316,7 +294,7 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 		String encoding;
 		if (useEncoding)
 		{
-			encoding = getConfig0("Encoding");
+			encoding = getConfig0("output.encoding");
 			if (encoding == null) encoding = "default1";
 		}
 		else
@@ -326,7 +304,7 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 		/*
 		 * lineSeparator
 		 */
-		String lineSeparator = getConfig0("lineSeparator");
+		String lineSeparator = getConfig0("output.lineSeparator");
 		if (lineSeparator == null) lineSeparator = "\n";
 		lineSeparator = lineSeparator.replace("\\n", "\n").replace("\\r", "\r");
 		/*
@@ -338,7 +316,7 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 			assert (!tempFile.exists());
 			Files.move(dest.toPath(), tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
-		if (encoding.equals("default1"))
+		if (("default1").equals(encoding))
 		{
 			/*
 			 * default1 mode: use PrintWriter
@@ -352,7 +330,7 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 			}
 			out.close();
 		}
-		else if (encoding.equals("default2"))
+		else if (("default2").equals(encoding))
 		{
 			/*
 			 * default2 mode: use FileOutputStream
@@ -373,7 +351,7 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 			output.write(bytes,0,bytes.length);
 			output.flush();
 			output.close();
-			JOptionPane.showMessageDialog(SwingUtilities.windowForComponent(this), "You are using " + encoding + " encoding (beta).\nPlease check if the this.file is saved correctly.", "Saved", JOptionPane.WARNING_MESSAGE);
+			JOptionPane.showMessageDialog(SwingUtilities.windowForComponent(this), "You are using " + encoding + " encoding (beta).\nPlease check if the file is saved correctly.", "Saved", JOptionPane.WARNING_MESSAGE);
 		}
 		/*
 		 * finished: now change this.file
@@ -404,7 +382,8 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 	{
 		private final Window parent = SwingUtilities.windowForComponent(Tab.this);
 		private volatile boolean complete;
-		private FileInputStream input;
+		private volatile boolean _continue = true;
+		private InputStream input;
 		private BufferedReader br1;
 		private JDialog prog;
 		private File f;
@@ -415,6 +394,11 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 			this.f = fileToLoad;
 			this.encoding = encoding;
 			this.prog.setVisible(true);
+		}
+		
+		public void stop()
+		{
+			this._continue = false;
 		}
 		
 		@Override
@@ -430,7 +414,7 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 				String current = "";
 				try
 				{
-					input = new FileInputStream(f);
+					input = new BufferedInputStream(new FileInputStream(f));
 					//remove BOM
 					long x;
 					if (encoding.startsWith("UTF-16"))
@@ -444,9 +428,9 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 						assert x == 4;
 					}
 					//
-					while (((byte_read = input.read(buffer,0,4096)) != -1)&&(!this.isCancelled()))
+					while (((byte_read = input.read(buffer,0,4096)) != -1)&&(_continue))
 					{
-						if (byte_read != 4096) //buffer: "too large"
+						if (byte_read != 4096) //buffer is "too large"
 						{
 							byte[] _new = new byte[byte_read];
 							System.arraycopy(buffer,0,_new,0,byte_read);
@@ -487,7 +471,7 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 				try
 				{
 					br1 = new BufferedReader(new FileReader(f));
-					while (((buffer = br1.readLine()) != null)&&(!this.isCancelled()))
+					while (((buffer = br1.readLine()) != null)&&(_continue))
 					{
 						text = text + buffer + "\n";
 						lineno++;
@@ -513,9 +497,15 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 		@Override
 		protected void process(java.util.List<String> chunks)
 		{
+			int count = 0;
 			for (String s: chunks)
 			{
-				if (s != null) Tab.this.textArea.append(s);
+				if (s != null)
+				{
+					count++;
+					Tab.this.textArea.append(s);
+					Tab.this.textArea.setCaretPosition(0);
+				}
 			}
 			Tab.this.textArea.setCaretPosition(0);
 		}
@@ -533,7 +523,7 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 			}
 			try
 			{
-				if (!this.isCancelled())
+				if (this.complete)
 				{
 					Tab.this.textArea.append(this.get());
 				}
@@ -542,48 +532,9 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 			{
 				exception(ex);
 			}
-			Tab.enableCountWords = true;
-			if (countWords)
-			{
-				Tab.this.updateCount();
-			}
-			Tab.this.getTextArea().setAutoBackup(true);
-			Tab.this.getTextArea().setOpening(false);
-			if (complete)
-			{
-				Tab.this.setFile(f);
-				loadConfig();
-				if (getBoolean0("Caret.save"))
-				{
-					try
-					{
-						Tab.this.textArea.setCaretPosition(Integer.parseInt(getConfig0("Caret."+f.getPath())));
-					}
-					catch (Exception ex)
-					{
-						Tab.this.textArea.setCaretPosition(0);
-					}
-				}
-				else
-				{
-					Tab.this.textArea.setCaretPosition(0);
-				}
-				prog.dispose();
-				double rate = getShowRate();
-				if (rate < 0.95)
-				{
-					if (JOptionPane.showConfirmDialog(parent, (encoding!=null?(encoding):"System default") + " encoding is used and only " + format3.format(rate*100) + "% of the characters are correctly shown.\nWould you like to specify the charset and reload?", "Reload", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
-					{
-						Tab.this.showSpecifiedCharsetDialog(f);
-					}
-				}
-			}
-			else
-			{
-				Tab.this.setFile(null);
-			}
+			postFileOpen(this.complete?f:null,this.encoding);
+			prog.dispose();
 			MainPanel.setSelectedComponent(Tab.this);
-			Tab.this.setSaved(true);
 		}
 	}
 	
@@ -611,34 +562,16 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 		}
 	}
 	
-	private SwingWorker<?,?> open0(File src)
+	private SwingWorker<?,?> open0(final File src)
 	{
 		MainPanel.setSelectedComponent(Tab.this);
 		Window parent = SwingUtilities.windowForComponent(Tab.this);
-		if (watcher != null)
-		{
-			watcher.setEnabled(false);
-			watcher.close();
-		}
-		/*
-		 * disable count words to prevent hanging
-		 */
-		enableCountWords = false;
-		/*
-		 * disable auto backup
-		 */
-		this.getTextArea().setAutoBackup(false);
-		this.getTextArea().setOpening(true);
-		/*
-		 * cannot be new tab
-		 */
-		this.isNew = false;
+		this.preFileOpen();
 		/*
 		 * show "loading"
 		 */
 		ProgressDialog prog = new ProgressDialog(parent,"Please wait...");
 		prog.setIndeterminate(true);
-		this.textArea.setText("");
 		int lineno = 0;
 		String encoding = getEncoding(src);		
 		final MyWorker worker = new MyWorker(prog,src,encoding);		
@@ -647,20 +580,9 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 			@Override
 			public void windowClosing(WindowEvent ev)
 			{
-				worker.cancel(true);
+				worker.stop();
 				JOptionPane.showMessageDialog(SwingUtilities.windowForComponent(Tab.this), "Stopped opening file " + file.getPath() + ".", "Stopped", JOptionPane.WARNING_MESSAGE);
-				Tab.this.setFile(null);
-				Tab.enableCountWords = true;
-				Tab.this.getTextArea().setAutoBackup(true);
-				Tab.this.getTextArea().setOpening(false);
-				if (Tab.countWords)
-				{
-					updateCount();
-				}
-				if (Tab.this.watcher != null)
-				{
-					watcher.close();
-				}
+				postFileOpen(src,null);
 			}
 		});
 		worker.execute();
@@ -683,21 +605,7 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 	{
 		MainPanel.setSelectedComponent(Tab.this);
 		Window parent = SwingUtilities.windowForComponent(Tab.this);
-		if (watcher != null)
-		{
-			watcher.setEnabled(false);
-			watcher.close();
-		}
-		/*
-		 * disable count words to prevent hanging
-		 */
-		enableCountWords = false;
-		this.getTextArea().setAutoBackup(false);
-		this.getTextArea().setOpening(true);
-		/*
-		 * cannot be new tab
-		 */
-		this.isNew = false;
+		this.preFileOpen();
 		/*
 		 * show "loading"
 		 */
@@ -708,12 +616,9 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 			@Override
 			public void run()
 			{
-				this.setPriority(Thread.MIN_PRIORITY);
 				try
 				{
-					/*
-					 * Java 7+
-					 */
+					this.setPriority(Thread.MIN_PRIORITY);
 					byte[] bytes = Files.readAllBytes(src.toPath());
 					final String decoded = new String(bytes, Charset.forName(charset));
 					try
@@ -729,48 +634,19 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 					}
 					catch (InterruptedException ex)
 					{
-						throw new InternalError(); //shouldn't be interrupted
+						throw new InternalError();
 					}
 				}
-				catch (Exception ex1)
+				catch (IOException|InvocationTargetException ex2)
 				{
-					exception(ex1);
-					return;
+					exception(ex2);
 				}
 				SwingUtilities.invokeLater(new Runnable()
 				{
 					@Override
 					public void run()
 					{
-						if (getBoolean0("Caret.save"))
-						{
-							try
-							{
-								Tab.this.textArea.setCaretPosition(Integer.parseInt(getConfig0("Caret."+file.getPath())));
-							}
-							catch (Exception ex)
-							{
-								Tab.this.textArea.setCaretPosition(0);
-							}
-						}
-						else
-						{
-							Tab.this.textArea.setCaretPosition(0);
-						}
-						Tab.this.setFile(src);
-						Tab.enableCountWords = true;
-						Tab.this.getTextArea().setAutoBackup(true);
-						Tab.this.getTextArea().setOpening(false);
-						if (Tab.countWords)
-						{
-							updateCount();
-						}
-						Tab.this.setSaved(true);
-						/*
-						 * remove old watcher, and create a new one
-						 */
-						prog.setVisible(false);
-						prog.dispose();
+						postFileOpen(src,charset);
 					}
 				});
 			}
@@ -780,19 +656,7 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 			@Override
 			public void windowClosing(WindowEvent ev)
 			{
-				thread.interrupt();
-				Tab.this.file = null;
-				Tab.this.fileLabel.setFile(null);
-				Tab.enableCountWords = true;
-				Tab.this.getTextArea().setAutoBackup(true);
-				if (Tab.countWords)
-				{
-					updateCount();
-				}
-				if (Tab.this.watcher != null)
-				{
-					watcher.close();
-				}
+				Tab.this.postFileOpen(null,null);
 			}
 		});
 		thread.start();
@@ -801,8 +665,7 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 	
 	public void open(URL url) throws IOException
 	{
-		this.getTextArea().setOpening(true);
-		this.isNew = false;
+		preFileOpen();
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream())))
 		{
 			String text;
@@ -815,6 +678,32 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 		{
 			textArea.setCaretPosition(0);
 			this.getTextArea().setOpening(false);
+		}
+	}
+	
+	public void preFileOpen()
+	{
+		if (this.watcher != null)
+		{
+			this.watcher.setEnabled(false);
+			this.watcher.close();
+		}
+		this.textArea.setAutoBackup(false);
+		this.textArea.setOpening(true);
+		this.isNew = false;
+		this.textArea.setText("");
+	}
+	
+	public void postFileOpen(File file, String encoding)
+	{
+		this.setFile(file);
+		this.textArea.setAutoBackup(true);
+		this.statusBar.update();
+		this.setSaved(true);
+		this.textArea.setOpening(false);
+		if (file != null)
+		{
+			this.ensureShowRate(file, encoding);
 		}
 	}
 		
@@ -946,6 +835,19 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 		return (canDisplay*1.0)/text.length();
 	}
 	
+	public void ensureShowRate(File file, String encoding)
+	{
+		double rate = getShowRate();
+		if (rate < 0.95)
+		{
+			int option = JOptionPane.showConfirmDialog(this, (encoding!=null?(encoding):"System default") + " encoding is used and only " + format3.format(rate*100) + "% of the characters are correctly shown.\nWould you like to specify a charset and reload?", "Reload", JOptionPane.YES_NO_OPTION);
+			if (option == JOptionPane.YES_OPTION);
+			{
+				Tab.this.showSpecifiedCharsetDialog(file);
+			}
+		}
+	}
+	
 	/*
 	 * createWatcher: create everytime after a file has been opened
 	 */
@@ -1002,9 +904,12 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 	public void setFile(final File file)
 	{
 		this.file = file;
-		this.fileLabel.setFile(file);
 		MainPanel.getInstance().updateTabName(this);
 		this.watcher = this.createFileWatcher(file);
+		/*
+		 * recent file list
+		 */
+		loadConfig();
 		Runnable runnable = new Runnable()
 		{
 			@Override
@@ -1029,11 +934,48 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 			}
 		};
 		(new Thread(runnable)).start();
-	}
-	
-	public FileLabel getFileLabel()
-	{
-		return this.fileLabel;
+		/*
+		 * caret position
+		 */
+		if (getBoolean0("caret.save"))
+		{
+			try
+			{
+				Tab.this.textArea.setCaretPosition(Integer.parseInt(getConfig0("caret."+file.getPath())));
+			}
+			catch (Exception ex)
+			{
+				Tab.this.textArea.setCaretPosition(0);
+			}
+		}
+		else
+		{
+			Tab.this.textArea.setCaretPosition(0);
+		}
+		/*
+		 * syntax highlighting
+		 */
+		final Language newLanguage = Language.forName(getFileExtension(this.file));
+		if (newLanguage != null)
+		{
+			Parser oldParser = this.textArea.getFilter().getParser();
+			Language oldLanguage = oldParser==null?null:oldParser.getLanguage();
+			if ((oldLanguage==null)||(!oldLanguage.equals(newLanguage)))
+			{
+				Parser newParser = new Parser(newLanguage);
+				BracketMatcher bracketMatcher = new BracketMatcher(Tab.this.textArea,newParser);
+				MyIndentFilter filter = Tab.this.textArea.getFilter();
+				filter.setParser(newParser);
+				filter.updateBracketMatcher();
+				Tab.this.textArea.reparse();
+			}
+		}
+		else
+		{
+			MyIndentFilter filter = Tab.this.textArea.getFilter();
+			filter.setParser(null);
+			filter.updateBracketMatcher();
+		}
 	}
 	
 	public MyTextArea getTextArea()
@@ -1111,92 +1053,7 @@ public class Tab extends JPanel implements DocumentListener, CaretListener, Reso
 		}
 		return tmp;
 	}
-	
-	static class MyBlackLinePanel extends JPanel
-	{
-		private int type;
-		public MyBlackLinePanel(int type)
-		{
-			super(new FlowLayout());
-			this.type = type;
-		}
-	
-		@Override
-		protected void paintComponent(Graphics g)
-		{
-			super.paintComponent(g);
-			if (Tab.countWords)
-			{
-				int width = this.getWidth();
-				int height = this.getHeight();
-				switch (type)
-				{
-					case 0: //left: wordCount
-					g.setColor(Color.BLACK);
-					g.drawLine(0,0,width,0);
-					break;
-					
-					case 1: //right: fileLabel
-					g.setColor(Color.BLACK);
-					g.drawLine(0,0,0,height);
-					g.drawLine(0,0,width,0);
-					break;
-					
-					default:
-					break;
-				}
-			}
-		}
-	}
-	
-	class CountLabel extends MyLabel implements MouseListener
-	{
-		boolean isWordCount; //wordCount or charCount
-		CountLabel(int number, boolean isWordCount)
-		{
-			super("");
-			this.isWordCount = isWordCount;
-			this.setCountInfo(number, isWordCount);			
-			this.addMouseListener(this);
-		}
-		
-		private void setCountInfo(int number, boolean isWordCount)
-		{
-			String text = "";
-			if (isWordCount)
-			{
-				if (number > 1) text = "About " + number + " words";
-				else text = "About " + number + " word";
-			}
-			else
-			{
-				if (number > 1) text = "About " + number + " characters";
-				else text = "About " + number + " character";
-			}
-			this.setText(text);
-			this.setToolTipText(text);
-		}
-		
-		@Override
-		public void mouseReleased(MouseEvent ev)
-		{
-			isWordCount = !isWordCount;
-			Tab.this.updateCount();
-		}
-		
-		@Override
-		public void mouseEntered(MouseEvent ev) {}
-		
-		@Override
-		public void mouseExited(MouseEvent ev) {}
-		
-		@Override
-		public void mousePressed(MouseEvent ev) {}
-		
-		@Override
-		public void mouseClicked(MouseEvent ev) {}
-	}
-	
+
 	class MyPopupMenuItem extends JMenuItem implements ActionListener
 	{
 		private int x;

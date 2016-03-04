@@ -29,7 +29,7 @@ public class MyFileNameFilter implements FilenameFilter
 			if (dir.isDirectory()) return true;
 			else for (String format: TextFileFormat.getFormatList())
 			{
-				if (file.endsWith(format)) return true;
+				if (file.endsWith("."+format)) return true;
 			}
 			return false;
 			
@@ -37,7 +37,7 @@ public class MyFileNameFilter implements FilenameFilter
 			if (dir.isDirectory()) return true;
 			else for (String format: filterFormat)
 			{
-				if (file.endsWith(format)) return true;
+				if (file.endsWith("."+format)) return true;
 			}
 			return false;
 		}											

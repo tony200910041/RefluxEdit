@@ -41,7 +41,7 @@ public class FileBrowserDialog extends JDialog implements PopupMenuListener, Act
 		top.setLayout(new GridLayout()); //one element->expand
 		top.setBorder(new EmptyBorder(5,5,5,5));
 		top.add(new JLayer<JComboBox<?>>(openedBox,comboBoxLayerUI));
-		openedBox.setBackground(Color.WHITE);
+		if (Resources.isMetal) openedBox.setBackground(Color.WHITE);
 		openedBox.setRenderer(new BasicComboBoxRenderer()
 		{
 			@Override
@@ -136,7 +136,7 @@ public class FileBrowserDialog extends JDialog implements PopupMenuListener, Act
 	void openFile(File selected)
 	{
 		boolean open;
-		if (TextFileFormat.getFormatList().contains(StaticUtilities.getFileExtension(selected).toLowerCase()))
+		if (TextFileFormat.getFormatList().contains(Utilities.getFileExtension(selected).toLowerCase()))
 		{
 			open = true;
 		}

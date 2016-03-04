@@ -11,7 +11,7 @@ import javax.swing.table.*;
 import java.text.*;
 import java.util.*;
 import myjava.gui.common.*;
-import static myjava.util.StaticUtilities.*;
+import static myjava.util.Utilities.*;
 
 public class CharCountDialog extends JDialog implements Resources
 {

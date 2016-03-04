@@ -83,10 +83,10 @@ public class SearchDialog extends JDialog
 					String match = wd2.getText();
 					boolean useRegex = regex.isSelected();
 					boolean isCaseSensitive = caseSensitive.isSelected();
-					int count = StaticUtilities.count(buffer,find,useRegex,isCaseSensitive);
+					int count = Utilities.count(buffer,find,useRegex,isCaseSensitive);
 					if (count != 0)
 					{
-						String result = StaticUtilities.replace(buffer,find,match,useRegex,isCaseSensitive);
+						String result = Utilities.replace(buffer,find,match,useRegex,isCaseSensitive);
 						if (selected != null)
 						{
 							int start = textArea.getSelectionStart();

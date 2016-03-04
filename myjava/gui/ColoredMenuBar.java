@@ -80,7 +80,7 @@ public class ColoredMenuBar extends JMenuBar implements Resources
 				menu1_2.add(new MyMenuItem("Open file", "OPEN", 2, KeyEvent.VK_O));
 				menu1_2.add(new MyMenuItem("Open file (quick)", null, 3));
 				menu1_2.add(new MyMenuItem("Open file (charset)",null, 51));
-				if (SourceManager.getBoolean0("rememberRecentFiles"))
+				if (SourceManager.getBoolean0("recentFiles.remember"))
 				{
 					menu1_2.add(new JSeparator());
 					menu1_2.add(RecentMenu.getInstance());
@@ -193,7 +193,7 @@ public class ColoredMenuBar extends JMenuBar implements Resources
 			break;
 			
 			case 2: //modern			
-			g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float)0.5));
+			g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
 			g2D.setPaint(new GradientPaint(0, 0, new Color(242,254,255), w, 0, new Color(255,250,217)));
 			g2D.fillRect(0, 0, w, h);
 			break;

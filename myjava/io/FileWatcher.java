@@ -29,6 +29,7 @@ public abstract class FileWatcher implements Runnable, AutoCloseable
 	 */
 	public FileWatcher(File file)
 	{
+		super();
 		this.file = file;
 		this.lastModified = file.lastModified();
 		try
@@ -88,7 +89,7 @@ public abstract class FileWatcher implements Runnable, AutoCloseable
 			WatchKey k;
 			try
 			{
-				k = ((WatchService)service).take();
+				k = service.take();
 			}
 			catch (InterruptedException ex)
 			{
@@ -151,5 +152,5 @@ public abstract class FileWatcher implements Runnable, AutoCloseable
 	}
 	
 	//called when file is changed
-	public abstract void fileChanged(WatchEvent ev);
+	public abstract void fileChanged(WatchEvent<?> ev);
 }

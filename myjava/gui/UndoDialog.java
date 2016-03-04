@@ -8,13 +8,14 @@ package myjava.gui;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import myjava.util.*;
 import myjava.gui.common.*;
 import exec.*;
 
 public class UndoDialog extends JDialog implements Resources
 {
-	private JList<String> undoJList = createUndoRecordList();
-	private JList<String> redoJList = createUndoRecordList();
+	private JList<UndoManager.Data> undoJList = createUndoRecordList();
+	private JList<UndoManager.Data> redoJList = createUndoRecordList();
 	private Tab tab;
 	public UndoDialog(final Tab tab)
 	{
@@ -95,9 +96,9 @@ public class UndoDialog extends JDialog implements Resources
 	public void resetUndoDialogList()
 	{
 		//reset list
-		DefaultListModel<String> undo_m = (DefaultListModel<String>)(undoJList.getModel());
+		DefaultListModel<UndoManager.Data> undo_m = (DefaultListModel<UndoManager.Data>)(undoJList.getModel());
 		undo_m.removeAllElements();
-		for (String _undo: tab.getTextArea().getUndoManager().getUndoList())
+		for (UndoManager.Data _undo: tab.getTextArea().getUndoManager().getUndoList())
 		{
 			/*
 			 * first one in list = peek
@@ -105,36 +106,21 @@ public class UndoDialog extends JDialog implements Resources
 			undo_m.addElement(_undo);
 		}
 		//
-		DefaultListModel<String> redo_m = (DefaultListModel<String>)(redoJList.getModel());
+		DefaultListModel<UndoManager.Data> redo_m = (DefaultListModel<UndoManager.Data>)(redoJList.getModel());
 		redo_m.removeAllElements();
-		for (String _redo: tab.getTextArea().getUndoManager().getRedoList())
+		for (UndoManager.Data _redo: tab.getTextArea().getUndoManager().getRedoList())
 		{
 			redo_m.addElement(_redo);
 		}
 	}
 	
-	public static JList<String> createUndoRecordList()
+	public static JList<UndoManager.Data> createUndoRecordList()
 	{
 		//return a formatted JList
-		DefaultListModel<String> lm = new DefaultListModel<String>();
-		JList<String> list = new JList<>(lm);
+		DefaultListModel<UndoManager.Data> lm = new DefaultListModel<>();
+		JList<UndoManager.Data> list = new JList<>(lm);
 		list.setFont(f13);
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		list.setCellRenderer(new DefaultListCellRenderer()
-		{
-			public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus)
-			{
-				JLabel label = (JLabel)(super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus));
-				String str = value.toString();
-				int length = str.length();
-				if (length > 25) str = str.substring(0,25) + "...";
-				if (length > 1) str = str + " (" + length + " characters)";
-				else str = str + " (" + length + " character)";
-				label.setText(str);
-				label.setToolTipText(str);
-				return label;
-			}
-		});
 		return list;
 	}
 }

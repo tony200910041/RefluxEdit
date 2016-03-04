@@ -12,7 +12,7 @@ import javax.swing.table.*;
 import java.util.*;
 import myjava.gui.*;
 import static exec.SourceManager.*;
-import static myjava.util.StaticUtilities.*;
+import static myjava.util.Utilities.*;
 
 public class CompileTab extends OptionTab
 {
@@ -21,27 +21,27 @@ public class CompileTab extends OptionTab
 	private JTextField runtf = new MyTextField(30);
 	private JTextField filetf = new MyTextField(30);
 	//options
-	private boolean _removeOld = getBoolean0("Compile.removeOriginal");
-	private boolean _isGlobal = getBoolean0("Compile.useGlobal");
-	private boolean _beep = getBoolean0("Compile.end.beep");
-	private JCheckBox removeOld = new MyCheckBox("Remove old file", _removeOld);
+	private boolean _removeOld = getBoolean0("compile.removeOriginalFiles");
+	private boolean _isGlobal = getBoolean0("compile.useGlobalCommand");
+	private boolean _beep = getBoolean0("compile.end.beep");
+	private JCheckBox removeOld = new MyCheckBox("Backup old file", _removeOld);
 	private JTextField removeRegexTF = new MyTextField(20);
 	private JCheckBox useGlobal = new MyCheckBox("Use global commands", _isGlobal);
 	private JCheckBox endBeep = new MyCheckBox("Emit a beep when compilation ends", _beep);
 	//format path
-	private String quoteOption = getConfig0("Compile.pathQuote");
+	private String quoteOption = getConfig0("compile.pathQuote");
 	private JRadioButton curlyQuote = new MyRadioButton("Curly", ("curly").equals(quoteOption));
 	private JRadioButton straightQuote = new MyRadioButton("Straight", ("straight").equals(quoteOption));
 	private JRadioButton noQuote = new MyRadioButton("No",false);
 	private MyButtonGroup quoteGroup = new MyButtonGroup(curlyQuote,straightQuote,noQuote);
-	private JCheckBox escapeSpace = new MyCheckBox("Escape whitespaces", getBoolean0("Compile.escapeSpace"));
+	private JCheckBox escapeSpace = new MyCheckBox("Escape whitespaces", getBoolean0("compile.escapeSpace"));
 	public CompileTab()
 	{
 		super(new BorderLayout(),"Compilation");
 		this.setBackground(Color.WHITE);
 		//load command data
 		reloadCommands();
-		removeRegexTF.setText(getConfig0("Compile.regex"));
+		removeRegexTF.setText(getConfig0("compile.regex"));
 		//setup tooltip messages
 		String toolTip = "<html>%f: file path<br>%p: directory<br>%s: simple name of file<br>%a: file name without extension<br>%n: new line.</html>";
 		compiletf.setToolTipText(toolTip);
@@ -90,14 +90,14 @@ public class CompileTab extends OptionTab
 				Set<String> keys = keys();
 				for (String key: keys)
 				{
-					if (key.startsWith("Compile.command.default."))
+					if (key.startsWith("compile.command.default."))
 					{
 						tam.addRow(new String[]{key, getConfig0(key)});
 					}
 				}
 				for (String key: keys)
 				{
-					if (key.startsWith("Compile.runCommand.default."))
+					if (key.startsWith("compile.runCommand.default."))
 					{
 						tam.addRow(new String[]{key, getConfig0(key)});
 					}
@@ -172,8 +172,8 @@ public class CompileTab extends OptionTab
 							String key = extension.getText();
 							if (!key.isEmpty())
 							{
-								String commandKey = "Compile.command.default."+key;
-								String runCommandKey = "Compile.runCommand.default."+key;
+								String commandKey = "compile.command.default."+key;
+								String runCommandKey = "compile.runCommand.default."+key;
 								//
 								String commandText = command.getText();
 								String runCommandText = runCommand.getText();
@@ -354,16 +354,16 @@ public class CompileTab extends OptionTab
 		{
 			//not use global
 			String path = file.getPath();
-			s1 = getConfig0("Compile.command."+path);
-			s2 = getConfig0("Compile.runCommand."+path);
-			s3 = getConfig0("Compile.runCommandFileName."+path);
+			s1 = getConfig0("compile.command."+path);
+			s2 = getConfig0("compile.runCommand."+path);
+			s3 = getConfig0("compile.runCommandFileName."+path);
 		}
 		else
 		{
 			//use global
-			s1 = getConfig0("Compile.command");
-			s2 = getConfig0("Compile.runCommand");
-			s3 = getConfig0("Compile.runCommandFileName");
+			s1 = getConfig0("compile.command");
+			s2 = getConfig0("compile.runCommand");
+			s3 = getConfig0("compile.runCommandFileName");
 		}
 		if (((s1 == null)||s1.isEmpty())&&(file != null))
 		{
@@ -377,7 +377,7 @@ public class CompileTab extends OptionTab
 		}
 		if (((s3 == null)||s3.isEmpty())&&(file != null))
 		{
-			s3 = "run.bat";
+			s3 = getDefaultCommandFileName();
 		}
 		compiletf.setText(s1);
 		runtf.setText(s2);
@@ -392,22 +392,22 @@ public class CompileTab extends OptionTab
 		String fileNameText = filetf.getText();
 		if (useGlobal.isSelected())
 		{
-			setConfig("Compile.command", commandText);
-			setConfig("Compile.runCommand", runText);
-			setConfig("Compile.runCommandFileName", fileNameText);
+			setConfig("compile.command", commandText);
+			setConfig("compile.runCommand", runText);
+			setConfig("compile.runCommandFileName", fileNameText);
 		}
 		if (file != null)
 		{
 			String path = file.getPath();
-			setConfig("Compile.command."+path, commandText);
-			setConfig("Compile.runCommand."+path, runText);
-			setConfig("Compile.runCommandFileName."+path, fileNameText);
+			setConfig("compile.command."+path, commandText);
+			setConfig("compile.runCommand."+path, runText);
+			setConfig("compile.runCommandFileName."+path, fileNameText);
 		}
-		setConfig("Compile.useGlobal", useGlobal.isSelected()+"");
-		setConfig("Compile.removeOriginal", removeOld.isSelected()+"");
-		setConfig("Compile.regex", removeRegexTF.getText());
-		setConfig("Compile.pathQuote", curlyQuote.isSelected()?"curly":(straightQuote.isSelected()?"straight":"no"));
-		setConfig("Compile.escapeSpace", escapeSpace.isSelected()+"");
-		setConfig("Compile.end.beep", endBeep.isSelected()+"");
+		setConfig("compile.useGlobalCommand", useGlobal.isSelected()+"");
+		setConfig("compile.removeOriginalFiles", removeOld.isSelected()+"");
+		setConfig("compile.regex", removeRegexTF.getText());
+		setConfig("compile.pathQuote", curlyQuote.isSelected()?"curly":(straightQuote.isSelected()?"straight":"no"));
+		setConfig("compile.escapeSpace", escapeSpace.isSelected()+"");
+		setConfig("compile.end.beep", endBeep.isSelected()+"");
 	}
 }

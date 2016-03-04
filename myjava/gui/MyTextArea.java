@@ -18,7 +18,7 @@ import myjava.gui.*;
 import myjava.util.*;
 import myjava.gui.common.*;
 import static exec.SourceManager.*;
-import static myjava.util.StaticUtilities.*;
+import static myjava.util.Utilities.*;
 
 public class MyTextArea extends JTextArea implements MouseListener
 {
@@ -191,6 +191,11 @@ public class MyTextArea extends JTextArea implements MouseListener
 		}
 	}
 	
+	public void reparse()
+	{
+		this.indentFilter.reparse(this.getDocument());
+	}
+	
 	public void setAutoBackup(boolean autoBackupEnabled)
 	{
 		this.autoBackupEnabled = autoBackupEnabled;
@@ -260,12 +265,33 @@ public class MyTextArea extends JTextArea implements MouseListener
 	}
 	
 	@Override
+	public int getLineOfOffset(int offset) throws BadLocationException
+	{
+		return offset==0?0:super.getLineOfOffset(offset);
+	}
+	
+	@Override
+	public int getLineEndOffset(int line) throws BadLocationException
+	{
+		int count = this.getLineCount();
+		if (this.getDocument().getLength() == 0)
+		{
+			return 0;
+		}
+		else if ((count-1) == line)
+		{
+			return super.getLineEndOffset(line);
+		}
+		else
+		{
+			return super.getLineEndOffset(line)-1;
+		}
+	}
+	
+	@Override
 	public void mouseReleased(MouseEvent ev)
 	{
-		if (ev.isPopupTrigger()||ev.isControlDown())
-		{
-			popup.show(MyTextArea.this, ev.getX(), ev.getY());
-		}
+		maybeShowPopup(ev);
 	}
 	
 	@Override
@@ -273,6 +299,15 @@ public class MyTextArea extends JTextArea implements MouseListener
 	{
 		//reset MyTextArea.this drop target: remove receiving file info outside
 		MyTextArea.this.setDropTarget(defaultDropTarget);
+		maybeShowPopup(ev);
+	}
+	
+	private void maybeShowPopup(MouseEvent ev)
+	{
+		if (ev.isPopupTrigger())
+		{
+			popup.show(MyTextArea.this,ev.getX(),ev.getY());
+		}
 	}
 	
 	@Override

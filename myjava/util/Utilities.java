@@ -5,13 +5,20 @@
 
 package myjava.util;
 
+import java.awt.event.*;
 import java.util.*;
 import java.util.regex.*;
 import java.io.*;
+import myjava.gui.common.*;
 import static exec.SourceManager.*;
 
-public final class StaticUtilities
+public final class Utilities
 {
+	private Utilities()
+	{
+		throw new InternalError();
+	}
+	
 	public static String toInvertCase(String str)
 	{
 		char c;
@@ -179,26 +186,12 @@ public final class StaticUtilities
 	
 	public static char toChar(String unicode)
 	{
-		return (char)Integer.parseInt(unicode, 16);
+		return (char)Integer.parseInt(unicode,16);
 	}
 	
 	public static int wordCount(String text)
 	{
-		if (text != null)
-		{
-			if (text.isEmpty())
-			{
-				return 0;
-			}
-			else
-			{
-				text = text.replace("\n"," ");
-				ArrayList<String> list = new ArrayList<String>(Arrays.asList(text.split(" ")));
-				while (list.remove("")) {}
-				return list.size();
-			}
-		}
-		else return 0;
+		return new WordCounter(text).count();
 	}
 	
 	public static int charCount(String text)
@@ -284,7 +277,7 @@ public final class StaticUtilities
 	public static String getCommand(String ext)
 	{
 		//must not return null
-		String command = getConfig("Compile.command.default."+ext);
+		String command = getConfig("compile.command.default."+ext);
 		if (command != null)
 		{
 			return command;
@@ -316,7 +309,7 @@ public final class StaticUtilities
 	
 	public static String getRunCommand(String ext)
 	{
-		String runCommand = getConfig("Compile.runCommand.default."+ext);
+		String runCommand = getConfig("compile.runCommand.default."+ext);
 		if (runCommand != null)
 		{
 			return runCommand;
@@ -344,6 +337,11 @@ public final class StaticUtilities
 				return "";
 			}
 		}
+	}
+	
+	public static String getDefaultCommandFileName()
+	{
+		return "run"+(IS_MAC?".command":(IS_WINDOWS?".bat":""));
 	}
 	
 	public static int count(String text, String find, boolean useRegex, boolean isCaseSensitive)
@@ -431,5 +429,26 @@ public final class StaticUtilities
 		reader.readLine();
 		String s = reader.readLine();
 		return s.substring(s.indexOf("key=")+4);
+	}
+	
+	public static String getMenuShortcutKeyMaskString()
+	{
+		switch (Resources.OS_CTRL_MASK)
+		{
+			case InputEvent.CTRL_MASK: return "Ctrl";
+			case InputEvent.META_MASK: return "Command";
+			default: return KeyEvent.getKeyModifiersText(Resources.OS_CTRL_MASK);
+		}
+	}
+	
+	public static String normalize(String s)
+	{
+		String[] tokens = s.split("_");
+		StringBuilder builder = new StringBuilder();
+		for (String token: tokens)
+		{
+			builder.append(token.substring(0,1).toUpperCase()+token.substring(1).toLowerCase()+" ");
+		}
+		return builder.toString().trim();
 	}
 }

@@ -10,7 +10,7 @@ import java.awt.event.*;
 import java.awt.datatransfer.*;
 import java.awt.dnd.*;
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.*; //open file handler
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -32,7 +32,7 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 	{
 		//initialization:
 		SourceManager.initialize();
-		RefluxEdit.setLAF();
+		RefluxEdit.setLookAndFeel();
 		UISetter.initialize();
 	}
 	/*
@@ -54,54 +54,8 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 	 * file association detector
 	 * static for convenience
 	 */
-	private static FADetector detector = new FADetector()
-	{
-		@Override
-		public synchronized void hasNewFile(File[] files)
-		{
-			if (files != null)
-			{
-				outFor:
-				for (File received: files)
-				{
-					if (received.exists())
-					{
-						if (!w.isVisible())
-						{
-							w.setVisible(true);
-						}
-						for (Tab tab: MainPanel.getAllTab())
-						{
-							if (received.equals(tab.getFile()))
-							{
-								//select existing tab
-								MainPanel.setSelectedComponent(tab);
-								continue outFor;
-							}
-						}
-						//create new tab and load file
-						Tab newTab = Tab.getNewTab();
-						MainPanel.add(newTab);
-						try
-						{
-							newTab.openAndWait(received);
-						}
-						catch (Exception ex)
-						{
-							exception(ex);
-						}
-					}
-				}
-			}
-		}
-	};
-	
-	public static void main(String[] args)
-	{
-		launch(args);
-	}
-		
-	protected static void launch(final String[] args)
+	private static FADetector detector;
+	public static void main(final String[] args)
 	{
 		final double initialTime = System.currentTimeMillis();
 		SwingUtilities.invokeLater(new Runnable()
@@ -109,77 +63,140 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 			@Override
 			public void run()
 			{
-				if (detector.hasInstance())
+				if (SourceManager.IS_MAC)
 				{
-					boolean response = detector.awaitResponse(isMac?20000:5000);
-					if (response)
-					{
-						if (args.length >= 1)
-						{
-							detector.setFiles(convertToFileArray(args));
-						}
-						System.exit(0);
-					}
-					else
-					{
-						//crashed
-						int option = showCrashedDialog();
-						if (option == JOptionPane.YES_OPTION)
-						{
-							//launch anyway
-						}
-						else if (option == JOptionPane.NO_OPTION)
-						{
-							//quit
-							System.exit(0);
-						}
-					}
+					MacHandler.initialize();
 				}
-				// load a new RefluxEdit frame
-				w = new RefluxEdit();
-				w.restoreFrame();
-				w.build();
-				w.createTray();
-				SplashScreen splash = SplashScreen.getSplashScreen();
-				if (splash != null)
+				else
 				{
-					splash.close();
+					launch0(args);
+					detector.setInstance(true);
 				}
-				w.setVisible(true);
+				RefluxEdit.createInstance();
 				setConfig("LastStartupTimeTaken", System.currentTimeMillis()-initialTime + "ms");
-				detector.setInstance(true);
-				ClipboardDialog.initialize();
-				if (getBoolean0("showHint"))
-				{
-					HintDialog.showHintDialog(w);
-				}
-				if (args.length >= 1)
-				{
-					for (File argFile: convertToFileArray(args))
-					{
-						Tab newTab = Tab.getNewTab();
-						MainPanel.add(newTab);
-						try
-						{
-							newTab.openAndWait(argFile);
-						}
-						catch (Exception ex)
-						{
-							exception(ex);
-						}
-					}
-				}
-			}
-			
-			int showCrashedDialog()
-			{
-				String[] options = {"Launch", "Quit"};
-				return JOptionPane.showOptionDialog(null, "RefluxEdit looks like crashed.\nWould you like to launch a new instance?", "Error", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.ERROR_MESSAGE, null, options, options[1]);
+				RefluxEdit.postOperation(args);
 			}
 		});
 	}
+		
+	private static void launch0(final String[] args)
+	{
+		detector = new FADetector()
+		{
+			@Override
+			public synchronized void hasNewFile(File[] files)
+			{
+				if (files != null)
+				{
+					outFor:
+					for (File received: files)
+					{
+						if (received.exists())
+						{
+							if (!w.isVisible())
+							{
+								w.setVisible(true);
+							}
+							for (Tab tab: MainPanel.getAllTab())
+							{
+								if (received.equals(tab.getFile()))
+								{
+									//select existing tab
+									MainPanel.setSelectedComponent(tab);
+									continue outFor;
+								}
+							}
+							//create new tab and load file
+							Tab newTab = Tab.getNewTab();
+							MainPanel.add(newTab);
+							try
+							{
+								newTab.openAndWait(received);
+							}
+							catch (Exception ex)
+							{
+								exception(ex);
+							}
+						}
+					}
+				}
+			}
+		};
+		if (detector.hasInstance())
+		{
+			boolean response = detector.awaitResponse(isMac?20000:5000);
+			if (response)
+			{
+				if (args.length >= 1)
+				{
+					detector.setFiles(convertToFileArray(args));
+				}
+				System.exit(0);
+			}
+			else
+			{
+				//crashed
+				int option = showCrashedDialog();
+				if (option == JOptionPane.YES_OPTION)
+				{
+					//launch anyway
+				}
+				else if (option == JOptionPane.NO_OPTION)
+				{
+					//quit
+					System.exit(0);
+				}
+			}
+		}
+	}
 	
-	protected static void setLAF()
+	private static void createInstance()
+	{
+		// load a new RefluxEdit frame
+		w = new RefluxEdit();
+		w.restoreFrame();
+		w.restoreComponents();
+		w.createTray();
+		SplashScreen splash = SplashScreen.getSplashScreen();
+		if (splash != null)
+		{
+			splash.close();
+		}
+		w.setVisible(true);
+	}
+	
+	private static void postOperation(String[] args)
+	{
+		ClipboardDialog.initialize();
+		if (getBoolean0("showHint"))
+		{
+			HintDialog.showHintDialog(w);
+		}
+		if (args.length >= 1)
+		{
+			for (File argFile: convertToFileArray(args))
+			{
+				Tab newTab = Tab.getNewTab();
+				MainPanel.add(newTab);
+				try
+				{
+					newTab.openAndWait(argFile);
+				}
+				catch (Exception ex)
+				{
+					exception(ex);
+				}
+			}
+		}
+	}
+			
+	private static int showCrashedDialog()
+	{
+		String[] options = {"Launch", "Quit"};
+		return JOptionPane.showOptionDialog(null, "RefluxEdit looks like crashed.\nWould you like to launch a new instance?", "Error", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.ERROR_MESSAGE, null, options, options[1]);
+	}
+	
+	protected static void setLookAndFeel()
 	{
 		JComponent.setDefaultLocale(Locale.ENGLISH);		
 		String laf = getConfig0("LAF");
@@ -211,7 +228,7 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 			public void windowClosing(WindowEvent ev)
 			{
 				loadConfig();
-				if (useTray&&getBoolean0("useTray")&&getBoolean0("CloseToTray"))
+				if (useTray&&getBoolean0("systemTray.use")&&getBoolean0("systemTray.closeToTray"))
 				{
 					//close to tray
 					RefluxEdit.this.setVisible(false);
@@ -265,46 +282,48 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 	{
 		this.setMinimumSize(new Dimension(275,250));
 		int sizex=0, sizey=0, locationx=0, locationy=0;
-		try
-		{
-			sizex = (int)Double.parseDouble(getConfig0("Size.x"));
-			sizey = (int)Double.parseDouble(getConfig0("Size.y"));
-		}
-		catch (Exception ex)
-		{
-			sizex = 690;
-			sizey = 550;
-		}
-		finally
-		{
-			sizex = Math.min(Math.max(275,sizex),scrSize.width);
-			sizey = Math.min(Math.max(250,sizey),scrSize.height);
-			this.setSize(sizex, sizey);
-		}
-		//location
-		try
-		{
-			locationx = (int)Double.parseDouble(getConfig0("Location.x"));
-			locationy = (int)Double.parseDouble(getConfig0("Location.y"));
-		}
-		catch (Exception ex)
-		{
-			locationx = 0;
-			locationy = 0;
-		}	
-		finally
-		{
-			locationx = Math.max(0,Math.min(locationx,scrSize.width));
-			locationy = Math.max(0,Math.min(locationy,scrSize.height));
-			this.setLocation(locationx, locationy);
-		}
-		//maximized
-		if (getBoolean0("isMaxmized"))
+		if (getBoolean0("frame.isMaxmized"))
 		{
 			this.setExtendedState(JFrame.MAXIMIZED_BOTH);
 		}
+		else
+		{
+			try
+			{
+				sizex = (int)Double.parseDouble(getConfig0("frame.size.width"));
+				sizey = (int)Double.parseDouble(getConfig0("frame.size.height"));
+			}
+			catch (Exception ex)
+			{
+				sizex = 690;
+				sizey = 550;
+			}
+			finally
+			{
+				sizex = Math.min(Math.max(275,sizex),scrSize.width);
+				sizey = Math.min(Math.max(250,sizey),scrSize.height);
+				this.setSize(sizex, sizey);
+			}
+			//location
+			try
+			{
+				locationx = (int)Double.parseDouble(getConfig0("frame.location.x"));
+				locationy = (int)Double.parseDouble(getConfig0("frame.location.y"));
+			}
+			catch (Exception ex)
+			{
+				locationx = 0;
+				locationy = 0;
+			}	
+			finally
+			{
+				locationx = Math.max(0,Math.min(locationx,scrSize.width));
+				locationy = Math.max(0,Math.min(locationy,scrSize.height));
+				this.setLocation(locationx, locationy);
+			}
+		}
 		//ontop
-		this.setAlwaysOnTop(getBoolean0("OnTop"));
+		this.setAlwaysOnTop(getBoolean0("frame.onTop"));
 		//icon
 		try
 		{
@@ -318,12 +337,12 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 	/*
 	 * build components
 	 */
-	public void build()
+	public void restoreComponents()
 	{
 		/*
 		 * use ribbon panel or menubar
 		 */
-		if (getBoolean0("isRibbon"))
+		if (getBoolean0("frame.isRibbon"))
 		{
 			isRibbon = true;
 			this.add(MyRefluxEditRibbonPanel.getInstance(), BorderLayout.PAGE_START);			
@@ -335,7 +354,7 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 			this.setJMenuBar(menubar);
 			if (Resources.isMetal)
 			{			
-				if (getBoolean0("isUseNewMenuBar"))
+				if (getBoolean0("frame.newMenuBar"))
 				{
 					menubar.setStyle(ColoredMenuBar.MODERN);
 				}
@@ -347,7 +366,7 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 			/*
 			 * top panel
 			 */
-			String isPanel = getConfig0("isPanel");
+			String isPanel = getConfig0("frame.isPanel");
 			if (isPanel != null)
 			{
 				switch (isPanel)
@@ -378,7 +397,7 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 	 */
 	public void createTray()
 	{
-		if (useTray&&getBoolean0("useTray"))
+		if (useTray&&getBoolean0("systemTray.use"))
 		{
 			//JPopupMenu
 			JPopupMenu popup = new JPopupMenu();
@@ -428,21 +447,23 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 	 */
 	public void close()
 	{
-		Tab tab = MainPanel.getSelectedTab();
 		Dimension d = RefluxEdit.this.getSize();
 		Point l = RefluxEdit.this.getLocation();
-		setConfig("Size.x", d.width + "");
-		setConfig("Size.y", d.height + "");
-		setConfig("Location.x", l.x + "");
-		setConfig("Location.y", l.y + "");
-		setConfig("isMaxmized", String.valueOf(RefluxEdit.this.getExtendedState() == JFrame.MAXIMIZED_BOTH));
+		setConfig("frame.size.width",Integer.toString(d.width));
+		setConfig("frame.size.height",Integer.toString(d.height));
+		setConfig("frame.location.x",Integer.toString(l.x));
+		setConfig("frame.location.y",Integer.toString(l.y));
+		setConfig("frame.isMaxmized",String.valueOf(RefluxEdit.this.getExtendedState() == JFrame.MAXIMIZED_BOTH));
 		//save caret position
-		for (Tab t: MainPanel.getAllTab())
+		for (Tab tab: MainPanel.getAllTab())
 		{
-			setCaret(t.getFile(), t.getTextArea().getCaretPosition());
+			setCaret(tab.getFile(), tab.getTextArea().getCaretPosition());
 		}
 		saveConfig();
-		detector.setInstance(false);
+		if (detector != null)
+		{
+			detector.setInstance(false);
+		}
 		System.exit(0);
 	}
 	
@@ -487,9 +508,9 @@ public class RefluxEdit extends JFrame implements ColorConstants, VersionConstan
 	/*
 	 * convert from String[] to File[]
 	 */
-	private static ArrayList<File> convertToFileArray(String[] paths)
+	private static java.util.List<File> convertToFileArray(String[] paths)
 	{
-		ArrayList<File> list = new ArrayList<>();
+		java.util.List<File> list = new ArrayList<>();
 		for (String arg: paths)
 		{
 			if (arg != null)

@@ -13,7 +13,7 @@ import myjava.gui.*;
 
 public class HintTab extends OptionTab
 {
-	private JCheckBox showHints = new MyCheckBox("Show hints on startup", SourceManager.getBoolean0("showHint"));
+	private JCheckBox showHints = new MyCheckBox("Show hints on startup", SourceManager.getBoolean0("hint.showAtStartUp"));
 	public HintTab()
 	{
 		super(new FlowLayout(FlowLayout.CENTER), "Hints");
@@ -35,6 +35,6 @@ public class HintTab extends OptionTab
 	@Override
 	public void onExit()
 	{
-		SourceManager.setConfig("showHint", showHints.isSelected()+"");
+		SourceManager.setConfig("hint.showAtStartUp", showHints.isSelected()+"");
 	}
 }

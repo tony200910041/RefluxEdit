@@ -13,11 +13,11 @@ import static exec.SourceManager.*;
 
 public class TrayTab extends OptionTab implements ActionListener
 {
-	private JCheckBox isUseTray = new MyCheckBox("Use system tray", getBoolean0("useTray"));
-	private JCheckBox closeToTray = new MyCheckBox("Close to tray", getBoolean0("CloseToTray"));
+	private JCheckBox isUseTray = new MyCheckBox("Use system tray", getBoolean0("systemTray.use"));
+	private JCheckBox closeToTray = new MyCheckBox("Close to tray", getBoolean0("systemTray.closeToTray"));
 	public TrayTab()
 	{
-		super(new FlowLayout(FlowLayout.CENTER), "System tray");
+		super(new FlowLayout(FlowLayout.CENTER),"System tray");
 		this.add(isUseTray);
 		this.add(closeToTray);
 		closeToTray.setEnabled(isUseTray.isSelected());
@@ -34,8 +34,8 @@ public class TrayTab extends OptionTab implements ActionListener
 	public void onExit()
 	{
 		boolean _use = isUseTray.isSelected();
-		setConfig("useTray", _use+"");
-		setConfig("CloseToTray", closeToTray.isSelected()+"");
+		setConfig("systemTray.use", _use+"");
+		setConfig("systemTray.closeToTray", closeToTray.isSelected()+"");
 		try
 		{
 			SystemTray systemTray = SystemTray.getSystemTray();
@@ -44,7 +44,7 @@ public class TrayTab extends OptionTab implements ActionListener
 			{
 				parent.createTray();
 			}
-			else if (icons.length == 1)
+			else if (!_use)
 			{
 				systemTray.remove(icons[0]); //only added one, or none
 			}

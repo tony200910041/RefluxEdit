@@ -17,7 +17,7 @@ public class LookAndFeelTab extends OptionTab
 {
 	//Look and Feel
 	private JComboBox<UIManager.LookAndFeelInfo> lafBox = new JComboBox<>(UIManager.getInstalledLookAndFeels());
-	private String originalLAFSetting = getConfig0("LAF");
+	private String originalLAFSetting = getConfig0("lookAndFeel.value");
 	//ribbon
 	private JCheckBox ribbon = new MyCheckBox("Use Ribbon UI", RefluxEdit.isRibbon);
 	private boolean originalRibbonSetting = RefluxEdit.isRibbon;
@@ -87,7 +87,7 @@ public class LookAndFeelTab extends OptionTab
 		chooser.setBorder(new TitledBorder("File chooser"));
 		in.add(chooser);
 		this.add(in);
-		(("Java").equals(getConfig0("ChooserStyle"))?swingFileChooser:systemFileChooser).setSelected(true);
+		(("Java").equals(getConfig0("lookAndFeel.chooserStyle"))?swingFileChooser:systemFileChooser).setSelected(true);
 	}
 	
 	@Override
@@ -95,15 +95,15 @@ public class LookAndFeelTab extends OptionTab
 	{
 		//Look and Feel
 		String lafValue = ((UIManager.LookAndFeelInfo)(lafBox.getSelectedItem())).getClassName();
-		setConfig("LAF", lafValue);
+		setConfig("lookAndFeel.value", lafValue);
 		//ribbon
 		boolean newRibbon = ribbon.isSelected();
-		setConfig("isRibbon", newRibbon+"");
+		setConfig("frame.isRibbon", newRibbon+"");
 		//menubar
 		boolean newMenuBar = nativeMenuBar.isSelected();
 		setConfig("apple.laf.useScreenMenuBar", newMenuBar+"");
 		//file chooser
-		setConfig("ChooserStyle",swingFileChooser.isSelected()?"Java":"System");
+		setConfig("lookAndFeel.chooserStyle",swingFileChooser.isSelected()?"Java":"System");
 		//finally
 		if ((newRibbon != originalRibbonSetting)||(!lafValue.equals(originalLAFSetting))||(originalMenuBarSetting != newMenuBar))
 		{

@@ -16,7 +16,7 @@ import java.nio.file.*;
 import myjava.gui.common.*;
 import static exec.SourceManager.*;
 import static myjava.gui.ExceptionDialog.*;
-import static myjava.util.StaticUtilities.*;
+import static myjava.util.Utilities.*;
 
 public class MyCompileToolBar extends JToolBar implements Resources
 {
@@ -133,7 +133,7 @@ public class MyCompileToolBar extends JToolBar implements Resources
 		MyButton run = new MyButton("Run")
 		{
 			@Override
-			public void mouseReleased(MouseEvent ev)
+			public void actionPerformed(ActionEvent ev)
 			{
 				(new Thread()
 				{
@@ -145,15 +145,15 @@ public class MyCompileToolBar extends JToolBar implements Resources
 						File currentFile = currentTab.getFile();
 						if (currentFile != null)
 						{
-							boolean isGlobal = getBoolean0("Compile.useGlobal");
+							boolean isGlobal = getBoolean0("compile.useGlobalCommand");
 							String command = null;
 							if ((!isGlobal)&&(currentFile != null))
 							{
-								command = getConfig0("Compile.runCommand."+currentFile.getPath());
+								command = getConfig0("compile.runCommand."+currentFile.getPath());
 							}
 							else if (isGlobal)
 							{
-								command = getConfig0("Compile.runCommand");
+								command = getConfig0("compile.runCommand");
 							}
 							if ((command == null)||command.isEmpty())
 							{
@@ -164,31 +164,42 @@ public class MyCompileToolBar extends JToolBar implements Resources
 							String cmdFileName = null;
 							if ((!isGlobal)&&(currentFile!=null))
 							{
-								cmdFileName = getConfig0("Compile.runCommandFileName."+currentFile.getPath());
+								cmdFileName = getConfig0("compile.runCommandFileName."+currentFile.getPath());
 							}
 							else if (isGlobal)
 							{
-								cmdFileName = getConfig0("Compile.runCommandFileName");
+								cmdFileName = getConfig0("compile.runCommandFileName");
 							}
 							if ((cmdFileName == null)||cmdFileName.isEmpty())
 							{
-								cmdFileName = isMac?"run.command":"run.bat";
+								cmdFileName = getDefaultCommandFileName();
 							}
 							File cmdfile = new File(currentFile.getParent(),cmdFileName);
-							boolean success = cmdfile.delete();
-							try (PrintWriter writer = new PrintWriter(cmdfile,"UTF-8"))
+							if ((!cmdfile.exists())||(cmdfile.delete()))
 							{
-								writer.println(command);
+								try (PrintWriter writer = new PrintWriter(cmdfile,"UTF-8"))
+								{
+									writer.println(command);
+								}
+								catch (Exception ex)
+								{							
+								}
+								try
+								{
+									if (isMac)
+									{
+										Runtime.getRuntime().exec("chmod u+x " + cmdfile.getPath());
+									}
+									Desktop.getDesktop().open(cmdfile);
+								}
+								catch (Exception ex)
+								{
+									exception(ex);
+								}
 							}
-							catch (Exception ex)
-							{							
-							}
-							try
+							else
 							{
-								Desktop.getDesktop().open(cmdfile);
-							}
-							catch (Exception ex)
-							{
+								error("Error: cannot delete old command file!");
 							}
 						}
 					}
@@ -198,7 +209,7 @@ public class MyCompileToolBar extends JToolBar implements Resources
 		MyButton hide = new MyButton("Hide")
 		{
 			@Override
-			public void mouseReleased(MouseEvent ev)
+			public void actionPerformed(ActionEvent ev)
 			{
 				MyCompileToolBar.this.setUI(new StopFloatingToolBarUI());
 				MyCompileToolBar.this.updateUI();
@@ -233,16 +244,16 @@ public class MyCompileToolBar extends JToolBar implements Resources
 		File currentFile = currentTab.getFile();
 		if (currentFile != null)
 		{
-			boolean isGlobal = getBoolean0("Compile.useGlobal");
+			boolean isGlobal = getBoolean0("compile.useGlobalCommand");
 			try
 			{
 				currentTab.save(currentFile,true);
 				//delete old
 				loadConfig();
-				String regex = getConfig0("Compile.regex");
+				String regex = getConfig0("compile.regex");
 				File parent = currentFile.getParentFile();
 				File dir = null;
-				if (getBoolean0("Compile.removeOriginal"))
+				if (getBoolean0("compile.removeOriginalFiles"))
 				{								
 					File[] files = parent.listFiles();
 					for (File _f: files)
@@ -261,11 +272,11 @@ public class MyCompileToolBar extends JToolBar implements Resources
 				String command = null;
 				if ((!isGlobal)&&(currentFile!=null))
 				{
-					command = getConfig0("Compile.command."+currentFile.getPath());
+					command = getConfig0("compile.command."+currentFile.getPath());
 				}
 				else if (isGlobal)
 				{
-					command = getConfig0("Compile.command");
+					command = getConfig0("compile.command");
 				}
 				ProcessBuilder builder1;
 				if ((command == null)||(command.isEmpty()))
@@ -342,7 +353,7 @@ public class MyCompileToolBar extends JToolBar implements Resources
 								throw new InternalError();
 							}
 							//beep
-							if (getBoolean0("Compile.end.beep"))
+							if (getBoolean0("compile.end.beep"))
 							{
 								System.out.println("\007");
 							}
@@ -419,8 +430,8 @@ public class MyCompileToolBar extends JToolBar implements Resources
 	
 	private String formatPath(String s)
 	{
-		String quoteOption = getConfig0("Compile.pathQuote");
-		boolean escapeSpace = getBoolean0("Compile.escapeSpace");
+		String quoteOption = getConfig0("compile.pathQuote");
+		boolean escapeSpace = getBoolean0("compile.escapeSpace");
 		if (("curly").equals(quoteOption))
 		{
 			s = "\u201C" + s + "\u201D";

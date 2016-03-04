@@ -23,7 +23,7 @@ import myjava.gui.common.Resources;
 public class MyRibbonPanel extends JPanel implements MouseListener
 {
 	private static final Color LIGHT_GRAY = new Color(238,238,238);
-	private HashMap<MyPureButton, JPanel> list = new HashMap<MyPureButton, JPanel>();
+	private Map<MyPureButton, JPanel> list = new HashMap<MyPureButton, JPanel>();
 	/*
 	 * gapPanel: create initial gap
 	 */
@@ -94,18 +94,8 @@ public class MyRibbonPanel extends JPanel implements MouseListener
 	
 	public void addAsFirstComponent(Component firstButton)
 	{
-		Component[] comp = buttonPanel.getComponents();
-		buttonPanel.removeAll();
 		firstButton.setPreferredSize(new Dimension(65,25));
-		buttonPanel.add(firstButton);
-		for (Component c: comp)
-		{
-			buttonPanel.add(c);
-		}
-		buttonPanel.revalidate();
-		buttonPanel.repaint();/*
-		firstButton.setPreferredSize(new Dimension(65,25));
-		buttonPanel.add(firstButton,0);*/
+		buttonPanel.add(firstButton,0);
 	}
 	
 	private static class ButtonPanel extends JPanel

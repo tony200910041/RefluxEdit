@@ -12,13 +12,10 @@ import javax.swing.border.*;
 
 public interface Resources
 {
-	/**
-	 * declares resources for convenience
-	 */
 	/*
+	 * declares resources for convenience
 	 * used across all components
 	 * use name f13 for compatibility
-	 * all are public static final 
 	 * laf:
 	 */
 	String LAF = UIManager.getLookAndFeel().getName().toLowerCase();
@@ -28,13 +25,13 @@ public interface Resources
 	/*
 	 * "ctrl"/"meta"(command) key
 	 */
-	String osName = System.getProperty("os.name").toLowerCase();
-	boolean isMac = osName.contains("mac");
-	int OS_CTRL_MASK = isMac?ActionEvent.META_MASK:ActionEvent.CTRL_MASK;
+	String osName = exec.SourceManager.OS_NAME;
+	boolean isMac = exec.SourceManager.IS_MAC;
+	int OS_CTRL_MASK = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 	/*
 	 * ui constants
 	 */
-	Font f13 = LAF.contains("windows")?(new JButton().getFont().deriveFont(12f)):(new Font(osName.contains("win")?"Microsoft Jhenghei":(isMac?new JButton().getFont().getName():"Arial"), Font.PLAIN, 13));
+	Font f13 = isWindows?(new JButton().getFont().deriveFont(12f)):(new Font((osName.contains("win")?"Microsoft Jhenghei":new JButton().getFont().getName()), Font.PLAIN, 13));
 	LineBorder bord1 = new LineBorder(Color.BLACK, 1);
 	LineBorder bord2 = new LineBorder(Color.LIGHT_GRAY, 1);
 	BevelBorder raisedBorder = new BevelBorder(BevelBorder.RAISED);

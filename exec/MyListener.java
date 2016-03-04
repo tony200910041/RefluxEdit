@@ -35,7 +35,7 @@ import myjava.gui.common.*;
 import myjava.gui.option.*;
 import static exec.SourceManager.*;
 import static myjava.gui.ExceptionDialog.*;
-import static myjava.util.StaticUtilities.*;
+import static myjava.util.Utilities.*;
 import static exec.RefluxEdit.*;
 
 public class MyListener extends AbstractAction implements MouseListener, VersionConstants, Resources
@@ -253,19 +253,9 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			case 7: //undo
 			if (textArea.isEditable())
 			{
-				int caret = textArea.getCaretPosition();
 				textArea.setAutoBackup(false);
 				undoManager.undo();
 				textArea.setAutoBackup(true);
-				//calculate new caret position
-				try
-				{
-					textArea.setCaretPosition(caret);
-				}
-				catch (Exception ex)
-				{
-					textArea.setCaretPosition(0);
-				}
 			}
 			else
 			{
@@ -276,18 +266,9 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			case 8: //redo
 			if (textArea.isEditable())
 			{
-				int caret = textArea.getCaretPosition();
 				textArea.setAutoBackup(false);
 				undoManager.redo();
 				textArea.setAutoBackup(true);
-				try
-				{
-					textArea.setCaretPosition(caret);
-				}
-				catch (Exception ex)
-				{
-					textArea.setCaretPosition(0);
-				}
 			}
 			else
 			{
@@ -360,13 +341,13 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			{
 				MyTextArea.setTextEditable(false);
 				textArea.setBackground(new Color(245,245,245));
-				writeConfig("isEditable", "false");
+				writeConfig("textArea.isEditable", "false");
 			}
 			else
 			{
 				MyTextArea.setTextEditable(true);
 				textArea.setBackground(Color.WHITE);
-				writeConfig("isEditable", "true");
+				writeConfig("textArea.isEditable", "true");
 				textArea.requestFocusInWindow();
 			}
 			MainPanel.updateAllTab();
@@ -412,16 +393,9 @@ public class MyListener extends AbstractAction implements MouseListener, Version
 			break;
 			
 			case 21: //always on top
-			if (w.isAlwaysOnTop())
-			{
-				writeConfig("OnTop", "false");
-				w.setAlwaysOnTop(false);
-			}
-			else
-			{
-				writeConfig("OnTop", "true");
-				w.setAlwaysOnTop(true);
-			}
+			boolean old = w.isAlwaysOnTop();
+			writeConfig("frame.onTop", Boolean.toString(!old));
+			w.setAlwaysOnTop(!old);
 			break;
 			
 			case 22: //word count
